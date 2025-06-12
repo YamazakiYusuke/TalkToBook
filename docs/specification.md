@@ -413,3 +413,4 @@ Main Screen → Recording Screen → Processing Screen → Text View Screen
 ### 11.3 Revision History
 - v1.0 (2024-12-06): Initial version created
 - v1.1 (2024-12-06): English translation completed
+- v1.2 (2024-12-13): Added document merge functionality and chapter management features
