@@ -37,6 +37,8 @@ We will solve this challenge by creating a smartphone app called "TalkToBook" th
 3. As a user, I want peace of mind knowing my work is automatically saved
 4. As a user, I want to control the app with voice commands
 5. As a user, I want clear notification when the app cannot be used offline
+6. As a user, I want to merge multiple recording sessions into a single document by tapping them in order
+7. As a user, I want to organize my documents into chapters for better structure
 
 ### 2.4 Use Cases
 1. **Voice Recording and Conversion**
@@ -54,6 +56,19 @@ We will solve this challenge by creating a smartphone app called "TalkToBook" th
    - Combine multiple recording sessions into one document
    - Organize chapters and paragraphs
    - Save completed documents
+
+4. **Document Merging**
+   - Enter selection mode in document list
+   - Tap documents in desired order (numbered badges appear)
+   - View merge preview with selected order
+   - Enter title for merged document
+   - Confirm merge operation
+
+5. **Chapter Organization**
+   - View list of chapters in a document
+   - Create new chapters
+   - Edit chapter titles and content
+   - Reorder chapters within document
 
 ## 3. Functional Requirements
 
@@ -87,6 +102,21 @@ We will solve this challenge by creating a smartphone app called "TalkToBook" th
 - Basic commands like "Start recording" and "Stop recording"
 - Navigation commands like "Next chapter" and "Go back"
 - Operation commands like "Save" and "Read aloud"
+
+#### 3.1.6 Document Merge Functionality
+- Selection mode for document list with clear visual indicators
+- Tap-to-select interface with numbered order badges (1, 2, 3...)
+- Merge preview showing selected documents in order
+- Custom title input for merged document
+- Original documents preserved after merge
+- Progress indicator during merge process
+
+#### 3.1.7 Chapter Management
+- Chapter list view with clear hierarchy
+- Create, edit, and delete chapters
+- Drag-and-drop or numbered reordering
+- Chapter title and content editing
+- Navigation between chapters
 
 ### 3.2 User Interface Requirements
 - Minimum font size: 18pt
@@ -249,11 +279,48 @@ data class Chapter(
 - Simple editing toolbar
 - Voice command button
 
+#### 6.2.4 Document List Screen
+- List of all documents with large, readable titles
+- Creation date and time display
+- Select button for entering selection mode
+- Clear visual distinction between normal and selection modes
+
+#### 6.2.5 Document List Screen (Selection Mode)
+- Checkbox or selection indicator for each document
+- Numbered badges showing selection order (1, 2, 3...)
+- Merge button (appears when 2+ documents selected)
+- Cancel selection button
+- Selected count display
+
+#### 6.2.6 Document Merge Screen
+- Preview of documents to be merged in order
+- Large, editable title field for new document
+- Visual representation of merge order
+- Confirm and Cancel buttons
+- Progress indicator during merge
+
+#### 6.2.7 Chapter List Screen
+- Hierarchical list of chapters
+- Chapter numbers and titles
+- Add new chapter button
+- Edit indicators for each chapter
+- Clear navigation to parent document
+
+#### 6.2.8 Chapter Edit Screen
+- Large text input for chapter title
+- Content editing area with voice input option
+- Save and Cancel buttons
+- Delete chapter option with confirmation
+
 ### 6.3 Navigation Flow
 ```
 Main Screen → Recording Screen → Processing Screen → Text View Screen
      ↑                                                      ↓
      └──────────── Document List ←──────────────────────────┘
+                        ↓
+                Selection Mode → Document Merge Screen
+                        ↓
+                Document Detail → Chapter List → Chapter Edit
 ```
 
 ### 6.4 Senior-Friendly Design Elements
