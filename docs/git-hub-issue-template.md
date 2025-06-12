@@ -65,7 +65,7 @@ Example:
 CLAUDE.md
 <!--
 Example: 
-docs/specification
+docs/specification.md
 -->
 
 # Working Branch
