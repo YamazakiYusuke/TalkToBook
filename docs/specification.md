@@ -247,8 +247,9 @@ data class Chapter(
 - Data migration tools and backwards compatibility
 
 ### 5.5 Network Requirements
-- **Connectivity**: Required for all operations
-- **Minimum bandwidth**: 1 Mbps
+- **Connectivity**: Required for speech-to-text conversion operations
+- **Offline capabilities**: Document viewing, editing, and management work offline
+- **Minimum bandwidth**: 1 Mbps (when online)
 - **Offline detection**: Immediate UI feedback
 - **Connection monitoring**: Real-time status updates
 
