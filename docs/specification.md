@@ -291,23 +291,6 @@ Main Screen → Recording Screen → Processing Screen → Text View Screen
 - Use Cases testing
 - Coverage target: 80% or higher
 
-### 8.2 Integration Testing
-- API communication testing
-- Database operation testing
-- Voice recording and playback testing
-
-### 8.3 User Acceptance Testing
-- Real-use testing with elderly monitors
-- Task completion rate measurement
-- Error rate measurement
-- Satisfaction survey
-
-### 8.4 Accessibility Testing
-- Operation verification with TalkBack
-- Layout verification with font size changes
-- Color contrast validation
-- Touch target size verification
-
 ## 9. Deployment and Maintenance
 
 ### 9.1 Deployment Strategy
