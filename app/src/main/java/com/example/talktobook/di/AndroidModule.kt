@@ -2,6 +2,7 @@ package com.example.talktobook.di
 
 import android.content.Context
 import android.media.MediaRecorder
+import android.os.Build
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -25,8 +26,13 @@ object AndroidModule {
     }
 
     @Provides
-    fun provideMediaRecorder(): MediaRecorder {
-        return MediaRecorder().apply {
+    fun provideMediaRecorder(@ApplicationContext context: Context): MediaRecorder {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            MediaRecorder(context)
+        } else {
+            @Suppress("DEPRECATION")
+            MediaRecorder()
+        }.apply {
             setAudioSource(MediaRecorder.AudioSource.MIC)
             setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
             setAudioEncoder(MediaRecorder.AudioEncoder.AAC)

@@ -3,6 +3,7 @@ package com.example.talktobook.di
 import com.example.talktobook.util.Constants
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import com.google.gson.Strictness
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -22,7 +23,7 @@ object NetworkModule {
     @Singleton
     fun provideGson(): Gson {
         return GsonBuilder()
-            .setLenient()
+            .setStrictness(Strictness.LENIENT)
             .create()
     }
 
