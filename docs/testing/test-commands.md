@@ -114,6 +114,40 @@ rm -rf ~/.gradle/caches/
 ./gradlew test --rerun-tasks
 ```
 
+## 最適化されたテスト実行手順（2025年6月13日更新）
+
+### 開発時の効率的なテスト実行順序
+```bash
+# 1. 高速フィードバック重視の実行順序
+./gradlew testDebugUnitTest    # 約30秒 - 単体テスト先行
+./gradlew lintDebug           # 約10秒 - Lint即座実行
+
+# 2. 必要時のみ実行（時間がかかる処理）
+./gradlew assembleDebug       # 2分+ - フルビルド
+./gradlew test               # 全テスト（Debug+Release）
+```
+
+### ネットワーク関連テストの実行
+```bash
+# ネットワーク層の単体テスト
+./gradlew testDebugUnitTest --tests "*Network*"
+./gradlew testDebugUnitTest --tests "*remote*"
+
+# 特定の新機能テスト（例：Task 5関連）
+./gradlew testDebugUnitTest --tests "com.example.talktobook.data.remote.*"
+./gradlew testDebugUnitTest --tests "com.example.talktobook.di.NetworkModuleTest"
+```
+
+### 依存関係追加後の検証コマンド
+```bash
+# 新しい依存関係（例：mockk）追加後の確認
+./gradlew dependencies --configuration testImplementation | grep mockk
+
+# コンパイル確認
+./gradlew compileDebugKotlin
+./gradlew compileDebugUnitTestKotlin
+```
+
 ## 継続的インテグレーション用
 
 ### JUnit XMLレポート生成
@@ -125,4 +159,13 @@ rm -rf ~/.gradle/caches/
 ### テスト失敗時も続行
 ```bash
 ./gradlew test --continue
+```
+
+### 権限関連の検証
+```bash
+# AndroidManifest.xmlの権限確認
+grep -i "permission" app/src/main/AndroidManifest.xml
+
+# Lint権限エラーの特定
+./gradlew lintDebug 2>&1 | grep -i "permission\|MissingPermission"
 ```

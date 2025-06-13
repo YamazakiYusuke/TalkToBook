@@ -17,6 +17,7 @@ gson = "2.11.0"
 viewmodelCompose = "2.9.1"
 coroutines = "1.8.1"
 ksp = "2.0.0-1.0.22"
+mockk = "1.13.5"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -56,6 +57,9 @@ viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-
 
 # Coroutines
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
+
+# Testing
+mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

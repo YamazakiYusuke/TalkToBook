@@ -1,5 +1,8 @@
 package com.example.talktobook.di
 
+import com.example.talktobook.data.remote.api.OpenAIApi
+import com.example.talktobook.data.remote.interceptor.AuthInterceptor
+import com.example.talktobook.data.remote.interceptor.NetworkConnectivityInterceptor
 import com.example.talktobook.util.Constants
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
@@ -29,20 +32,18 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideOkHttpClient(): OkHttpClient {
+    fun provideOkHttpClient(
+        authInterceptor: AuthInterceptor,
+        networkConnectivityInterceptor: NetworkConnectivityInterceptor
+    ): OkHttpClient {
         val loggingInterceptor = HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BODY
         }
 
         return OkHttpClient.Builder()
+            .addInterceptor(networkConnectivityInterceptor)
+            .addInterceptor(authInterceptor)
             .addInterceptor(loggingInterceptor)
-            .addInterceptor { chain ->
-                val original = chain.request()
-                val requestBuilder = original.newBuilder()
-                    .header("Authorization", "Bearer ${Constants.OPENAI_API_KEY}")
-                    .header("Content-Type", "application/json")
-                chain.proceed(requestBuilder.build())
-            }
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(60, TimeUnit.SECONDS)
             .writeTimeout(60, TimeUnit.SECONDS)
@@ -62,5 +63,9 @@ object NetworkModule {
             .build()
     }
 
-    // OpenAI API will be provided here when API interface is implemented
+    @Provides
+    @Singleton
+    fun provideOpenAIApi(retrofit: Retrofit): OpenAIApi {
+        return retrofit.create(OpenAIApi::class.java)
+    }
 }
