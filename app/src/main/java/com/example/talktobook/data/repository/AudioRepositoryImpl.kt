@@ -26,7 +26,7 @@ import javax.inject.Singleton
 class AudioRepositoryImpl @Inject constructor(
     private val recordingDao: RecordingDao,
     private val mediaRecorder: MediaRecorder,
-    private val audioDirectory: File
+    private val audioFileManager: com.example.talktobook.util.AudioFileManager
 ) : AudioRepository {
 
     private var currentRecordingStartTime: Long = 0
@@ -35,15 +35,9 @@ class AudioRepositoryImpl @Inject constructor(
 
     override suspend fun startRecording(): Recording = withContext(Dispatchers.IO) {
         try {
-            // Ensure audio directory exists
-            if (!audioDirectory.exists()) {
-                audioDirectory.mkdirs()
-            }
-
-            // Generate unique filename
-            val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
-            val filename = "recording_$timestamp.m4a"
-            val audioFile = File(audioDirectory, filename)
+            // Generate unique filename and create audio file
+            val filename = audioFileManager.generateUniqueFileName()
+            val audioFile = audioFileManager.createRecordingFile(filename)
 
             // Configure MediaRecorder
             mediaRecorder.apply {
@@ -172,11 +166,8 @@ class AudioRepositoryImpl @Inject constructor(
 
     override suspend fun deleteRecording(recordingId: Long) = withContext(Dispatchers.IO) {
         recordingDao.getRecordingById(recordingId)?.let { entity ->
-            // Delete audio file
-            val audioFile = File(entity.audioFilePath)
-            if (audioFile.exists()) {
-                audioFile.delete()
-            }
+            // Delete audio file using AudioFileManager
+            audioFileManager.deleteFile(entity.audioFilePath)
             
             // Delete from database
             recordingDao.deleteRecording(entity)
@@ -214,19 +205,23 @@ class AudioRepositoryImpl @Inject constructor(
 
     override suspend fun cleanupOrphanedAudioFiles() = withContext(Dispatchers.IO) {
         // Get all audio files in directory
-        val audioFiles = audioDirectory.listFiles() ?: return@withContext
+        val audioFiles = audioFileManager.getAudioDirectory().listFiles() ?: return@withContext
         
         // Get all recording file paths from database
         val recordingPaths = recordingDao.getAllRecordings()
             .map { recordings -> recordings.map { it.audioFilePath }.toSet() }
         
         recordingPaths.collect { paths ->
-            // Delete files that are not in database
+            // Delete files that are not in database using AudioFileManager
             audioFiles.forEach { file ->
                 if (file.absolutePath !in paths) {
-                    file.delete()
+                    audioFileManager.deleteFile(file.absolutePath)
                 }
             }
         }
+        
+        // Also cleanup temp files and enforce cache limits
+        audioFileManager.cleanupTempFiles()
+        audioFileManager.enforceCacheSizeLimit()
     }
 }

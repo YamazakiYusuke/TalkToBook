@@ -5,14 +5,14 @@ import kotlinx.coroutines.flow.Flow
 import java.io.File
 
 interface AudioRepository {
-    suspend fun startRecording(): String
-    suspend fun stopRecording(): Recording?
-    suspend fun pauseRecording()
-    suspend fun resumeRecording()
-    suspend fun saveRecording(recording: Recording): Result<Recording>
-    suspend fun getRecording(id: String): Recording?
-    suspend fun getAllRecordings(): Flow<List<Recording>>
-    suspend fun deleteRecording(id: String): Result<Unit>
-    suspend fun getAudioFile(filePath: String): File?
-    suspend fun deleteAudioFile(filePath: String): Result<Unit>
+    suspend fun startRecording(): Recording
+    suspend fun stopRecording(recordingId: Long): Recording?
+    suspend fun pauseRecording(recordingId: Long): Recording?
+    suspend fun resumeRecording(recordingId: Long): Recording?
+    suspend fun deleteRecording(recordingId: Long)
+    suspend fun getRecording(recordingId: Long): Recording?
+    fun getAllRecordings(): Flow<List<Recording>>
+    suspend fun updateRecordingTranscription(recordingId: Long, transcribedText: String)
+    suspend fun getRecordingAudioFile(recordingId: Long): File?
+    suspend fun cleanupOrphanedAudioFiles()
 }
