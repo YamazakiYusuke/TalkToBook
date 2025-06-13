@@ -29,6 +29,11 @@ TalkToBook is an Android application designed to help elderly users (65+) write 
 
 # Generate debug APK
 ./gradlew assembleDebug
+
+# Alternative test commands (using provided scripts)
+./scripts/run-tests.sh          # Comprehensive test suite with reports
+./scripts/quick-test.sh         # Fast test execution for development
+./scripts/test-specific.sh      # Run specific test classes
 ```
 
 ## Architecture
@@ -58,6 +63,11 @@ All data access goes through repository interfaces defined in `domain/repository
 - `AudioRepository`: Audio recording and file management
 - `TranscriptionRepository`: OpenAI Whisper API communication
 - `DocumentRepository`: Document and chapter CRUD operations
+
+### Additional Components
+- **Services**: `AudioRecordingService` for background audio recording
+- **Utils**: `PermissionUtils` for Android permission handling
+- **DI Modules**: `RepositoryModule` for repository bindings
 
 ## Configuration Requirements
 
@@ -103,3 +113,31 @@ This project follows **Test-Driven Development (TDD)** principles:
 - Integration tests for database operations and API communication
 - UI tests using Compose testing framework
 - Target 80%+ code coverage as specified in requirements
+
+### Test Execution
+The project includes automated test scripts in `scripts/` directory:
+- `run-tests.sh`: Full test suite with comprehensive reporting
+- `quick-test.sh`: Fast execution for development workflow
+- `test-specific.sh`: Targeted test execution for specific classes
+
+Refer to `scripts/README.md` for detailed usage instructions and configuration options.
+
+## Current Project Status
+
+### Implemented Features
+- ✅ Complete data layer with Room database
+- ✅ Network layer with OpenAI API integration
+- ✅ Audio recording service infrastructure
+- ✅ Domain models and repository interfaces
+- ✅ Comprehensive unit test coverage
+- ✅ Hilt dependency injection setup
+- ✅ Base ViewModels and UI state management
+
+### Development Environment
+- **Target SDK**: 35
+- **Min SDK**: 29
+- **Compile SDK**: 35
+- **Java Version**: 11
+- **Kotlin**: 2.0.0
+- **AGP**: 8.7.1
+- **Testing**: JUnit 4.13.2, MockK 1.13.5
