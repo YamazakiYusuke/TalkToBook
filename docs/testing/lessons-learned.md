@@ -164,6 +164,95 @@ sdkmanager --list | grep -E "(Available|Updates)"
 2. **環境構築ベストプラクティスの文書化**
 3. **定期的な環境メンテナンス手順の確立**
 
+## 最新の学習ポイント（2025年6月13日更新）
+
+### ネットワーク層実装での新たな知見
+
+#### TDD適用におけるテスト設計の重要性
+
+**Task 5（Network Layer）実装で学んだこと：**
+
+##### 1. 依存関係管理の課題
+```kotlin
+// 問題: 新しい依存関係（mockk）の追加を忘れがち
+testImplementation(libs.mockk)  // libs.versions.tomlへの追加も必要
+```
+
+**学び**: 新機能実装時は依存関係の追加を必ず検討する
+
+##### 2. Android権限とLintエラーの早期発見
+```xml
+<!-- 忘れがちな権限追加 -->
+<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+```
+
+**解決プロセス:**
+1. Lintエラーで権限不足を発見
+2. AndroidManifest.xmlに権限追加
+3. 再テストで問題解決確認
+
+**学び**: Lintチェックはコンパイル後に必ず実行すべき
+
+##### 3. ネットワーク層のテスト設計パターン
+```kotlin
+// 成功例: モックを活用した単体テスト
+private val mockContext = mockk<Context>(relaxed = true)
+private val authInterceptor = AuthInterceptor()
+private val networkConnectivityInterceptor = NetworkConnectivityInterceptor(mockContext)
+```
+
+**効果的なテストパターン:**
+- インターセプターの個別テスト
+- エラーハンドリングの網羅的テスト
+- 例外階層の完全性テスト
+
+#### 実装効率向上のポイント
+
+##### 段階的実装の価値
+1. **API Interface作成** → コンパイル確認
+2. **DTOモデル定義** → データ構造検証
+3. **エラーハンドリング** → 例外処理網羅
+4. **インターセプター実装** → 横断的関心事処理
+5. **DI設定更新** → 依存関係統合
+6. **テスト作成** → 品質保証
+
+**学び**: 各段階でのコンパイル確認により問題の早期発見が可能
+
+##### テスト実行の最適化
+```bash
+# 効率的なテスト実行順序
+./gradlew testDebugUnitTest    # 約30秒 - 先に単体テスト
+./gradlew lintDebug           # 約10秒 - 次にlintチェック
+./gradlew assembleDebug       # 2分+ - 最後にビルド全体
+```
+
+**時間効率の考慮:**
+- 高速なテストを先に実行して早期フィードバック
+- 長時間かかるビルドは必要時のみ実行
+
+### 継続的品質向上のプロセス
+
+#### コミット前チェックリスト（更新版）
+```bash
+# 1. 単体テスト実行（必須 - 30秒）
+./gradlew testDebugUnitTest
+
+# 2. Lintチェック（必須 - 10秒）  
+./gradlew lintDebug
+
+# 3. 権限・マニフェスト確認（手動）
+grep -i "permission" app/src/main/AndroidManifest.xml
+
+# 4. 新しい依存関係の確認（手動）
+git diff gradle/libs.versions.toml app/build.gradle.kts
+```
+
+#### PR作成時の品質保証
+1. **機能テスト**: 実装した機能の動作確認
+2. **回帰テスト**: 既存機能への影響確認
+3. **パフォーマンステスト**: ビルド時間・テスト実行時間の確認
+4. **ドキュメント更新**: 実装内容の文書化
+
 ## 結論
 
 今回の試行錯誤を通じて、以下の価値を再確認：
@@ -172,5 +261,11 @@ sdkmanager --list | grep -E "(Available|Updates)"
 - **環境一貫性の価値**: クロスプラットフォーム開発での統一環境
 - **段階的アプローチ**: 複雑な問題を小さく分割して解決
 - **ドキュメント化の効果**: 失敗と成功の両方を記録する意義
+
+### 新たに追加された学び（Network Layer実装）
+- **TDD効果の実証**: テストファーストでの品質向上確認
+- **依存関係管理**: 新機能追加時の systematic approach
+- **Lint活用**: 静的解析による品質保証の重要性
+- **段階的検証**: 各実装段階でのコンパイル確認の価値
 
 これらの学びは、今後の開発プロジェクトにおける品質向上と効率化に直接貢献するものである。
