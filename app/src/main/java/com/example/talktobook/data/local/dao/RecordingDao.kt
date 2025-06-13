@@ -45,4 +45,10 @@ interface RecordingDao {
     
     @Query("SELECT COUNT(*) FROM recordings WHERE status = :status")
     suspend fun getRecordingCountByStatus(status: TranscriptionStatus): Int
+    
+    @Query("UPDATE recordings SET status = :status WHERE id = :recordingId")
+    suspend fun updateTranscriptionStatus(recordingId: String, status: TranscriptionStatus)
+    
+    @Query("UPDATE recordings SET transcribedText = :text WHERE id = :recordingId")
+    suspend fun updateTranscribedText(recordingId: String, text: String)
 }
