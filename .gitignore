@@ -13,3 +13,12 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Test reports and logs
+test-reports/
+*.log
+test-output-*.log
+lint-output-*.log
+
+# Test artifacts (specific files, not the test directory)
+/test
