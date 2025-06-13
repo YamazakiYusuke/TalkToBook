@@ -21,7 +21,8 @@
       "Bash(cat:*)",
       "Bash(./scripts/check-build.sh:*)",
       "Bash(./scripts/check-tests.sh:*)",
-      "Bash(./scripts/check-lint.sh:*)"
+      "Bash(./scripts/check-lint.sh:*)",
+      "Bash(./scripts/run-tests.sh:*)"
     ],
     "deny": []
   }
