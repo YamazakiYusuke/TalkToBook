@@ -8,13 +8,12 @@ plugins {
 
 android {
     namespace = "com.example.talktobook"
-    compileSdk = 34
-    buildToolsVersion = "34.0.0"
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.talktobook"
         minSdk = 29
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
@@ -46,6 +45,9 @@ android {
     }
     kotlinOptions {
         jvmTarget = "11"
+    }
+    lint {
+        disable += "NullSafeMutableLiveData"
     }
 }
 

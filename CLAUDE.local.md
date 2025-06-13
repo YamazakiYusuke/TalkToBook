@@ -1,0 +1,1 @@
+- check build, check unit test, check lint @scripts/ use this shell script

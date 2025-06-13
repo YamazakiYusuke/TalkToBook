@@ -12,7 +12,9 @@ class ChapterTest {
             documentId = "doc-1",
             orderIndex = 0,
             title = "Chapter Title",
-            content = "Chapter content"
+            content = "Chapter content",
+            createdAt = 1234567890L,
+            updatedAt = 1234567900L
         )
 
         assertEquals("chapter-1", chapter.id)
@@ -29,7 +31,9 @@ class ChapterTest {
             documentId = "doc-1",
             orderIndex = 0,
             title = "Title",
-            content = "Content"
+            content = "Content",
+            createdAt = 1234567890L,
+            updatedAt = 1234567900L
         )
 
         val chapter2 = Chapter(
@@ -37,7 +41,9 @@ class ChapterTest {
             documentId = "doc-1",
             orderIndex = 0,
             title = "Title",
-            content = "Content"
+            content = "Content",
+            createdAt = 1234567890L,
+            updatedAt = 1234567900L
         )
 
         assertEquals(chapter1, chapter2)
@@ -51,7 +57,9 @@ class ChapterTest {
             documentId = "doc-1",
             orderIndex = 0,
             title = "Original Title",
-            content = "Original content"
+            content = "Original content",
+            createdAt = 1234567890L,
+            updatedAt = 1234567900L
         )
 
         val updatedChapter = originalChapter.copy(
@@ -69,9 +77,9 @@ class ChapterTest {
 
     @Test
     fun `Chapter ordering validation`() {
-        val chapter1 = Chapter("1", "doc-1", 0, "First", "Content 1")
-        val chapter2 = Chapter("2", "doc-1", 1, "Second", "Content 2")
-        val chapter3 = Chapter("3", "doc-1", 2, "Third", "Content 3")
+        val chapter1 = Chapter("1", "doc-1", 0, "First", "Content 1", 1234567890L, 1234567900L)
+        val chapter2 = Chapter("2", "doc-1", 1, "Second", "Content 2", 1234567890L, 1234567900L)
+        val chapter3 = Chapter("3", "doc-1", 2, "Third", "Content 3", 1234567890L, 1234567900L)
 
         assertTrue(chapter1.orderIndex < chapter2.orderIndex)
         assertTrue(chapter2.orderIndex < chapter3.orderIndex)

@@ -8,8 +8,8 @@ class DocumentTest {
     @Test
     fun `create Document with all parameters`() {
         val chapters = listOf(
-            Chapter("1", "doc-1", 0, "Chapter 1", "Content 1"),
-            Chapter("2", "doc-1", 1, "Chapter 2", "Content 2")
+            Chapter("1", "doc-1", 0, "Chapter 1", "Content 1", 1234567890L, 1234567900L),
+            Chapter("2", "doc-1", 1, "Chapter 2", "Content 2", 1234567890L, 1234567900L)
         )
 
         val document = Document(
