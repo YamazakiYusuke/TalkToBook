@@ -16,26 +16,12 @@ import javax.inject.Singleton
 object AndroidModule {
 
     @Provides
-    @Singleton
-    fun provideAudioDirectory(@ApplicationContext context: Context): File {
-        val audioDir = File(context.getExternalFilesDir(null), "audio_recordings")
-        if (!audioDir.exists()) {
-            audioDir.mkdirs()
-        }
-        return audioDir
-    }
-
-    @Provides
     fun provideMediaRecorder(@ApplicationContext context: Context): MediaRecorder {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             MediaRecorder(context)
         } else {
             @Suppress("DEPRECATION")
             MediaRecorder()
-        }.apply {
-            setAudioSource(MediaRecorder.AudioSource.MIC)
-            setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-            setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
         }
     }
 }
