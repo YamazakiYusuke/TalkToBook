@@ -11,6 +11,67 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 
+// Senior-friendly color schemes with high contrast
+private val SeniorLightColorScheme = lightColorScheme(
+    primary = SeniorPrimary,
+    onPrimary = SeniorOnPrimary,
+    primaryContainer = SeniorPrimaryLight,
+    onPrimaryContainer = SeniorOnPrimary,
+    
+    secondary = SeniorSecondary,
+    onSecondary = SeniorOnSecondary,
+    secondaryContainer = SeniorSecondaryLight,
+    onSecondaryContainer = SeniorOnSecondary,
+    
+    tertiary = SeniorSecondaryVariant,
+    onTertiary = SeniorOnSecondary,
+    
+    error = SeniorError,
+    onError = SeniorOnError,
+    
+    background = SeniorBackground,
+    onBackground = SeniorOnBackground,
+    
+    surface = SeniorSurface,
+    onSurface = SeniorOnSurface,
+    surfaceVariant = SeniorSurface,
+    onSurfaceVariant = SeniorOnSurface,
+    
+    outline = SeniorDivider,
+    outlineVariant = SeniorDivider
+)
+
+// For dark theme (less commonly used by seniors, but provided for completeness)
+private val SeniorDarkColorScheme = darkColorScheme(
+    primary = SeniorPrimaryLight,
+    onPrimary = SeniorOnBackground,
+    primaryContainer = SeniorPrimary,
+    onPrimaryContainer = SeniorOnPrimary,
+    
+    secondary = SeniorSecondaryLight,
+    onSecondary = SeniorOnBackground,
+    secondaryContainer = SeniorSecondary,
+    onSecondaryContainer = SeniorOnSecondary,
+    
+    tertiary = SeniorSecondaryVariant,
+    onTertiary = SeniorOnSecondary,
+    
+    error = SeniorError,
+    onError = SeniorOnError,
+    
+    background = SeniorOnBackground,
+    onBackground = SeniorBackground,
+    
+    surface = SeniorOnSurface,
+    onSurface = SeniorBackground,
+    surfaceVariant = SeniorOnSurface,
+    onSurfaceVariant = SeniorBackground,
+    
+    outline = SeniorDivider,
+    outlineVariant = SeniorDivider
+)
+
+// Legacy color schemes (kept for compatibility during development)
 private val DarkColorScheme = darkColorScheme(
     primary = Purple80,
     secondary = PurpleGrey80,
@@ -21,38 +82,52 @@ private val LightColorScheme = lightColorScheme(
     primary = Purple40,
     secondary = PurpleGrey40,
     tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
 )
 
 @Composable
 fun TalkToBookTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    // Dynamic color is disabled for senior users to maintain consistent high contrast
+    dynamicColor: Boolean = false,
+    // Use senior-friendly theme by default
+    useSeniorTheme: Boolean = true,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
+        useSeniorTheme -> {
+            // Always use senior-friendly colors for optimal accessibility
+            if (darkTheme) SeniorDarkColorScheme else SeniorLightColorScheme
+        }
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
-
         darkTheme -> DarkColorScheme
         else -> LightColorScheme
     }
 
+    val typography = if (useSeniorTheme) SeniorTypography else Typography
+
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography,
+        typography = typography,
+        content = content
+    )
+}
+
+/**
+ * Legacy theme function for backward compatibility
+ */
+@Composable
+fun TalkToBookLegacyTheme(
+    darkTheme: Boolean = isSystemInDarkTheme(),
+    dynamicColor: Boolean = true,
+    content: @Composable () -> Unit
+) {
+    TalkToBookTheme(
+        darkTheme = darkTheme,
+        dynamicColor = dynamicColor,
+        useSeniorTheme = false,
         content = content
     )
 }
