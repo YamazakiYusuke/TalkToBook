@@ -1,5 +1,7 @@
 package com.example.talktobook.data.local.entity
 
+import com.example.talktobook.data.mapper.ChapterMapper.toDomainModel
+import com.example.talktobook.data.mapper.ChapterMapper.toEntity
 import org.junit.Test
 import org.junit.Assert.*
 

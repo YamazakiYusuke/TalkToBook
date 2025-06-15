@@ -1,5 +1,7 @@
 package com.example.talktobook.data.local.entity
 
+import com.example.talktobook.data.mapper.RecordingMapper.toDomainModel
+import com.example.talktobook.data.mapper.RecordingMapper.toEntity
 import com.example.talktobook.domain.model.TranscriptionStatus
 import org.junit.Test
 import org.junit.Assert.*

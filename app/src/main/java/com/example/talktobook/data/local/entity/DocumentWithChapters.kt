@@ -2,6 +2,8 @@ package com.example.talktobook.data.local.entity
 
 import androidx.room.Embedded
 import androidx.room.Relation
+import com.example.talktobook.data.mapper.ChapterMapper.toDomainModel
+import com.example.talktobook.data.mapper.DocumentMapper.toDomainModel
 import com.example.talktobook.domain.model.Document
 
 data class DocumentWithChapters(
@@ -14,5 +16,5 @@ data class DocumentWithChapters(
 )
 
 fun DocumentWithChapters.toDomainModel(): Document {
-    return document.toDomainModel(chapters)
+    return document.toDomainModel(chapters.map { it.toDomainModel() })
 }

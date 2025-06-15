@@ -1,7 +1,6 @@
 package com.example.talktobook.domain.usecase.audio
 
 import com.example.talktobook.domain.model.Recording
-import com.example.talktobook.domain.model.RecordingState
 import com.example.talktobook.domain.model.TranscriptionStatus
 import com.example.talktobook.domain.repository.AudioRepository
 import io.mockk.coEvery
@@ -28,14 +27,13 @@ class StartRecordingUseCaseTest {
     @Test
     fun `invoke returns success when recording starts successfully`() = runTest {
         val expectedRecording = Recording(
-            id = 1L,
-            timestamp = Date(),
+            id = "test-recording-id",
+            timestamp = System.currentTimeMillis(),
             audioFilePath = "/path/to/audio.m4a",
             transcribedText = null,
-            transcriptionStatus = TranscriptionStatus.PENDING,
+            status = TranscriptionStatus.PENDING,
             duration = 0L,
-            title = null,
-            state = RecordingState.RECORDING
+            title = null
         )
         coEvery { audioRepository.startRecording() } returns expectedRecording
 

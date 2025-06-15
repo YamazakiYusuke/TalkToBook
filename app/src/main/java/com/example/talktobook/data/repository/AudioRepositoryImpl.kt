@@ -4,10 +4,9 @@ import android.media.MediaRecorder
 import android.os.Build
 import com.example.talktobook.data.local.dao.RecordingDao
 import com.example.talktobook.data.local.entity.RecordingEntity
-import com.example.talktobook.data.local.entity.toDomain
-import com.example.talktobook.data.local.entity.toEntity
+import com.example.talktobook.data.mapper.RecordingMapper.toDomainModel
+import com.example.talktobook.data.mapper.RecordingMapper.toEntity
 import com.example.talktobook.domain.model.Recording
-import com.example.talktobook.domain.model.RecordingState
 import com.example.talktobook.domain.model.TranscriptionStatus
 import com.example.talktobook.domain.repository.AudioRepository
 import com.example.talktobook.util.Constants
@@ -19,6 +18,7 @@ import java.io.File
 import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -61,22 +61,22 @@ class AudioRepositoryImpl @Inject constructor(
             lastPauseTime = 0
 
             // Create recording entity
+            val recordingId = UUID.randomUUID().toString()
             val recording = Recording(
-                id = 0, // Will be assigned by database
-                timestamp = Date(),
+                id = recordingId,
+                timestamp = System.currentTimeMillis(),
                 audioFilePath = audioFile.absolutePath,
                 transcribedText = null,
-                transcriptionStatus = TranscriptionStatus.PENDING,
+                status = TranscriptionStatus.PENDING,
                 duration = 0L,
-                title = null,
-                state = RecordingState.RECORDING
+                title = null
             )
 
             // Save to database
-            val recordingId = recordingDao.insertRecording(recording.toEntity())
+            recordingDao.insertRecording(recording.toEntity())
             
-            // Return the recording with assigned ID
-            return@withContext recording.copy(id = recordingId)
+            // Return the recording
+            return@withContext recording
         } catch (e: IOException) {
             throw IOException("Failed to start recording: ${e.message}", e)
         } catch (e: IllegalStateException) {
@@ -84,14 +84,14 @@ class AudioRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun pauseRecording(recordingId: Long): Recording? = withContext(Dispatchers.IO) {
+    override suspend fun pauseRecording(recordingId: String): Recording? = withContext(Dispatchers.IO) {
         return@withContext try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                 mediaRecorder.pause()
                 lastPauseTime = System.currentTimeMillis()
                 
                 recordingDao.getRecordingById(recordingId)?.let { entity ->
-                    val recording = entity.toDomain().copy(state = RecordingState.PAUSED)
+                    val recording = entity.toDomainModel()
                     recordingDao.updateRecording(recording.toEntity())
                     recording
                 }
@@ -104,7 +104,7 @@ class AudioRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun resumeRecording(recordingId: Long): Recording? = withContext(Dispatchers.IO) {
+    override suspend fun resumeRecording(recordingId: String): Recording? = withContext(Dispatchers.IO) {
         return@withContext try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                 mediaRecorder.resume()
@@ -114,7 +114,7 @@ class AudioRepositoryImpl @Inject constructor(
                 }
                 
                 recordingDao.getRecordingById(recordingId)?.let { entity ->
-                    val recording = entity.toDomain().copy(state = RecordingState.RECORDING)
+                    val recording = entity.toDomainModel()
                     recordingDao.updateRecording(recording.toEntity())
                     recording
                 }
@@ -127,7 +127,7 @@ class AudioRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun stopRecording(recordingId: Long): Recording? = withContext(Dispatchers.IO) {
+    override suspend fun stopRecording(recordingId: String): Recording? = withContext(Dispatchers.IO) {
         return@withContext try {
             mediaRecorder.stop()
             mediaRecorder.reset()
@@ -141,8 +141,7 @@ class AudioRepositoryImpl @Inject constructor(
             }
             
             recordingDao.getRecordingById(recordingId)?.let { entity ->
-                val recording = entity.toDomain().copy(
-                    state = RecordingState.STOPPED,
+                val recording = entity.toDomainModel().copy(
                     duration = totalDuration
                 )
                 recordingDao.updateRecording(recording.toEntity())
@@ -157,14 +156,14 @@ class AudioRepositoryImpl @Inject constructor(
         } catch (e: IllegalStateException) {
             // If stop fails, still try to update the database
             recordingDao.getRecordingById(recordingId)?.let { entity ->
-                val recording = entity.toDomain().copy(state = RecordingState.STOPPED)
+                val recording = entity.toDomainModel()
                 recordingDao.updateRecording(recording.toEntity())
                 recording
             }
         }
     }
 
-    override suspend fun deleteRecording(recordingId: Long) = withContext(Dispatchers.IO) {
+    override suspend fun deleteRecording(recordingId: String): Unit = withContext(Dispatchers.IO) {
         recordingDao.getRecordingById(recordingId)?.let { entity ->
             // Delete audio file using AudioFileManager
             audioFileManager.deleteFile(entity.audioFilePath)
@@ -174,30 +173,30 @@ class AudioRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getRecording(recordingId: Long): Recording? = withContext(Dispatchers.IO) {
-        return@withContext recordingDao.getRecordingById(recordingId)?.toDomain()
+    override suspend fun getRecording(recordingId: String): Recording? = withContext(Dispatchers.IO) {
+        return@withContext recordingDao.getRecordingById(recordingId)?.toDomainModel()
     }
 
     override fun getAllRecordings(): Flow<List<Recording>> {
         return recordingDao.getAllRecordings().map { entities ->
-            entities.map { it.toDomain() }
+            entities.map { it.toDomainModel() }
         }
     }
 
     override suspend fun updateRecordingTranscription(
-        recordingId: Long,
+        recordingId: String,
         transcribedText: String
-    ) = withContext(Dispatchers.IO) {
+    ): Unit = withContext(Dispatchers.IO) {
         recordingDao.getRecordingById(recordingId)?.let { entity ->
             val updatedEntity = entity.copy(
                 transcribedText = transcribedText,
-                transcriptionStatus = TranscriptionStatus.COMPLETED
+                status = TranscriptionStatus.COMPLETED
             )
             recordingDao.updateRecording(updatedEntity)
         }
     }
 
-    override suspend fun getRecordingAudioFile(recordingId: Long): File? = withContext(Dispatchers.IO) {
+    override suspend fun getRecordingAudioFile(recordingId: String): File? = withContext(Dispatchers.IO) {
         return@withContext recordingDao.getRecordingById(recordingId)?.let { entity ->
             File(entity.audioFilePath)
         }
@@ -205,7 +204,7 @@ class AudioRepositoryImpl @Inject constructor(
 
     override suspend fun cleanupOrphanedAudioFiles() = withContext(Dispatchers.IO) {
         // Get all audio files in directory
-        val audioFiles = audioFileManager.getAudioDirectory().listFiles() ?: return@withContext
+        val audioFiles = audioFileManager.audioDirectory.listFiles() ?: return@withContext
         
         // Get all recording file paths from database
         val recordingPaths = recordingDao.getAllRecordings()
