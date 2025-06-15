@@ -11,9 +11,18 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlin.coroutines.coroutineContext
 import kotlin.math.*
 import kotlin.random.Random
+
+private object AnimationConstants {
+    const val MIN_DURATION_MS = 300
+    const val MAX_DURATION_MS = 800
+    const val IDLE_ANIMATION_DURATION_MS = 500
+}
 
 @Composable
 fun WaveformVisualization(
@@ -37,15 +46,23 @@ fun WaveformVisualization(
             // Start continuous random animations for each bar
             animatedBars.forEachIndexed { index, animatable ->
                 launch {
-                    while (isRecording) {
-                        val targetValue = Random.nextFloat() * 0.8f + 0.2f
-                        animatable.animateTo(
-                            targetValue = targetValue,
-                            animationSpec = tween(
-                                durationMillis = Random.nextInt(300, 800),
-                                easing = EaseInOutCubic
+                    try {
+                        while (coroutineContext.isActive && isRecording) {
+                            val targetValue = Random.nextFloat() * 0.8f + 0.2f
+                            animatable.animateTo(
+                                targetValue = targetValue,
+                                animationSpec = tween(
+                                    durationMillis = Random.nextInt(AnimationConstants.MIN_DURATION_MS, AnimationConstants.MAX_DURATION_MS),
+                                    easing = EaseInOutCubic
+                                )
                             )
-                        )
+                        }
+                    } catch (e: CancellationException) {
+                        // Re-throw cancellation exception to properly cancel the coroutine
+                        throw e
+                    } catch (e: Exception) {
+                        // Log animation errors but don't crash
+                        // In a real app, you'd use a proper logging framework
                     }
                 }
             }
@@ -53,20 +70,26 @@ fun WaveformVisualization(
             // Return to idle state
             animatedBars.forEach { animatable ->
                 launch {
-                    animatable.animateTo(
-                        targetValue = 0.2f,
-                        animationSpec = tween(
-                            durationMillis = 500,
-                            easing = EaseOutCubic
+                    try {
+                        animatable.animateTo(
+                            targetValue = 0.2f,
+                            animationSpec = tween(
+                                durationMillis = AnimationConstants.IDLE_ANIMATION_DURATION_MS,
+                                easing = EaseOutCubic
+                            )
                         )
-                    )
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        // Log animation errors but don't crash
+                    }
                 }
             }
         }
     }
     
     Box(
-        modifier = modifier.size(100.dp),
+        modifier = modifier,
         contentAlignment = Alignment.Center
     ) {
         Canvas(

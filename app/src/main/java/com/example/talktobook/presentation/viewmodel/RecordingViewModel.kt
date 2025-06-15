@@ -16,6 +16,7 @@ import com.example.talktobook.service.AudioRecordingService
 import com.example.talktobook.util.PermissionUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -49,6 +50,7 @@ class RecordingViewModel @Inject constructor(
     
     private var audioService: AudioRecordingService? = null
     private var serviceBound = false
+    private var serviceStateJob: Job? = null
 
     private val serviceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
@@ -115,52 +117,74 @@ class RecordingViewModel @Inject constructor(
 
         setLoading(true)
         viewModelScope.launch {
-            try {
-                val success = audioService?.startRecording() ?: false
-                if (!success) {
-                    setError("Failed to start recording")
+            startRecordingUseCase().fold(
+                onSuccess = { recording ->
+                    clearError()
+                },
+                onFailure = { exception ->
+                    setError("Recording error: ${exception.message}")
                 }
-            } catch (e: Exception) {
-                setError("Recording error: ${e.message}")
-            } finally {
-                setLoading(false)
-            }
+            )
+            setLoading(false)
         }
     }
 
     fun onStopRecording() {
+        val currentRecording = audioService?.currentRecording?.value
+        if (currentRecording == null) {
+            setError("No active recording to stop")
+            return
+        }
+
         setLoading(true)
         viewModelScope.launch {
-            try {
-                audioService?.stopRecording()
-                clearError()
-            } catch (e: Exception) {
-                setError("Stop recording error: ${e.message}")
-            } finally {
-                setLoading(false)
-            }
+            stopRecordingUseCase(currentRecording.id).fold(
+                onSuccess = { recording ->
+                    clearError()
+                },
+                onFailure = { exception ->
+                    setError("Stop recording error: ${exception.message}")
+                }
+            )
+            setLoading(false)
         }
     }
 
     fun onPauseRecording() {
+        val currentRecording = audioService?.currentRecording?.value
+        if (currentRecording == null) {
+            setError("No active recording to pause")
+            return
+        }
+
         viewModelScope.launch {
-            try {
-                audioService?.pauseRecording()
-                clearError()
-            } catch (e: Exception) {
-                setError("Pause recording error: ${e.message}")
-            }
+            pauseRecordingUseCase(currentRecording.id).fold(
+                onSuccess = { recording ->
+                    clearError()
+                },
+                onFailure = { exception ->
+                    setError("Pause recording error: ${exception.message}")
+                }
+            )
         }
     }
 
     fun onResumeRecording() {
+        val currentRecording = audioService?.currentRecording?.value
+        if (currentRecording == null) {
+            setError("No recording to resume")
+            return
+        }
+
         viewModelScope.launch {
-            try {
-                audioService?.resumeRecording()
-                clearError()
-            } catch (e: Exception) {
-                setError("Resume recording error: ${e.message}")
-            }
+            resumeRecordingUseCase(currentRecording.id).fold(
+                onSuccess = { recording ->
+                    clearError()
+                },
+                onFailure = { exception ->
+                    setError("Resume recording error: ${exception.message}")
+                }
+            )
         }
     }
 
@@ -188,10 +212,16 @@ class RecordingViewModel @Inject constructor(
     }
 
     private fun observeServiceState() {
-        audioService?.let { service ->
+        serviceStateJob?.cancel()
+        serviceStateJob = audioService?.let { service ->
             viewModelScope.launch {
-                service.recordingDuration.collect { duration ->
-                    _recordingDuration.value = duration
+                try {
+                    service.recordingDuration.collect { duration ->
+                        _recordingDuration.value = duration
+                    }
+                } catch (e: Exception) {
+                    // Log error but don't crash the app
+                    setError("Service connection error: ${e.message}")
                 }
             }
         }
@@ -199,6 +229,7 @@ class RecordingViewModel @Inject constructor(
 
     override fun onCleared() {
         super.onCleared()
+        serviceStateJob?.cancel()
         if (serviceBound) {
             context.unbindService(serviceConnection)
             serviceBound = false

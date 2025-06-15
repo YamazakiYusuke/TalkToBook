@@ -18,9 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -45,7 +43,6 @@ fun RecordingScreen(
     viewModel: RecordingViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
-    val haptic = LocalHapticFeedback.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -111,7 +108,7 @@ private fun PermissionRequiredContent(
         Icon(
             imageVector = Icons.Default.Mic,
             contentDescription = "Microphone",
-            modifier = Modifier.size(72.dp),
+            modifier = Modifier.size(SeniorComponentDefaults.TouchTarget.LargeTouchTarget),
             tint = MaterialTheme.colorScheme.primary
         )
 
@@ -273,13 +270,13 @@ private fun RecordingVisualizationSection(
     recordingState: RecordingState
 ) {
     Box(
-        modifier = Modifier.size(160.dp),
+        modifier = Modifier.size(SeniorComponentDefaults.TouchTarget.LargeTouchTarget * 2.2f),
         contentAlignment = Alignment.Center
     ) {
         // Background pulse animation
         RecordingPulse(
             isRecording = recordingState == RecordingState.RECORDING,
-            modifier = Modifier.size(140.dp),
+            modifier = Modifier.size(SeniorComponentDefaults.TouchTarget.LargeTouchTarget * 2f),
             color = when (recordingState) {
                 RecordingState.RECORDING -> MaterialTheme.colorScheme.primary
                 RecordingState.PAUSED -> MaterialTheme.colorScheme.secondary
@@ -290,7 +287,7 @@ private fun RecordingVisualizationSection(
         // Center microphone icon
         Box(
             modifier = Modifier
-                .size(80.dp)
+                .size(SeniorComponentDefaults.TouchTarget.LargeTouchTarget)
                 .clip(CircleShape)
                 .background(
                     when (recordingState) {
@@ -312,7 +309,7 @@ private fun RecordingVisualizationSection(
                     RecordingState.PAUSED -> "Paused"
                     else -> "Ready"
                 },
-                modifier = Modifier.size(32.dp),
+                modifier = Modifier.size(SeniorComponentDefaults.Spacing.ExtraLarge),
                 tint = when (recordingState) {
                     RecordingState.RECORDING -> MaterialTheme.colorScheme.onPrimary
                     RecordingState.PAUSED -> MaterialTheme.colorScheme.onSecondary
@@ -325,7 +322,7 @@ private fun RecordingVisualizationSection(
         if (recordingState == RecordingState.RECORDING) {
             WaveformVisualization(
                 isRecording = true,
-                modifier = Modifier.size(120.dp),
+                modifier = Modifier.size(SeniorComponentDefaults.TouchTarget.LargeTouchTarget * 1.7f),
                 color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
             )
         }
