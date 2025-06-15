@@ -87,7 +87,7 @@ fun RecordingScreen(
                 onResumeRecording = viewModel::onResumeRecording,
                 onNavigateToProcessing = onNavigateToProcessing,
                 onNavigateBack = onNavigateBack,
-                onClearError = viewModel::clearError
+                onClearError = viewModel::onClearError
             )
         }
     }

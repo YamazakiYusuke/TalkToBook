@@ -28,6 +28,7 @@
       "Bash(rg:*)",
       "Bash(./scripts/test-specific.sh:*)",
       "Bash(chmod:*)",
+      "Bash(grep:*)",
       "Bash(grep:*)"
     ],
     "deny": []

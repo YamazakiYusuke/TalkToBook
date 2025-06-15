@@ -204,6 +204,10 @@ class RecordingViewModel @Inject constructor(
         setError("Record audio permission is required to use this feature")
     }
 
+    fun onClearError() {
+        clearError()
+    }
+
     private fun checkPermissions() {
         _hasRecordPermission.value = permissionUtils.hasRecordAudioPermission()
     }

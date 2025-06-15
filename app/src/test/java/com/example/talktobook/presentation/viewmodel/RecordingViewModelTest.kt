@@ -22,6 +22,9 @@ import kotlinx.coroutines.test.TestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.Dispatchers
 import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
@@ -54,6 +57,7 @@ class RecordingViewModelTest {
     @Before
     fun setUp() {
         testDispatcher = UnconfinedTestDispatcher()
+        Dispatchers.setMain(testDispatcher)
         
         // Mock dependencies
         context = mockk(relaxed = true)
@@ -93,6 +97,7 @@ class RecordingViewModelTest {
 
     @After
     fun tearDown() {
+        Dispatchers.resetMain()
         unmockkAll()
     }
 
@@ -469,6 +474,10 @@ class RecordingViewModelTest {
         every { context.bindService(any<Intent>(), capture(serviceConnectionSlot), any<Int>()) } returns true
         
         viewModel = createViewModel()
+        advanceUntilIdle()
+        
+        // Manually connect the service since the test is capturing the connection
+        serviceConnectionSlot.captured.onServiceConnected(mockk<ComponentName>(), binder)
         advanceUntilIdle()
         
         // Initially connected
