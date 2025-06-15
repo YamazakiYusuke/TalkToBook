@@ -1,5 +1,6 @@
 package com.example.talktobook.service
 
+import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -7,10 +8,12 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Binder
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import com.example.talktobook.MainActivity
 import com.example.talktobook.R
 import com.example.talktobook.domain.model.Recording
@@ -88,7 +91,9 @@ class AudioRecordingService : Service() {
                 _currentRecording.value = recording
                 _isRecording.value = true
                 
-                startForeground(NOTIFICATION_ID, createRecordingNotification())
+                if (hasNotificationPermission()) {
+                    startForeground(NOTIFICATION_ID, createRecordingNotification())
+                }
                 startDurationTimer()
                 
             } catch (e: Exception) {
@@ -242,9 +247,22 @@ class AudioRecordingService : Service() {
             .build()
     }
 
+    private fun hasNotificationPermission(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+        } else {
+            true // Permission not required for API < 33
+        }
+    }
+
     private fun updateNotification(notification: Notification) {
-        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.notify(NOTIFICATION_ID, notification)
+        if (hasNotificationPermission()) {
+            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.notify(NOTIFICATION_ID, notification)
+        }
     }
 
     override fun onDestroy() {
