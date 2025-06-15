@@ -63,6 +63,14 @@ object AccessibilityUtils {
     }
     
     /**
+     * Calculate luminance for compatibility with tests
+     * (Delegates to Compose's built-in luminance function)
+     */
+    fun calculateLuminance(color: Color): Double {
+        return color.luminance().toDouble()
+    }
+
+    /**
      * Get accessible text color for a given background
      */
     fun getAccessibleTextColor(backgroundColor: Color): Color {
@@ -73,6 +81,27 @@ object AccessibilityUtils {
             // Dark background, use light text
             Color.White
         }
+    }
+
+    /**
+     * Check if a color combination meets WCAG AA standard (4.5:1 ratio)
+     */
+    fun meetsWcagAA(foreground: Color, background: Color): Boolean {
+        return calculateContrastRatio(foreground, background) >= 4.5
+    }
+
+    /**
+     * Check if a color combination meets WCAG AAA standard (7:1 ratio)
+     */
+    fun meetsWcagAAA(foreground: Color, background: Color): Boolean {
+        return calculateContrastRatio(foreground, background) >= 7.0
+    }
+
+    /**
+     * Check if a color combination meets the minimum contrast for non-text elements (3:1 ratio)
+     */
+    fun meetsMinimumContrast(foreground: Color, background: Color): Boolean {
+        return calculateContrastRatio(foreground, background) >= 3.0
     }
     
     /**

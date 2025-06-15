@@ -9,13 +9,22 @@ import kotlinx.coroutines.launch
 
 abstract class BaseViewModel<T : UiState> : ViewModel() {
 
-    private val _uiState = MutableStateFlow(getInitialState())
-    val uiState: StateFlow<T> = _uiState.asStateFlow()
+    protected val _isLoading = MutableStateFlow(false)
+    protected val _error = MutableStateFlow<String?>(null)
 
-    protected abstract fun getInitialState(): T
+    abstract val initialState: T
+    abstract val uiState: StateFlow<T>
 
-    protected fun updateState(update: (T) -> T) {
-        _uiState.value = update(_uiState.value)
+    protected fun setLoading(isLoading: Boolean) {
+        _isLoading.value = isLoading
+    }
+
+    protected fun setError(error: String?) {
+        _error.value = error
+    }
+
+    protected fun clearError() {
+        _error.value = null
     }
 
     protected fun launchSafe(
@@ -32,6 +41,6 @@ abstract class BaseViewModel<T : UiState> : ViewModel() {
     }
 
     protected open fun handleError(throwable: Throwable) {
-        // Default error handling can be overridden by subclasses
+        setError(throwable.message ?: "An unknown error occurred")
     }
 }
