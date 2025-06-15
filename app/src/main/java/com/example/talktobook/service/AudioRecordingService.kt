@@ -268,6 +268,18 @@ class AudioRecordingService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         recordingJob?.cancel()
+        
+        // Cleanup audio repository resources
+        serviceScope.launch {
+            try {
+                if (audioRepository is com.example.talktobook.data.repository.AudioRepositoryImpl) {
+                    audioRepository.cleanup()
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("AudioRecordingService", "Error cleaning up audio repository", e)
+            }
+        }
+        
         serviceScope.cancel()
         _isRecording.value = false
         _currentRecording.value = null

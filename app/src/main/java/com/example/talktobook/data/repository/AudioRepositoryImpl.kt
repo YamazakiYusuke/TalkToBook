@@ -1,5 +1,6 @@
 package com.example.talktobook.data.repository
 
+import android.content.Context
 import android.media.MediaRecorder
 import android.os.Build
 import com.example.talktobook.data.local.dao.RecordingDao
@@ -10,9 +11,12 @@ import com.example.talktobook.domain.model.Recording
 import com.example.talktobook.domain.model.TranscriptionStatus
 import com.example.talktobook.domain.repository.AudioRepository
 import com.example.talktobook.util.Constants
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.IOException
@@ -25,140 +29,294 @@ import javax.inject.Singleton
 @Singleton
 class AudioRepositoryImpl @Inject constructor(
     private val recordingDao: RecordingDao,
-    private val mediaRecorder: MediaRecorder,
+    @ApplicationContext private val context: Context,
     private val audioFileManager: com.example.talktobook.util.AudioFileManager
 ) : AudioRepository {
 
-    private var currentRecordingStartTime: Long = 0
-    private var pausedDuration: Long = 0
-    private var lastPauseTime: Long = 0
+    private val recordingMutex = Mutex()
+    private var currentMediaRecorder: MediaRecorder? = null
+    private var currentRecordingState: RecordingState? = null
 
-    override suspend fun startRecording(): Recording = withContext(Dispatchers.IO) {
-        try {
-            // Generate unique filename and create audio file
-            val filename = audioFileManager.generateUniqueFileName()
-            val audioFile = audioFileManager.createRecordingFile(filename)
+    private data class RecordingState(
+        val recordingId: String,
+        val startTime: Long,
+        val pausedDuration: Long = 0,
+        val lastPauseTime: Long = 0,
+        val audioFilePath: String
+    )
 
-            // Configure MediaRecorder
-            mediaRecorder.apply {
+    private enum class MediaRecorderState {
+        INITIAL, PREPARED, RECORDING, PAUSED, STOPPED, RELEASED, ERROR
+    }
+
+    private var recorderState: MediaRecorderState = MediaRecorderState.INITIAL
+
+    private fun createMediaRecorder(): MediaRecorder {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            MediaRecorder(context)
+        } else {
+            @Suppress("DEPRECATION")
+            MediaRecorder()
+        }
+    }
+
+    private fun releaseMediaRecorder() {
+        currentMediaRecorder?.apply {
+            try {
+                when (recorderState) {
+                    MediaRecorderState.RECORDING, MediaRecorderState.PAUSED -> {
+                        stop()
+                        recorderState = MediaRecorderState.STOPPED
+                    }
+                    else -> { /* Already stopped or in error state */ }
+                }
+            } catch (e: Exception) {
+                // Log the error but continue with cleanup
+                android.util.Log.w("AudioRepository", "Error stopping MediaRecorder", e)
+            }
+
+            try {
                 reset()
-                setAudioSource(MediaRecorder.AudioSource.MIC)
-                setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-                setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-                setOutputFile(audioFile.absolutePath)
-                
-                // Set audio quality parameters
-                setAudioEncodingBitRate(128000) // 128 kbps
-                setAudioSamplingRate(44100) // 44.1 kHz
-                
-                prepare()
-                start()
+                release()
+                recorderState = MediaRecorderState.RELEASED
+            } catch (e: Exception) {
+                android.util.Log.w("AudioRepository", "Error releasing MediaRecorder", e)
+                recorderState = MediaRecorderState.ERROR
             }
+        }
+        currentMediaRecorder = null
+    }
 
-            // Reset timing variables
-            currentRecordingStartTime = System.currentTimeMillis()
-            pausedDuration = 0
-            lastPauseTime = 0
-
-            // Create recording entity
-            val recordingId = UUID.randomUUID().toString()
-            val recording = Recording(
-                id = recordingId,
-                timestamp = System.currentTimeMillis(),
-                audioFilePath = audioFile.absolutePath,
-                transcribedText = null,
-                status = TranscriptionStatus.PENDING,
-                duration = 0L,
-                title = null
-            )
-
-            // Save to database
-            recordingDao.insertRecording(recording.toEntity())
-            
-            // Return the recording
-            return@withContext recording
-        } catch (e: IOException) {
-            throw IOException("Failed to start recording: ${e.message}", e)
-        } catch (e: IllegalStateException) {
-            throw IllegalStateException("MediaRecorder in invalid state: ${e.message}", e)
+    private suspend fun validateRecordingState(expectedStates: Set<MediaRecorderState>) {
+        if (recorderState !in expectedStates) {
+            throw IllegalStateException("Invalid MediaRecorder state: $recorderState. Expected one of: $expectedStates")
         }
     }
 
-    override suspend fun pauseRecording(recordingId: String): Recording? = withContext(Dispatchers.IO) {
-        return@withContext try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                mediaRecorder.pause()
-                lastPauseTime = System.currentTimeMillis()
-                
-                recordingDao.getRecordingById(recordingId)?.let { entity ->
-                    val recording = entity.toDomainModel()
-                    recordingDao.updateRecording(recording.toEntity())
-                    recording
+    override suspend fun startRecording(): Recording = recordingMutex.withLock {
+        withContext(Dispatchers.IO) {
+            try {
+                // Ensure no recording is in progress
+                if (currentRecordingState != null) {
+                    throw IllegalStateException("A recording is already in progress")
                 }
-            } else {
-                // Pause not supported on older Android versions
-                null
-            }
-        } catch (e: IllegalStateException) {
-            null
-        }
-    }
 
-    override suspend fun resumeRecording(recordingId: String): Recording? = withContext(Dispatchers.IO) {
-        return@withContext try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                mediaRecorder.resume()
-                if (lastPauseTime > 0) {
-                    pausedDuration += System.currentTimeMillis() - lastPauseTime
-                    lastPauseTime = 0
-                }
-                
-                recordingDao.getRecordingById(recordingId)?.let { entity ->
-                    val recording = entity.toDomainModel()
-                    recordingDao.updateRecording(recording.toEntity())
-                    recording
-                }
-            } else {
-                // Resume not supported on older Android versions
-                null
-            }
-        } catch (e: IllegalStateException) {
-            null
-        }
-    }
+                // Release any existing MediaRecorder
+                releaseMediaRecorder()
 
-    override suspend fun stopRecording(recordingId: String): Recording? = withContext(Dispatchers.IO) {
-        return@withContext try {
-            mediaRecorder.stop()
-            mediaRecorder.reset()
-            
-            // Calculate total duration
-            val totalDuration = if (currentRecordingStartTime > 0) {
-                val recordingTime = System.currentTimeMillis() - currentRecordingStartTime
-                recordingTime - pausedDuration
-            } else {
-                0L
-            }
-            
-            recordingDao.getRecordingById(recordingId)?.let { entity ->
-                val recording = entity.toDomainModel().copy(
-                    duration = totalDuration
+                // Generate unique filename and create audio file
+                val filename = audioFileManager.generateUniqueFileName()
+                val audioFile = audioFileManager.createRecordingFile(filename)
+
+                // Create and configure new MediaRecorder
+                val mediaRecorder = createMediaRecorder()
+                currentMediaRecorder = mediaRecorder
+
+                mediaRecorder.apply {
+                    setAudioSource(MediaRecorder.AudioSource.MIC)
+                    setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+                    setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+                    setOutputFile(audioFile.absolutePath)
+                    
+                    // Set audio quality parameters
+                    setAudioEncodingBitRate(128000) // 128 kbps
+                    setAudioSamplingRate(44100) // 44.1 kHz
+                    
+                    prepare()
+                    recorderState = MediaRecorderState.PREPARED
+                    
+                    start()
+                    recorderState = MediaRecorderState.RECORDING
+                }
+
+                // Create recording entity
+                val recordingId = UUID.randomUUID().toString()
+                val startTime = System.currentTimeMillis()
+                
+                // Update recording state
+                currentRecordingState = RecordingState(
+                    recordingId = recordingId,
+                    startTime = startTime,
+                    audioFilePath = audioFile.absolutePath
                 )
-                recordingDao.updateRecording(recording.toEntity())
+
+                val recording = Recording(
+                    id = recordingId,
+                    timestamp = startTime,
+                    audioFilePath = audioFile.absolutePath,
+                    transcribedText = null,
+                    status = TranscriptionStatus.PENDING,
+                    duration = 0L,
+                    title = null
+                )
+
+                // Save to database
+                recordingDao.insertRecording(recording.toEntity())
                 
-                // Reset timing variables
-                currentRecordingStartTime = 0
-                pausedDuration = 0
-                lastPauseTime = 0
+                return@withContext recording
+            } catch (e: Exception) {
+                // Cleanup on error
+                releaseMediaRecorder()
+                currentRecordingState = null
+                recorderState = MediaRecorderState.ERROR
                 
-                recording
+                when (e) {
+                    is IOException -> throw IOException("Failed to start recording: ${e.message}", e)
+                    is IllegalStateException -> throw IllegalStateException("MediaRecorder in invalid state: ${e.message}", e)
+                    else -> throw RuntimeException("Unexpected error during recording start: ${e.message}", e)
+                }
             }
-        } catch (e: IllegalStateException) {
-            // If stop fails, still try to update the database
-            recordingDao.getRecordingById(recordingId)?.let { entity ->
-                val recording = entity.toDomainModel()
-                recordingDao.updateRecording(recording.toEntity())
-                recording
+        }
+    }
+
+    override suspend fun pauseRecording(recordingId: String): Recording? = recordingMutex.withLock {
+        withContext(Dispatchers.IO) {
+            try {
+                val recordingState = currentRecordingState
+                    ?: throw IllegalStateException("No active recording found")
+                
+                if (recordingState.recordingId != recordingId) {
+                    throw IllegalArgumentException("Recording ID mismatch")
+                }
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    validateRecordingState(setOf(MediaRecorderState.RECORDING))
+                    
+                    currentMediaRecorder?.pause()
+                    recorderState = MediaRecorderState.PAUSED
+                    
+                    val pauseTime = System.currentTimeMillis()
+                    currentRecordingState = recordingState.copy(lastPauseTime = pauseTime)
+                    
+                    recordingDao.getRecordingById(recordingId)?.let { entity ->
+                        val recording = entity.toDomainModel()
+                        recordingDao.updateRecording(recording.toEntity())
+                        recording
+                    }
+                } else {
+                    // Pause not supported on older Android versions
+                    null
+                }
+            } catch (e: Exception) {
+                android.util.Log.w("AudioRepository", "Error pausing recording", e)
+                null
+            }
+        }
+    }
+
+    override suspend fun resumeRecording(recordingId: String): Recording? = recordingMutex.withLock {
+        withContext(Dispatchers.IO) {
+            try {
+                val recordingState = currentRecordingState
+                    ?: throw IllegalStateException("No active recording found")
+                
+                if (recordingState.recordingId != recordingId) {
+                    throw IllegalArgumentException("Recording ID mismatch")
+                }
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    validateRecordingState(setOf(MediaRecorderState.PAUSED))
+                    
+                    currentMediaRecorder?.resume()
+                    recorderState = MediaRecorderState.RECORDING
+                    
+                    // Calculate paused duration
+                    val resumeTime = System.currentTimeMillis()
+                    val updatedPausedDuration = if (recordingState.lastPauseTime > 0) {
+                        recordingState.pausedDuration + (resumeTime - recordingState.lastPauseTime)
+                    } else {
+                        recordingState.pausedDuration
+                    }
+                    
+                    currentRecordingState = recordingState.copy(
+                        pausedDuration = updatedPausedDuration,
+                        lastPauseTime = 0
+                    )
+                    
+                    recordingDao.getRecordingById(recordingId)?.let { entity ->
+                        val recording = entity.toDomainModel()
+                        recordingDao.updateRecording(recording.toEntity())
+                        recording
+                    }
+                } else {
+                    // Resume not supported on older Android versions
+                    null
+                }
+            } catch (e: Exception) {
+                android.util.Log.w("AudioRepository", "Error resuming recording", e)
+                null
+            }
+        }
+    }
+
+    override suspend fun stopRecording(recordingId: String): Recording? = recordingMutex.withLock {
+        withContext(Dispatchers.IO) {
+            try {
+                val recordingState = currentRecordingState
+                
+                // Handle case where recording state might be null (already stopped or error)
+                if (recordingState == null) {
+                    android.util.Log.w("AudioRepository", "No active recording state found for stop operation")
+                    return@withContext recordingDao.getRecordingById(recordingId)?.toDomainModel()
+                }
+                
+                if (recordingState.recordingId != recordingId) {
+                    throw IllegalArgumentException("Recording ID mismatch")
+                }
+
+                var finalRecording: Recording? = null
+                
+                try {
+                    // Stop the MediaRecorder if it's in a valid state
+                    if (recorderState in setOf(MediaRecorderState.RECORDING, MediaRecorderState.PAUSED)) {
+                        currentMediaRecorder?.stop()
+                        recorderState = MediaRecorderState.STOPPED
+                    }
+                    
+                    // Calculate total duration
+                    val stopTime = System.currentTimeMillis()
+                    val totalRecordingTime = stopTime - recordingState.startTime
+                    val finalPausedDuration = if (recorderState == MediaRecorderState.PAUSED && recordingState.lastPauseTime > 0) {
+                        recordingState.pausedDuration + (stopTime - recordingState.lastPauseTime)
+                    } else {
+                        recordingState.pausedDuration
+                    }
+                    val totalDuration = (totalRecordingTime - finalPausedDuration).coerceAtLeast(0L)
+                    
+                    // Update recording in database
+                    recordingDao.getRecordingById(recordingId)?.let { entity ->
+                        val recording = entity.toDomainModel().copy(duration = totalDuration)
+                        recordingDao.updateRecording(recording.toEntity())
+                        finalRecording = recording
+                    }
+                    
+                } catch (e: Exception) {
+                    android.util.Log.w("AudioRepository", "Error stopping MediaRecorder", e)
+                    
+                    // Still try to update the database even if stop failed
+                    recordingDao.getRecordingById(recordingId)?.let { entity ->
+                        finalRecording = entity.toDomainModel()
+                        recordingDao.updateRecording(entity)
+                    }
+                } finally {
+                    // Always cleanup resources
+                    releaseMediaRecorder()
+                    currentRecordingState = null
+                    recorderState = MediaRecorderState.INITIAL
+                }
+                
+                return@withContext finalRecording
+                
+            } catch (e: Exception) {
+                android.util.Log.e("AudioRepository", "Error in stopRecording", e)
+                
+                // Cleanup on error
+                releaseMediaRecorder()
+                currentRecordingState = null
+                recorderState = MediaRecorderState.ERROR
+                
+                // Return whatever we can find in the database
+                return@withContext recordingDao.getRecordingById(recordingId)?.toDomainModel()
             }
         }
     }
@@ -223,4 +381,30 @@ class AudioRepositoryImpl @Inject constructor(
         audioFileManager.cleanupTempFiles()
         audioFileManager.enforceCacheSizeLimit()
     }
+
+    /**
+     * Clean up any active recording and release resources.
+     * Should be called when the app is being destroyed or when audio recording needs to be forcefully stopped.
+     */
+    suspend fun cleanup() = recordingMutex.withLock {
+        try {
+            android.util.Log.i("AudioRepository", "Cleaning up audio repository resources")
+            releaseMediaRecorder()
+            currentRecordingState = null
+            recorderState = MediaRecorderState.INITIAL
+        } catch (e: Exception) {
+            android.util.Log.e("AudioRepository", "Error during cleanup", e)
+        }
+    }
+
+    /**
+     * Get the current recording state for monitoring purposes
+     */
+    fun getCurrentRecordingId(): String? = currentRecordingState?.recordingId
+
+    /**
+     * Check if a recording is currently active
+     */
+    fun isRecordingActive(): Boolean = currentRecordingState != null && 
+        recorderState in setOf(MediaRecorderState.RECORDING, MediaRecorderState.PAUSED)
 }
