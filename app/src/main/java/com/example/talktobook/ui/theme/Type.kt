@@ -114,3 +114,6 @@ val Typography = Typography(
         letterSpacing = 0.5.sp
     )
 )
+
+// Alias for consistency with other components
+val SeniorTypography = Typography
