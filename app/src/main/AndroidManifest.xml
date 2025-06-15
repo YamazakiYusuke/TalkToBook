@@ -39,11 +39,6 @@
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="mediaProjection" />
-            
-        <service
-            android:name=".service.TranscriptionProcessingService"
-            android:enabled="true"
-            android:exported="false" />
     </application>
 
 </manifest>
