@@ -150,6 +150,34 @@ class AccessibilityTest {
     }
     
     @Test
+    fun `verify getAccessibleTextColor function`() {
+        // Test with light background (should return dark text)
+        val lightBackground = Color.White
+        val textForLight = AccessibilityUtils.getAccessibleTextColor(lightBackground)
+        assertTrue(
+            textForLight == SeniorOnBackground,
+            "Light background should return dark text color"
+        )
+        
+        // Test with dark background (should return light text)
+        val darkBackground = Color.Black
+        val textForDark = AccessibilityUtils.getAccessibleTextColor(darkBackground)
+        assertTrue(
+            textForDark == Color.White,
+            "Dark background should return white text color"
+        )
+        
+        // Test edge case at luminance boundary (0.5)
+        val grayBackground = Color(0xFF808080) // 50% gray
+        val textForGray = AccessibilityUtils.getAccessibleTextColor(grayBackground)
+        // At exactly 0.5 luminance, should use dark text (> 0.5 condition)
+        assertTrue(
+            textForGray == SeniorOnBackground,
+            "Gray background at 50% luminance should return dark text"
+        )
+    }
+    
+    @Test
     fun `verify all senior colors are properly defined`() {
         // Ensure all colors have valid alpha values
         val colors = listOf(

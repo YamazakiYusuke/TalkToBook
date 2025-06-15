@@ -83,8 +83,8 @@ object SeniorComponentDefaults {
         )
         
         val textStyle = TextStyle(
-            fontSize = androidx.compose.ui.unit.sp(20), // ~15pt, above minimum
-            lineHeight = androidx.compose.ui.unit.sp(28)
+            fontSize = 20.sp, // ~15pt, above minimum
+            lineHeight = 28.sp
         )
     }
     
