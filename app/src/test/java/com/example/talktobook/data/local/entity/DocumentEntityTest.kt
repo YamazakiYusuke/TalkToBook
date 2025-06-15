@@ -1,5 +1,8 @@
 package com.example.talktobook.data.local.entity
 
+import com.example.talktobook.data.mapper.ChapterMapper.toDomainModel
+import com.example.talktobook.data.mapper.DocumentMapper.toDomainModel
+import com.example.talktobook.data.mapper.DocumentMapper.toEntity
 import org.junit.Test
 import org.junit.Assert.*
 
@@ -56,7 +59,8 @@ class DocumentEntityTest {
             )
         )
 
-        val domainModel = documentEntity.toDomainModel(chapterEntities)
+        val chapters = chapterEntities.map { it.toDomainModel() }
+        val domainModel = documentEntity.toDomainModel(chapters)
 
         assertEquals("doc-2", domainModel.id)
         assertEquals("My Document with Chapters", domainModel.title)

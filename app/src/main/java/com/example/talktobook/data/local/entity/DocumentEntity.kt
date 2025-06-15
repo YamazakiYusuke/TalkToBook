@@ -14,23 +14,3 @@ data class DocumentEntity(
     val content: String
 )
 
-fun DocumentEntity.toDomainModel(chapters: List<ChapterEntity> = emptyList()): Document {
-    return Document(
-        id = id,
-        title = title,
-        createdAt = createdAt,
-        updatedAt = updatedAt,
-        content = content,
-        chapters = chapters.map { it.toDomainModel() }
-    )
-}
-
-fun Document.toEntity(): DocumentEntity {
-    return DocumentEntity(
-        id = id,
-        title = title,
-        createdAt = createdAt,
-        updatedAt = updatedAt,
-        content = content
-    )
-}

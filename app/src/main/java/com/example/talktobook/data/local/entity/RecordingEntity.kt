@@ -17,26 +17,3 @@ data class RecordingEntity(
     val title: String?
 )
 
-fun RecordingEntity.toDomainModel(): Recording {
-    return Recording(
-        id = id,
-        timestamp = timestamp,
-        audioFilePath = audioFilePath,
-        transcribedText = transcribedText,
-        status = status,
-        duration = duration,
-        title = title
-    )
-}
-
-fun Recording.toEntity(): RecordingEntity {
-    return RecordingEntity(
-        id = id,
-        timestamp = timestamp,
-        audioFilePath = audioFilePath,
-        transcribedText = transcribedText,
-        status = status,
-        duration = duration,
-        title = title
-    )
-}

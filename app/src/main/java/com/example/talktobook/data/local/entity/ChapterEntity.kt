@@ -29,26 +29,3 @@ data class ChapterEntity(
     val updatedAt: Long
 )
 
-fun ChapterEntity.toDomainModel(): Chapter {
-    return Chapter(
-        id = id,
-        documentId = documentId,
-        orderIndex = orderIndex,
-        title = title,
-        content = content,
-        createdAt = createdAt,
-        updatedAt = updatedAt
-    )
-}
-
-fun Chapter.toEntity(): ChapterEntity {
-    return ChapterEntity(
-        id = id,
-        documentId = documentId,
-        orderIndex = orderIndex,
-        title = title,
-        content = content,
-        createdAt = createdAt,
-        updatedAt = updatedAt
-    )
-}
