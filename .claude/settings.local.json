@@ -24,7 +24,8 @@
       "Bash(./scripts/check-lint.sh:*)",
       "Bash(./scripts/run-tests.sh:*)",
       "Bash(bash:*)",
-      "Bash(timeout:*)"
+      "Bash(timeout:*)",
+      "Bash(rg:*)"
     ],
     "deny": []
   }
