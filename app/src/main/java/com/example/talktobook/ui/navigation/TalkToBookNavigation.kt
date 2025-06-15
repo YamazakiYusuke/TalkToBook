@@ -10,6 +10,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.talktobook.ui.components.TalkToBookScreen
 import com.example.talktobook.ui.components.TalkToBookPrimaryButton
+import com.example.talktobook.presentation.screen.RecordingScreen
 
 @Composable
 fun TalkToBookNavigation(
@@ -190,22 +191,6 @@ private fun MainScreen(
     }
 }
 
-@Composable
-private fun RecordingScreen(
-    onNavigateBack: () -> Unit,
-    onNavigateToProcessing: () -> Unit
-) {
-    TalkToBookScreen(title = "Recording") {
-        TalkToBookPrimaryButton(
-            text = "Stop Recording",
-            onClick = onNavigateToProcessing
-        )
-        TalkToBookPrimaryButton(
-            text = "Cancel",
-            onClick = onNavigateBack
-        )
-    }
-}
 
 @Composable
 private fun ProcessingScreen(
