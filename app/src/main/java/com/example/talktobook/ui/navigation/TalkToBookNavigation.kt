@@ -8,6 +8,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.talktobook.presentation.screen.RecordingScreen
 import com.example.talktobook.ui.components.TalkToBookScreen
 import com.example.talktobook.ui.components.TalkToBookPrimaryButton
 
@@ -37,7 +39,7 @@ fun TalkToBookNavigation(
         }
         
         composable(Screen.Recording.route) {
-            PlaceholderRecordingScreen(
+            RecordingScreen(
                 onNavigateBack = {
                     navController.popBackStack()
                 },
@@ -189,24 +191,6 @@ private fun MainScreen(
         )
     }
 }
-
-@Composable
-private fun PlaceholderRecordingScreen(
-    onNavigateBack: () -> Unit,
-    onNavigateToProcessing: () -> Unit
-) {
-    TalkToBookScreen(title = "Recording") {
-        TalkToBookPrimaryButton(
-            text = "Start Processing (Demo)",
-            onClick = onNavigateToProcessing
-        )
-        TalkToBookPrimaryButton(
-            text = "Back",
-            onClick = onNavigateBack
-        )
-    }
-}
-
 
 @Composable
 private fun ProcessingScreen(
