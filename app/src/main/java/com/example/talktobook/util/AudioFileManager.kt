@@ -8,12 +8,13 @@ import java.io.File
 import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.*
+import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class AudioFileManager @Inject constructor(
-    private val context: Context
+    @ApplicationContext private val context: Context
 ) {
     
     companion object {
@@ -25,13 +26,13 @@ class AudioFileManager @Inject constructor(
         private const val MAX_CACHE_SIZE_MB = 100L
     }
     
-    private val audioDirectory: File by lazy {
+    val audioDirectory: File by lazy {
         File(context.getExternalFilesDir(null), AUDIO_DIRECTORY).apply {
             if (!exists()) mkdirs()
         }
     }
     
-    private val tempDirectory: File by lazy {
+    val tempDirectory: File by lazy {
         File(context.cacheDir, TEMP_DIRECTORY).apply {
             if (!exists()) mkdirs()
         }
@@ -189,9 +190,6 @@ class AudioFileManager @Inject constructor(
         deletedCount
     }
     
-    fun getAudioDirectory(): File = audioDirectory
-    
-    fun getTempDirectory(): File = tempDirectory
     
     suspend fun validateAudioFile(filePath: String): Boolean = withContext(Dispatchers.IO) {
         try {

@@ -9,9 +9,9 @@ import javax.inject.Singleton
 @Singleton
 class PauseRecordingUseCase @Inject constructor(
     private val audioRepository: AudioRepository
-) : BaseUseCase<Long, Recording?>() {
+) : BaseUseCase<String, Recording?>() {
 
-    override suspend fun execute(parameters: Long): Result<Recording?> {
+    override suspend fun execute(parameters: String): Result<Recording?> {
         return try {
             val recording = audioRepository.pauseRecording(parameters)
             Result.success(recording)
