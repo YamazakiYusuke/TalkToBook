@@ -70,6 +70,9 @@ dependencies {
     ksp(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
     
+    // Navigation
+    implementation(libs.navigation.compose)
+    
     // Room
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
