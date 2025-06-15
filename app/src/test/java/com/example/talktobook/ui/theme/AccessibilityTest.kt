@@ -2,7 +2,7 @@ package com.example.talktobook.ui.theme
 
 import androidx.compose.ui.graphics.Color
 import org.junit.Test
-import kotlin.test.assertTrue
+import org.junit.Assert.assertTrue
 
 /**
  * Test class to verify WCAG AA compliance for senior-friendly theme
@@ -16,8 +16,8 @@ class AccessibilityTest {
         // All color combinations should meet WCAG AA standards
         results.forEach { (combination, meetsStandard) ->
             assertTrue(
-                meetsStandard,
-                "Color combination '$combination' does not meet WCAG AA standards"
+                "Color combination '$combination' does not meet WCAG AA standards",
+                meetsStandard
             )
         }
         
@@ -36,16 +36,16 @@ class AccessibilityTest {
             SeniorPrimary, SeniorBackground
         )
         assertTrue(
-            primaryOnBackground >= 4.5,
-            "Primary on background contrast ratio ($primaryOnBackground) should be at least 4.5:1"
+            "Primary on background contrast ratio ($primaryOnBackground) should be at least 4.5:1",
+            primaryOnBackground >= 4.5
         )
         
         val onPrimaryOnPrimary = AccessibilityUtils.calculateContrastRatio(
             SeniorOnPrimary, SeniorPrimary
         )
         assertTrue(
-            onPrimaryOnPrimary >= 4.5,
-            "OnPrimary on primary contrast ratio ($onPrimaryOnPrimary) should be at least 4.5:1"
+            "OnPrimary on primary contrast ratio ($onPrimaryOnPrimary) should be at least 4.5:1",
+            onPrimaryOnPrimary >= 4.5
         )
     }
     
@@ -56,16 +56,16 @@ class AccessibilityTest {
             SeniorSecondary, SeniorBackground
         )
         assertTrue(
-            secondaryOnBackground >= 4.5,
-            "Secondary on background contrast ratio ($secondaryOnBackground) should be at least 4.5:1"
+            "Secondary on background contrast ratio ($secondaryOnBackground) should be at least 4.5:1",
+            secondaryOnBackground >= 4.5
         )
         
         val onSecondaryOnSecondary = AccessibilityUtils.calculateContrastRatio(
             SeniorOnSecondary, SeniorSecondary
         )
         assertTrue(
-            onSecondaryOnSecondary >= 4.5,
-            "OnSecondary on secondary contrast ratio ($onSecondaryOnSecondary) should be at least 4.5:1"
+            "OnSecondary on secondary contrast ratio ($onSecondaryOnSecondary) should be at least 4.5:1",
+            onSecondaryOnSecondary >= 4.5
         )
     }
     
@@ -76,16 +76,16 @@ class AccessibilityTest {
             SeniorError, SeniorBackground
         )
         assertTrue(
-            errorOnBackground >= 4.5,
-            "Error on background contrast ratio ($errorOnBackground) should be at least 4.5:1"
+            "Error on background contrast ratio ($errorOnBackground) should be at least 4.5:1",
+            errorOnBackground >= 4.5
         )
         
         val onErrorOnError = AccessibilityUtils.calculateContrastRatio(
             SeniorOnError, SeniorError
         )
         assertTrue(
-            onErrorOnError >= 4.5,
-            "OnError on error contrast ratio ($onErrorOnError) should be at least 4.5:1"
+            "OnError on error contrast ratio ($onErrorOnError) should be at least 4.5:1",
+            onErrorOnError >= 4.5
         )
     }
     
@@ -96,16 +96,16 @@ class AccessibilityTest {
             SeniorOnBackground, SeniorBackground
         )
         assertTrue(
-            textOnBackground >= 7.0, // AAA standard for enhanced readability
-            "Text on background should meet AAA standard (7:1) for enhanced readability, got $textOnBackground"
+            "Text on background should meet AAA standard (7:1) for enhanced readability, got $textOnBackground",
+            textOnBackground >= 7.0 // AAA standard for enhanced readability
         )
         
         val textOnSurface = AccessibilityUtils.calculateContrastRatio(
             SeniorOnSurface, SeniorSurface
         )
         assertTrue(
-            textOnSurface >= 4.5,
-            "Text on surface contrast ratio ($textOnSurface) should be at least 4.5:1"
+            "Text on surface contrast ratio ($textOnSurface) should be at least 4.5:1",
+            textOnSurface >= 4.5
         )
     }
     
@@ -116,16 +116,16 @@ class AccessibilityTest {
             SeniorFocusIndicator, SeniorBackground
         )
         assertTrue(
-            focusOnBackground >= 3.0,
-            "Focus indicator on background contrast ratio ($focusOnBackground) should be at least 3:1"
+            "Focus indicator on background contrast ratio ($focusOnBackground) should be at least 3:1",
+            focusOnBackground >= 3.0
         )
         
         val focusOnSurface = AccessibilityUtils.calculateContrastRatio(
             SeniorFocusIndicator, SeniorSurface
         )
         assertTrue(
-            focusOnSurface >= 3.0,
-            "Focus indicator on surface contrast ratio ($focusOnSurface) should be at least 3:1"
+            "Focus indicator on surface contrast ratio ($focusOnSurface) should be at least 3:1",
+            focusOnSurface >= 3.0
         )
     }
     
@@ -136,16 +136,16 @@ class AccessibilityTest {
             SeniorDivider, SeniorBackground
         )
         assertTrue(
-            dividerOnBackground >= 3.0,
-            "Divider on background contrast ratio ($dividerOnBackground) should be at least 3:1"
+            "Divider on background contrast ratio ($dividerOnBackground) should be at least 3:1",
+            dividerOnBackground >= 3.0
         )
         
         val dividerOnSurface = AccessibilityUtils.calculateContrastRatio(
             SeniorDivider, SeniorSurface
         )
         assertTrue(
-            dividerOnSurface >= 3.0,
-            "Divider on surface contrast ratio ($dividerOnSurface) should be at least 3:1"
+            "Divider on surface contrast ratio ($dividerOnSurface) should be at least 3:1",
+            dividerOnSurface >= 3.0
         )
     }
     
@@ -155,16 +155,16 @@ class AccessibilityTest {
         val lightBackground = Color.White
         val textForLight = AccessibilityUtils.getAccessibleTextColor(lightBackground)
         assertTrue(
-            textForLight == SeniorOnBackground,
-            "Light background should return dark text color"
+            "Light background should return dark text color",
+            textForLight == SeniorOnBackground
         )
         
         // Test with dark background (should return light text)
         val darkBackground = Color.Black
         val textForDark = AccessibilityUtils.getAccessibleTextColor(darkBackground)
         assertTrue(
-            textForDark == Color.White,
-            "Dark background should return white text color"
+            "Dark background should return white text color",
+            textForDark == Color.White
         )
         
         // Test edge case at luminance boundary (0.5)
@@ -172,8 +172,8 @@ class AccessibilityTest {
         val textForGray = AccessibilityUtils.getAccessibleTextColor(grayBackground)
         // At exactly 0.5 luminance, should use dark text (> 0.5 condition)
         assertTrue(
-            textForGray == SeniorOnBackground,
-            "Gray background at 50% luminance should return dark text"
+            "Gray background at 50% luminance should return dark text",
+            textForGray == SeniorOnBackground
         )
     }
     
@@ -191,8 +191,8 @@ class AccessibilityTest {
         
         colors.forEach { color ->
             assertTrue(
-                color.alpha == 1.0f,
-                "Color $color should have full opacity (alpha = 1.0)"
+                "Color $color should have full opacity (alpha = 1.0)",
+                color.alpha == 1.0f
             )
         }
     }

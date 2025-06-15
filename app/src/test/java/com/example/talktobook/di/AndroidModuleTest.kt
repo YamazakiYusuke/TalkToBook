@@ -9,18 +9,16 @@ import java.lang.reflect.Method
 class AndroidModuleTest {
 
     @Test
-    fun `android module provides media recorder`() {
-        // Test that the provider method exists and has correct signature
+    fun `android module is properly configured`() {
+        // Test that AndroidModule exists and is properly configured
         val moduleClass = AndroidModule::class.java
-        val providerMethod: Method? = moduleClass.methods.find { 
-            it.name == "provideMediaRecorder" 
-        }
         
-        assertNotNull("MediaRecorder provider method should exist", providerMethod)
-        providerMethod?.let {
-            assertTrue("Provider method should have Context parameter", 
-                it.parameterTypes.any { param -> param.simpleName == "Context" })
-        }
+        // Verify it's an object (singleton)
+        assertTrue("AndroidModule should be an object", moduleClass.kotlin.objectInstance != null)
+        
+        // Note: MediaRecorder instances are now created per-recording session
+        // in AudioRepositoryImpl for proper lifecycle management
+        // This is the correct architectural approach for media recording
     }
 
     @Test
