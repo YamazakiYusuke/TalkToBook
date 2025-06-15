@@ -29,7 +29,9 @@
       "Bash(./scripts/test-specific.sh:*)",
       "Bash(chmod:*)",
       "Bash(grep:*)",
-      "Bash(grep:*)"
+      "Bash(kotlinc:*)",
+      "Bash(dos2unix:*)",
+      "Bash(sed:*)"
     ],
     "deny": []
   }
