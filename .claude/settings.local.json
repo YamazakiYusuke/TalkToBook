@@ -25,7 +25,10 @@
       "Bash(./scripts/run-tests.sh:*)",
       "Bash(bash:*)",
       "Bash(timeout:*)",
-      "Bash(rg:*)"
+      "Bash(rg:*)",
+      "Bash(./scripts/test-specific.sh:*)",
+      "Bash(chmod:*)",
+      "Bash(grep:*)"
     ],
     "deny": []
   }

@@ -6,6 +6,7 @@ import com.example.talktobook.data.mapper.RecordingMapper.toDomainModel
 import com.example.talktobook.data.mapper.RecordingMapper.toDomainModels
 import com.example.talktobook.data.offline.OfflineManager
 import com.example.talktobook.data.remote.api.OpenAIApi
+import com.example.talktobook.data.remote.util.NetworkErrorHandler
 import com.example.talktobook.domain.model.Recording
 import com.example.talktobook.domain.model.TranscriptionStatus
 import com.example.talktobook.domain.repository.TranscriptionRepository
@@ -58,17 +59,19 @@ class TranscriptionRepositoryImpl @Inject constructor(
             
             val response = openAIApi.transcribeAudio(audioPart, modelPart, languagePart, responseFormatPart, temperaturePart)
             
-            if (response.isSuccessful) {
-                response.body()?.let { transcriptionResponse ->
+            // Use NetworkErrorHandler for proper error handling
+            NetworkErrorHandler.handleResponse(response).fold(
+                onSuccess = { transcriptionResponse ->
                     // Cache the result
                     memoryCache.put(cacheKey, transcriptionResponse.text)
                     Result.success(transcriptionResponse.text)
-                } ?: Result.failure(Exception("Empty response body"))
-            } else {
-                Result.failure(Exception("Transcription failed: ${response.code()} - ${response.message()}"))
-            }
+                },
+                onFailure = { error ->
+                    Result.failure(error)
+                }
+            )
         } catch (e: Exception) {
-            Result.failure(e)
+            NetworkErrorHandler.handleException(e)
         }
     }
     
