@@ -272,8 +272,9 @@ class AudioRecordingService : Service() {
         // Cleanup audio repository resources
         serviceScope.launch {
             try {
-                if (audioRepository is com.example.talktobook.data.repository.AudioRepositoryImpl) {
-                    audioRepository.cleanup()
+                val repository = audioRepository
+                if (repository is com.example.talktobook.data.repository.AudioRepositoryImpl) {
+                    repository.cleanup()
                 }
             } catch (e: Exception) {
                 android.util.Log.e("AudioRecordingService", "Error cleaning up audio repository", e)
