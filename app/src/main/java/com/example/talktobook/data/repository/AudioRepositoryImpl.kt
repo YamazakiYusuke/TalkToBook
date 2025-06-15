@@ -4,8 +4,8 @@ import android.media.MediaRecorder
 import android.os.Build
 import com.example.talktobook.data.local.dao.RecordingDao
 import com.example.talktobook.data.local.entity.RecordingEntity
-import com.example.talktobook.data.local.entity.toDomainModel
-import com.example.talktobook.data.local.entity.toEntity
+import com.example.talktobook.data.mapper.RecordingMapper.toDomainModel
+import com.example.talktobook.data.mapper.RecordingMapper.toEntity
 import com.example.talktobook.domain.model.Recording
 import com.example.talktobook.domain.model.TranscriptionStatus
 import com.example.talktobook.domain.repository.AudioRepository

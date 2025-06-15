@@ -1,7 +1,6 @@
 package com.example.talktobook.domain.usecase.audio
 
 import com.example.talktobook.domain.model.Recording
-import com.example.talktobook.domain.model.RecordingState
 import com.example.talktobook.domain.model.TranscriptionStatus
 import com.example.talktobook.domain.repository.AudioRepository
 import io.mockk.coEvery
@@ -26,16 +25,15 @@ class StopRecordingUseCaseTest {
 
     @Test
     fun `invoke returns success with recording when stop is successful`() = runTest {
-        val recordingId = 1L
+        val recordingId = "test-recording-id"
         val stoppedRecording = Recording(
             id = recordingId,
-            timestamp = Date(),
+            timestamp = System.currentTimeMillis(),
             audioFilePath = "/path/to/audio.m4a",
             transcribedText = null,
-            transcriptionStatus = TranscriptionStatus.PENDING,
+            status = TranscriptionStatus.PENDING,
             duration = 5000L,
-            title = null,
-            state = RecordingState.STOPPED
+            title = null
         )
         coEvery { audioRepository.stopRecording(recordingId) } returns stoppedRecording
 
@@ -48,7 +46,7 @@ class StopRecordingUseCaseTest {
 
     @Test
     fun `invoke returns success with null when recording not found`() = runTest {
-        val recordingId = 999L
+        val recordingId = "nonexistent-id"
         coEvery { audioRepository.stopRecording(recordingId) } returns null
 
         val result = stopRecordingUseCase(recordingId)
@@ -60,7 +58,7 @@ class StopRecordingUseCaseTest {
 
     @Test
     fun `invoke returns failure when repository throws exception`() = runTest {
-        val recordingId = 1L
+        val recordingId = "test-recording-id"
         val expectedException = IllegalStateException("MediaRecorder stop failed")
         coEvery { audioRepository.stopRecording(recordingId) } throws expectedException
 
@@ -73,27 +71,25 @@ class StopRecordingUseCaseTest {
 
     @Test
     fun `invoke handles multiple recording IDs correctly`() = runTest {
-        val recordingId1 = 1L
-        val recordingId2 = 2L
+        val recordingId1 = "test-recording-1"
+        val recordingId2 = "test-recording-2"
         val recording1 = Recording(
             id = recordingId1,
-            timestamp = Date(),
+            timestamp = System.currentTimeMillis(),
             audioFilePath = "/path/to/audio1.m4a",
             transcribedText = null,
-            transcriptionStatus = TranscriptionStatus.PENDING,
+            status = TranscriptionStatus.PENDING,
             duration = 3000L,
-            title = null,
-            state = RecordingState.STOPPED
+            title = null
         )
         val recording2 = Recording(
             id = recordingId2,
-            timestamp = Date(),
+            timestamp = System.currentTimeMillis(),
             audioFilePath = "/path/to/audio2.m4a",
             transcribedText = null,
-            transcriptionStatus = TranscriptionStatus.PENDING,
+            status = TranscriptionStatus.PENDING,
             duration = 7000L,
-            title = null,
-            state = RecordingState.STOPPED
+            title = null
         )
         
         coEvery { audioRepository.stopRecording(recordingId1) } returns recording1
