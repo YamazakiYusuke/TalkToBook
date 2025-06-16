@@ -138,4 +138,67 @@ class TranscriptionQueueManagerTest {
         // Then
         assertEquals(1, transcriptionQueueManager.pendingCount.value)
     }
+
+    @Test
+    fun `getOfflineQueueSummary should return correct summary when online`() = runTest {
+        // Given
+        val mockRecording1 = mockk<Recording> {
+            every { id } returns "test-id-1"
+            every { status } returns TranscriptionStatus.PENDING
+            every { timestamp } returns 1000L
+        }
+        val mockRecording2 = mockk<Recording> {
+            every { id } returns "test-id-2"
+            every { status } returns TranscriptionStatus.PENDING
+            every { timestamp } returns 2000L
+        }
+        coEvery { getTranscriptionQueueUseCase() } returns flowOf(listOf(mockRecording1, mockRecording2))
+        every { offlineManager.isOnline() } returns true
+
+        // When
+        val summary = transcriptionQueueManager.getOfflineQueueSummary()
+
+        // Then
+        assertEquals(2, summary.totalPending)
+        assertEquals(false, summary.isOffline)
+        assertEquals(mockRecording1, summary.oldestRecording)
+        assertEquals(mockRecording2, summary.newestRecording)
+    }
+
+    @Test
+    fun `getOfflineQueueSummary should return correct summary when offline`() = runTest {
+        // Given
+        val mockRecording = mockk<Recording> {
+            every { id } returns "test-id"
+            every { status } returns TranscriptionStatus.PENDING
+            every { timestamp } returns 1000L
+        }
+        coEvery { getTranscriptionQueueUseCase() } returns flowOf(listOf(mockRecording))
+        every { offlineManager.isOnline() } returns false
+
+        // When
+        val summary = transcriptionQueueManager.getOfflineQueueSummary()
+
+        // Then
+        assertEquals(1, summary.totalPending)
+        assertEquals(true, summary.isOffline)
+        assertEquals(mockRecording, summary.oldestRecording)
+        assertEquals(mockRecording, summary.newestRecording)
+    }
+
+    @Test
+    fun `getOfflineQueueSummary should handle empty queue`() = runTest {
+        // Given
+        coEvery { getTranscriptionQueueUseCase() } returns flowOf(emptyList())
+        every { offlineManager.isOnline() } returns true
+
+        // When
+        val summary = transcriptionQueueManager.getOfflineQueueSummary()
+
+        // Then
+        assertEquals(0, summary.totalPending)
+        assertEquals(false, summary.isOffline)
+        assertEquals(null, summary.oldestRecording)
+        assertEquals(null, summary.newestRecording)
+    }
 }

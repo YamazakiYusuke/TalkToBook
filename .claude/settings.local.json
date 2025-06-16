@@ -31,7 +31,8 @@
       "Bash(grep:*)",
       "Bash(kotlinc:*)",
       "Bash(dos2unix:*)",
-      "Bash(sed:*)"
+      "Bash(sed:*)",
+      "Bash(update-alternatives:*)"
     ],
     "deny": []
   }
