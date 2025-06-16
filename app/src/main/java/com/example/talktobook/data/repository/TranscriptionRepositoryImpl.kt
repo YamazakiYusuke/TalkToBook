@@ -10,6 +10,8 @@ import com.example.talktobook.data.remote.util.NetworkErrorHandler
 import com.example.talktobook.domain.model.Recording
 import com.example.talktobook.domain.model.TranscriptionStatus
 import com.example.talktobook.domain.repository.TranscriptionRepository
+import com.example.talktobook.domain.util.RetryPolicy
+import com.example.talktobook.domain.util.RetryPolicies
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -32,46 +34,49 @@ class TranscriptionRepositoryImpl @Inject constructor(
 ) : TranscriptionRepository {
     
     override suspend fun transcribeAudio(audioFile: File): Result<String> = withContext(Dispatchers.IO) {
-        try {
-            if (!audioFile.exists()) {
-                return@withContext Result.failure(IllegalArgumentException("Audio file does not exist"))
+        if (!audioFile.exists()) {
+            return@withContext Result.failure(IllegalArgumentException("Audio file does not exist"))
+        }
+        
+        // Check cache first
+        val cacheKey = "transcription_${audioFile.absolutePath}_${audioFile.lastModified()}"
+        val cachedResult = memoryCache.get<String>(cacheKey)
+        if (cachedResult != null) {
+            return@withContext Result.success(cachedResult)
+        }
+        
+        // Check if online for API call
+        if (!offlineManager.isOnline()) {
+            return@withContext Result.failure(Exception("No internet connection available for transcription"))
+        }
+        
+        // Use retry policy for API calls
+        return@withContext RetryPolicies.TRANSCRIPTION_API.executeWithRetry {
+            try {
+                val requestFile = audioFile.asRequestBody("audio/*".toMediaType())
+                val audioPart = MultipartBody.Part.createFormData("file", audioFile.name, requestFile)
+                val modelPart = "whisper-1".toRequestBody("text/plain".toMediaType())
+                val languagePart = "ja".toRequestBody("text/plain".toMediaType())
+                
+                val responseFormatPart = "json".toRequestBody("text/plain".toMediaType())
+                val temperaturePart = "0".toRequestBody("text/plain".toMediaType())
+                
+                val response = openAIApi.transcribeAudio(audioPart, modelPart, languagePart, responseFormatPart, temperaturePart)
+                
+                // Use NetworkErrorHandler for proper error handling
+                NetworkErrorHandler.handleResponse(response).fold(
+                    onSuccess = { transcriptionResponse ->
+                        // Cache the result
+                        memoryCache.put(cacheKey, transcriptionResponse.text)
+                        Result.success(transcriptionResponse.text)
+                    },
+                    onFailure = { error ->
+                        Result.failure(error)
+                    }
+                )
+            } catch (e: Exception) {
+                NetworkErrorHandler.handleException(e)
             }
-            
-            // Check cache first
-            val cacheKey = "transcription_${audioFile.absolutePath}_${audioFile.lastModified()}"
-            val cachedResult = memoryCache.get<String>(cacheKey)
-            if (cachedResult != null) {
-                return@withContext Result.success(cachedResult)
-            }
-            
-            // Check if online for API call
-            if (!offlineManager.isOnline()) {
-                return@withContext Result.failure(Exception("No internet connection available for transcription"))
-            }
-            
-            val requestFile = audioFile.asRequestBody("audio/*".toMediaType())
-            val audioPart = MultipartBody.Part.createFormData("file", audioFile.name, requestFile)
-            val modelPart = "whisper-1".toRequestBody("text/plain".toMediaType())
-            val languagePart = "ja".toRequestBody("text/plain".toMediaType())
-            
-            val responseFormatPart = "json".toRequestBody("text/plain".toMediaType())
-            val temperaturePart = "0".toRequestBody("text/plain".toMediaType())
-            
-            val response = openAIApi.transcribeAudio(audioPart, modelPart, languagePart, responseFormatPart, temperaturePart)
-            
-            // Use NetworkErrorHandler for proper error handling
-            NetworkErrorHandler.handleResponse(response).fold(
-                onSuccess = { transcriptionResponse ->
-                    // Cache the result
-                    memoryCache.put(cacheKey, transcriptionResponse.text)
-                    Result.success(transcriptionResponse.text)
-                },
-                onFailure = { error ->
-                    Result.failure(error)
-                }
-            )
-        } catch (e: Exception) {
-            NetworkErrorHandler.handleException(e)
         }
     }
     
