@@ -460,7 +460,7 @@ private fun DocumentMetadata(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
-                imageVector = Icons.Default.LibraryBooks,
+                imageVector = Icons.Filled.Book,
                 contentDescription = null,
                 modifier = Modifier.size(16.dp),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant

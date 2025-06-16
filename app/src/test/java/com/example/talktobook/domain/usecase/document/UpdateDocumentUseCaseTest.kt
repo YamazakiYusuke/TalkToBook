@@ -29,27 +29,29 @@ class UpdateDocumentUseCaseTest {
             title = "Updated Title",
             content = "Updated Content"
         )
-        val expectedDocument = Document(
+        val originalDocument = Document(
             id = "test-id",
-            title = "Updated Title",
-            createdAt = System.currentTimeMillis(),
-            updatedAt = System.currentTimeMillis(),
-            content = "Updated Content",
+            title = "Original Title",
+            createdAt = 1000L,
+            updatedAt = 1000L,
+            content = "Original Content",
             chapters = emptyList()
         )
-        coEvery { 
-            documentRepository.updateDocument(
-                documentId = "test-id",
-                title = "Updated Title",
-                content = "Updated Content"
-            ) 
-        } returns Result.success(expectedDocument)
+        val expectedDocument = originalDocument.copy(
+            title = "Updated Title",
+            content = "Updated Content",
+            updatedAt = System.currentTimeMillis()
+        )
+        
+        coEvery { documentRepository.getDocument("test-id") } returns originalDocument
+        coEvery { documentRepository.updateDocument(any()) } returns Result.success(expectedDocument)
 
         val result = updateDocumentUseCase(params)
 
         assertTrue("Result should be success", result.isSuccess)
         assertEquals("Should return the updated document", expectedDocument, result.getOrNull())
-        coVerify { documentRepository.updateDocument("test-id", "Updated Title", "Updated Content") }
+        coVerify { documentRepository.getDocument("test-id") }
+        coVerify { documentRepository.updateDocument(any()) }
     }
 
     @Test
@@ -58,20 +60,25 @@ class UpdateDocumentUseCaseTest {
             documentId = "test-id",
             title = "Updated Title"
         )
+        val originalDocument = Document(
+            id = "test-id",
+            title = "Original Title",
+            createdAt = 1000L,
+            updatedAt = 1000L,
+            content = "Original Content",
+            chapters = emptyList()
+        )
         val expectedException = IOException("Failed to update document")
-        coEvery { 
-            documentRepository.updateDocument(
-                documentId = "test-id",
-                title = "Updated Title",
-                content = null
-            ) 
-        } returns Result.failure(expectedException)
+        
+        coEvery { documentRepository.getDocument("test-id") } returns originalDocument
+        coEvery { documentRepository.updateDocument(any()) } returns Result.failure(expectedException)
 
         val result = updateDocumentUseCase(params)
 
         assertTrue("Result should be failure", result.isFailure)
         assertEquals("Should return the repository exception", expectedException, result.exceptionOrNull())
-        coVerify { documentRepository.updateDocument("test-id", "Updated Title", null) }
+        coVerify { documentRepository.getDocument("test-id") }
+        coVerify { documentRepository.updateDocument(any()) }
     }
 
     @Test
@@ -81,27 +88,28 @@ class UpdateDocumentUseCaseTest {
             title = "Updated Title",
             content = null
         )
-        val expectedDocument = Document(
+        val originalDocument = Document(
             id = "test-id",
-            title = "Updated Title",
-            createdAt = System.currentTimeMillis(),
-            updatedAt = System.currentTimeMillis(),
+            title = "Original Title",
+            createdAt = 1000L,
+            updatedAt = 1000L,
             content = "Original Content",
             chapters = emptyList()
         )
-        coEvery { 
-            documentRepository.updateDocument(
-                documentId = "test-id",
-                title = "Updated Title",
-                content = null
-            ) 
-        } returns Result.success(expectedDocument)
+        val expectedDocument = originalDocument.copy(
+            title = "Updated Title",
+            updatedAt = System.currentTimeMillis()
+        )
+        
+        coEvery { documentRepository.getDocument("test-id") } returns originalDocument
+        coEvery { documentRepository.updateDocument(any()) } returns Result.success(expectedDocument)
 
         val result = updateDocumentUseCase(params)
 
         assertTrue("Result should be success", result.isSuccess)
         assertEquals("Should return the updated document", expectedDocument, result.getOrNull())
-        coVerify { documentRepository.updateDocument("test-id", "Updated Title", null) }
+        coVerify { documentRepository.getDocument("test-id") }
+        coVerify { documentRepository.updateDocument(any()) }
     }
 
     @Test
@@ -111,26 +119,47 @@ class UpdateDocumentUseCaseTest {
             title = null,
             content = "Updated Content"
         )
-        val expectedDocument = Document(
+        val originalDocument = Document(
             id = "test-id",
             title = "Original Title",
-            createdAt = System.currentTimeMillis(),
-            updatedAt = System.currentTimeMillis(),
-            content = "Updated Content",
+            createdAt = 1000L,
+            updatedAt = 1000L,
+            content = "Original Content",
             chapters = emptyList()
         )
-        coEvery { 
-            documentRepository.updateDocument(
-                documentId = "test-id",
-                title = null,
-                content = "Updated Content"
-            ) 
-        } returns Result.success(expectedDocument)
+        val expectedDocument = originalDocument.copy(
+            content = "Updated Content",
+            updatedAt = System.currentTimeMillis()
+        )
+        
+        coEvery { documentRepository.getDocument("test-id") } returns originalDocument
+        coEvery { documentRepository.updateDocument(any()) } returns Result.success(expectedDocument)
 
         val result = updateDocumentUseCase(params)
 
         assertTrue("Result should be success", result.isSuccess)
         assertEquals("Should return the updated document", expectedDocument, result.getOrNull())
-        coVerify { documentRepository.updateDocument("test-id", null, "Updated Content") }
+        coVerify { documentRepository.getDocument("test-id") }
+        coVerify { documentRepository.updateDocument(any()) }
+    }
+
+    @Test
+    fun `invoke returns failure when document is not found`() = runTest {
+        val params = UpdateDocumentUseCase.Params(
+            documentId = "non-existent-id",
+            title = "Updated Title"
+        )
+        
+        coEvery { documentRepository.getDocument("non-existent-id") } returns null
+
+        val result = updateDocumentUseCase(params)
+
+        assertTrue("Result should be failure", result.isFailure)
+        assertTrue("Should be NoSuchElementException", result.exceptionOrNull() is NoSuchElementException)
+        assertEquals("Should have correct error message", 
+            "Document not found with id: non-existent-id", 
+            result.exceptionOrNull()?.message)
+        coVerify { documentRepository.getDocument("non-existent-id") }
+        coVerify(exactly = 0) { documentRepository.updateDocument(any()) }
     }
 }

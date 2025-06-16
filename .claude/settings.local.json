@@ -31,7 +31,8 @@
       "Bash(grep:*)",
       "Bash(kotlinc:*)",
       "Bash(dos2unix:*)",
-      "Bash(sed:*)"
+      "Bash(sed:*)",
+      "Bash(./scripts/test-specific.sh:*)"
     ],
     "deny": []
   }
