@@ -45,7 +45,7 @@ class DocumentRepositoryImplTest {
         val content = "Test content"
         
         coEvery { documentDao.insertDocument(any()) } just Runs
-        coEvery { memoryCache.invalidate(any()) } just Runs
+        coEvery { memoryCache.remove(any()) } just Runs
         
         // When
         val result = repository.createDocument(title, content)
@@ -72,7 +72,7 @@ class DocumentRepositoryImplTest {
         )
         
         coEvery { documentDao.updateDocument(any()) } just Runs
-        coEvery { memoryCache.invalidate(any()) } just Runs
+        coEvery { memoryCache.remove(any()) } just Runs
         
         // When
         val result = repository.updateDocument(document)
@@ -171,7 +171,7 @@ class DocumentRepositoryImplTest {
         val documentId = "test-id"
         coEvery { chapterDao.deleteChaptersByDocumentId(documentId) } just Runs
         coEvery { documentDao.deleteDocumentById(documentId) } just Runs
-        coEvery { memoryCache.invalidate(any()) } just Runs
+        coEvery { memoryCache.remove(any()) } just Runs
         
         // When
         val result = repository.deleteDocument(documentId)
@@ -203,9 +203,9 @@ class DocumentRepositoryImplTest {
             content = "Content 2"
         )
         
-        coEvery { documentDao.getById("doc1") } returns doc1
-        coEvery { documentDao.getById("doc2") } returns doc2
-        coEvery { documentDao.insert(any()) } just Runs
+        coEvery { documentDao.getDocumentById("doc1") } returns doc1
+        coEvery { documentDao.getDocumentById("doc2") } returns doc2
+        coEvery { documentDao.insertDocument(any()) } just Runs
         
         // When
         val result = repository.mergeDocuments(documentIds, newTitle)
@@ -227,7 +227,7 @@ class DocumentRepositoryImplTest {
         val orderIndex = 0
         
         coEvery { chapterDao.insertChapter(any()) } just Runs
-        coEvery { memoryCache.invalidate(any()) } just Runs
+        coEvery { memoryCache.remove(any()) } just Runs
         
         // When
         val result = repository.createChapter(documentId, title, content, orderIndex)
@@ -257,7 +257,7 @@ class DocumentRepositoryImplTest {
         )
         
         coEvery { chapterDao.updateChapter(any()) } just Runs
-        coEvery { memoryCache.invalidate(any()) } just Runs
+        coEvery { memoryCache.remove(any()) } just Runs
         
         // When
         val result = repository.updateChapter(chapter)
@@ -333,7 +333,7 @@ class DocumentRepositoryImplTest {
         // Given
         val chapterId = "chapter-id"
         coEvery { chapterDao.deleteChapterById(chapterId) } just Runs
-        coEvery { memoryCache.invalidate(any()) } just Runs
+        coEvery { memoryCache.remove(any()) } just Runs
         
         // When
         val result = repository.deleteChapter(chapterId)
@@ -349,16 +349,23 @@ class DocumentRepositoryImplTest {
         val documentId = "doc-id"
         val chapterIds = listOf("chapter1", "chapter2", "chapter3")
         
-        coEvery { chapterDao.updateOrderIndex(any(), any()) } just Runs
-        coEvery { memoryCache.invalidate(any()) } just Runs
+        val chapter1 = ChapterEntity("chapter1", documentId, 0, "Chapter 1", "Content 1", 1000L, 1000L)
+        val chapter2 = ChapterEntity("chapter2", documentId, 1, "Chapter 2", "Content 2", 1000L, 1000L)
+        val chapter3 = ChapterEntity("chapter3", documentId, 2, "Chapter 3", "Content 3", 1000L, 1000L)
+        
+        coEvery { chapterDao.getChapterById("chapter1") } returns chapter1
+        coEvery { chapterDao.getChapterById("chapter2") } returns chapter2
+        coEvery { chapterDao.getChapterById("chapter3") } returns chapter3
+        coEvery { chapterDao.updateChapter(any()) } just Runs
         
         // When
         val result = repository.reorderChapters(documentId, chapterIds)
         
         // Then
         assertTrue(result.isSuccess)
-        chapterIds.forEachIndexed { index, chapterId ->
-            coVerify { chapterDao.updateOrderIndex(chapterId, index) }
-        }
+        coVerify { chapterDao.getChapterById("chapter1") }
+        coVerify { chapterDao.getChapterById("chapter2") }
+        coVerify { chapterDao.getChapterById("chapter3") }
+        coVerify(exactly = 3) { chapterDao.updateChapter(any()) }
     }
 }
