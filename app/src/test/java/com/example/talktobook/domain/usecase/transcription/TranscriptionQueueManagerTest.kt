@@ -15,9 +15,11 @@ import io.mockk.mockk
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.delay
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
+import org.junit.After
 import org.junit.Test
 
 class TranscriptionQueueManagerTest {
@@ -40,12 +42,22 @@ class TranscriptionQueueManagerTest {
         every { offlineManager.observeConnectivity() } returns connectivityFlow
         every { offlineManager.isOnline() } returns true
 
+        // Set up default mocks for queue use case
+        coEvery { getTranscriptionQueueUseCase() } returns flowOf(emptyList())
+        coEvery { processTranscriptionQueueUseCase() } returns Result.success(Unit)
+
         transcriptionQueueManager = TranscriptionQueueManager(
             getTranscriptionQueueUseCase,
             processTranscriptionQueueUseCase,
             updateTranscriptionStatusUseCase,
             offlineManager
         )
+    }
+
+    @After
+    fun tearDown() {
+        // Clean up any running coroutines
+        connectivityFlow.value = false
     }
 
     @Test
@@ -102,6 +114,7 @@ class TranscriptionQueueManagerTest {
 
         // When
         connectivityFlow.value = false
+        delay(100) // Allow flow to process
 
         // Then
         assertEquals(
@@ -135,8 +148,17 @@ class TranscriptionQueueManagerTest {
         coEvery { processTranscriptionQueueUseCase() } returns Result.success(Unit)
         every { offlineManager.isOnline() } returns true
 
+        // When - Create new manager instance to pick up the new mock behavior
+        val newManager = TranscriptionQueueManager(
+            getTranscriptionQueueUseCase,
+            processTranscriptionQueueUseCase,
+            updateTranscriptionStatusUseCase,
+            offlineManager
+        )
+        delay(100) // Allow flow to process
+
         // Then
-        assertEquals(1, transcriptionQueueManager.pendingCount.value)
+        assertEquals(1, newManager.pendingCount.value)
     }
 
     @Test
