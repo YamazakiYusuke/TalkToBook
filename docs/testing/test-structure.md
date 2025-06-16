@@ -1,67 +1,67 @@
-# TalkToBook テスト構造
+# TalkToBook Test Structure
 
-## テストディレクトリ構造
+## Test Directory Structure
 
 ```
 app/src/
-├── test/                              # 単体テスト
+├── test/                              # Unit tests
 │   └── java/com/example/talktobook/
 │       ├── ExampleUnitTest.kt
 │       └── domain/model/
-│           ├── ChapterTest.kt         # Chapterモデルテスト
-│           ├── DocumentTest.kt        # Documentモデルテスト  
-│           ├── RecordingTest.kt       # Recordingモデルテスト
-│           ├── RecordingStateTest.kt  # RecordingState enumテスト
-│           └── TranscriptionStatusTest.kt # TranscriptionStatus enumテスト
-└── androidTest/                       # インストルメンテッドテスト
+│           ├── ChapterTest.kt         # Chapter model test
+│           ├── DocumentTest.kt        # Document model test  
+│           ├── RecordingTest.kt       # Recording model test
+│           ├── RecordingStateTest.kt  # RecordingState enum test
+│           └── TranscriptionStatusTest.kt # TranscriptionStatus enum test
+└── androidTest/                       # Instrumented tests
     └── java/com/example/talktobook/
         └── ExampleInstrumentedTest.kt
 ```
 
-## 現在実装済みテスト
+## Currently Implemented Tests
 
-### 1. ドメインモデルテスト
+### 1. Domain Model Tests
 
 #### ChapterTest.kt
-- **テスト対象**: `Chapter` data class
-- **テスト項目**:
-  - ✅ パラメータ完全指定での作成
-  - ✅ データクラスの等価性
-  - ✅ copy関数の動作
-  - ✅ 順序インデックスの検証
+- **Test Target**: `Chapter` data class
+- **Test Items**:
+  - ✅ Creation with complete parameters
+  - ✅ Data class equality
+  - ✅ copy function behavior
+  - ✅ Order index validation
 
 #### DocumentTest.kt
-- **テスト対象**: `Document` data class
-- **テスト項目**:
-  - ✅ パラメータ完全指定での作成
-  - ✅ 空のチャプターリストでの作成
-  - ✅ データクラスの等価性
-  - ✅ copy関数の動作
+- **Test Target**: `Document` data class
+- **Test Items**:
+  - ✅ Creation with complete parameters
+  - ✅ Creation with empty chapters list
+  - ✅ Data class equality
+  - ✅ copy function behavior
 
 #### RecordingTest.kt
-- **テスト対象**: `Recording` data class
-- **テスト項目**:
-  - ✅ null transcribedTextでの作成
-  - ✅ copy関数の動作
-  - ✅ データクラスの等価性
-  - ✅ その他のパラメータテスト
+- **Test Target**: `Recording` data class
+- **Test Items**:
+  - ✅ Creation with null transcribedText
+  - ✅ copy function behavior
+  - ✅ Data class equality
+  - ✅ Other parameter tests
 
 #### RecordingStateTest.kt
-- **テスト対象**: `RecordingState` enum
-- **テスト項目**:
-  - ✅ enum値の存在確認
-  - ✅ 文字列表現のテスト
-  - ✅ valueOf関数のテスト
+- **Test Target**: `RecordingState` enum
+- **Test Items**:
+  - ✅ Enum value existence verification
+  - ✅ String representation tests
+  - ✅ valueOf function tests
 
 #### TranscriptionStatusTest.kt
-- **テスト対象**: `TranscriptionStatus` enum
-- **テスト項目**:
-  - ✅ enum値の存在確認
-  - ✅ 状態遷移の妥当性
+- **Test Target**: `TranscriptionStatus` enum
+- **Test Items**:
+  - ✅ Enum value existence verification
+  - ✅ State transition validity
 
-## 今後実装すべきテスト
+## Tests to be Implemented
 
-### 2. リポジトリ層テスト（未実装）
+### 2. Repository Layer Tests (Not Implemented)
 
 ```
 app/src/test/java/com/example/talktobook/
@@ -71,13 +71,13 @@ app/src/test/java/com/example/talktobook/
     └── DocumentRepositoryImplTest.kt
 ```
 
-**テスト項目**:
-- データソースとの連携
-- エラーハンドリング
-- キャッシュ機能
-- データ変換処理
+**Test Items**:
+- Data source integration
+- Error handling
+- Cache functionality
+- Data transformation processing
 
-### 3. ユースケース層テスト（未実装）
+### 3. Use Case Layer Tests (Not Implemented)
 
 ```
 app/src/test/java/com/example/talktobook/
@@ -95,7 +95,7 @@ app/src/test/java/com/example/talktobook/
         └── GetDocumentsUseCaseTest.kt
 ```
 
-### 4. プレゼンテーション層テスト（未実装）
+### 4. Presentation Layer Tests (Not Implemented)
 
 ```
 app/src/test/java/com/example/talktobook/
@@ -106,7 +106,7 @@ app/src/test/java/com/example/talktobook/
         └── DocumentViewModelTest.kt
 ```
 
-### 5. UIテスト（未実装）
+### 5. UI Tests (Not Implemented)
 
 ```
 app/src/androidTest/java/com/example/talktobook/
@@ -120,22 +120,22 @@ app/src/androidTest/java/com/example/talktobook/
         └── DocumentListTest.kt
 ```
 
-## テストの品質基準
+## Test Quality Standards
 
-### TDD原則の適用
-- **Red-Green-Refactor** サイクルの実践
-- テストファーストアプローチ
-- 最小限の実装でテストを通す
+### TDD Principle Application
+- **Red-Green-Refactor** cycle practice
+- Test-first approach
+- Minimal implementation to pass tests
 
-### カバレッジ目標
-- **全体**: 80%以上
-- **ドメイン層**: 90%以上（現在: 100%）
-- **ユースケース層**: 85%以上
-- **プレゼンテーション層**: 70%以上
+### Coverage Goals
+- **Overall**: 80%+
+- **Domain Layer**: 90%+ (Current: 100%)
+- **Use Case Layer**: 85%+
+- **Presentation Layer**: 70%+
 
-### テストパターン
+### Test Patterns
 
-#### 1. データクラステスト
+#### 1. Data Class Tests
 ```kotlin
 @Test
 fun `create entity with all parameters`() {
@@ -158,7 +158,7 @@ fun `entity data class equality`() {
 }
 ```
 
-#### 2. ビジネスロジックテスト
+#### 2. Business Logic Tests
 ```kotlin
 @Test
 fun `usecase returns success when valid input`() {
@@ -175,7 +175,7 @@ fun `usecase returns success when valid input`() {
 }
 ```
 
-#### 3. エラーハンドリングテスト
+#### 3. Error Handling Tests
 ```kotlin
 @Test
 fun `usecase returns error when repository fails`() {
@@ -191,21 +191,21 @@ fun `usecase returns error when repository fails`() {
 }
 ```
 
-## テスト実行結果の分析
+## Test Execution Result Analysis
 
-### 成功指標
-- ✅ テスト成功率: 100% (17/17)
-- ✅ ビルド成功
-- ✅ Lint警告のみ（エラーなし）
+### Success Indicators
+- ✅ Test success rate: 100% (17/17)
+- ✅ Build success
+- ✅ Lint warnings only (no errors)
 
-### 品質メトリクス
-- **実行時間**: 平均2分以内
-- **安定性**: 再現可能な結果
-- **保守性**: 明確なテスト名と構造
+### Quality Metrics
+- **Execution time**: Average under 2 minutes
+- **Stability**: Reproducible results
+- **Maintainability**: Clear test names and structure
 
-## ベストプラクティス
+## Best Practices
 
-### 1. テスト命名規約
+### 1. Test Naming Convention
 ```kotlin
 // Good
 fun `create Document with empty chapters list`()
@@ -216,19 +216,19 @@ fun testDocumentCreation()
 fun test1()
 ```
 
-### 2. テスト構造
+### 2. Test Structure
 ```kotlin
 @Test
 fun `test description`() {
-    // Given (テスト準備)
+    // Given (test preparation)
     
-    // When (テスト実行)
+    // When (test execution)
     
-    // Then (結果検証)
+    // Then (result verification)
 }
 ```
 
-### 3. アサーション
-- 具体的で意味のあるアサーション
-- 複数の状態を個別に検証
-- エラーメッセージを明確に
+### 3. Assertions
+- Specific and meaningful assertions
+- Verify multiple states individually
+- Clear error messages

@@ -16,6 +16,7 @@ import com.example.talktobook.R
 import com.example.talktobook.domain.model.Recording
 import com.example.talktobook.domain.usecase.transcription.ProcessTranscriptionQueueUseCase
 import com.example.talktobook.domain.usecase.transcription.GetTranscriptionQueueUseCase
+import com.example.talktobook.domain.manager.TranscriptionQueueManager
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -39,6 +40,9 @@ class TranscriptionProcessingService : Service() {
     
     @Inject
     lateinit var getTranscriptionQueueUseCase: GetTranscriptionQueueUseCase
+    
+    @Inject
+    lateinit var transcriptionQueueManager: TranscriptionQueueManager
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var processingJob: Job? = null
@@ -79,15 +83,38 @@ class TranscriptionProcessingService : Service() {
     private fun startQueueMonitoring() {
         queueMonitorJob = serviceScope.launch {
             try {
-                getTranscriptionQueueUseCase().onEach { recordings ->
-                    _pendingCount.value = recordings.size
-                    
-                    if (recordings.isNotEmpty() && !_isProcessing.value) {
-                        startProcessing()
-                    } else if (recordings.isEmpty() && _isProcessing.value) {
-                        stopProcessing()
+                // Monitor the queue manager state
+                transcriptionQueueManager.queueState.onEach { state ->
+                    when (state) {
+                        TranscriptionQueueManager.QueueState.READY -> {
+                            if (!_isProcessing.value) {
+                                startProcessing()
+                            }
+                        }
+                        TranscriptionQueueManager.QueueState.IDLE -> {
+                            if (_isProcessing.value) {
+                                stopProcessing()
+                            }
+                        }
+                        TranscriptionQueueManager.QueueState.ERROR -> {
+                            stopProcessing()
+                        }
+                        else -> {
+                            // Handle other states as needed
+                        }
                     }
                 }.launchIn(this)
+                
+                // Monitor pending count
+                transcriptionQueueManager.pendingCount.onEach { count ->
+                    _pendingCount.value = count
+                }.launchIn(this)
+                
+                // Monitor currently processing record
+                transcriptionQueueManager.processingRecord.onEach { record ->
+                    _currentRecording.value = record
+                }.launchIn(this)
+                
             } catch (e: Exception) {
                 android.util.Log.e("TranscriptionService", "Error monitoring queue", e)
             }
@@ -103,13 +130,16 @@ class TranscriptionProcessingService : Service() {
             try {
                 startForeground(NOTIFICATION_ID, createProcessingNotification())
                 
-                while (isActive && _pendingCount.value > 0) {
-                    val result = processTranscriptionQueueUseCase()
-                    
-                    if (result.isFailure) {
-                        android.util.Log.e("TranscriptionService", "Queue processing failed", result.exceptionOrNull())
-                        break
-                    }
+                // The queue manager handles the actual processing coordination
+                // We just need to monitor its state and update our service state accordingly
+                while (isActive && transcriptionQueueManager.queueState.value in listOf(
+                    TranscriptionQueueManager.QueueState.READY,
+                    TranscriptionQueueManager.QueueState.PROCESSING
+                )) {
+                    // Update notification periodically
+                    val notification = createProcessingNotification()
+                    val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                    notificationManager.notify(NOTIFICATION_ID, notification)
                     
                     kotlinx.coroutines.delay(PROCESSING_INTERVAL_MS)
                 }
@@ -118,7 +148,6 @@ class TranscriptionProcessingService : Service() {
                 android.util.Log.e("TranscriptionService", "Error during processing", e)
             } finally {
                 _isProcessing.value = false
-                _currentRecording.value = null
                 stopForeground(STOP_FOREGROUND_REMOVE)
                 
                 if (_pendingCount.value == 0) {

@@ -92,17 +92,17 @@ This directory contains automated test execution scripts based on the test docum
 
 ## Environment Requirements
 
-All scripts automatically configure the Android development environment:
+All scripts automatically configure the Android development environment for Docker DevContainer:
 
 ```bash
-export ANDROID_HOME="$HOME/android"
+export ANDROID_HOME="/opt/android-sdk"
 export ANDROID_SDK_ROOT="$ANDROID_HOME"
 export JAVA_HOME="/usr/lib/jvm/java-17-openjdk-amd64"
 export PATH="$JAVA_HOME/bin:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
 ```
 
 ### Prerequisites
-- ✅ WSL Ubuntu with Android SDK installed natively
+- ✅ Docker DevContainer with Android SDK pre-installed
 - ✅ OpenJDK 17
 - ✅ Gradle 8.10.2+
 - ✅ Android SDK Platform 35
@@ -141,7 +141,7 @@ test-reports/
 # TalkToBook Test Execution Summary
 
 **Execution Date:** Fri Jun 13 17:50:30 UTC 2025
-**Environment:** WSL Ubuntu + Android SDK
+**Environment:** Docker DevContainer + Android SDK
 
 ## Test Results
 - Total Tests: 19
@@ -247,10 +247,10 @@ generate_json_report() {
 chmod +x scripts/*.sh
 ```
 
-### WSL Path Issues
+### Docker Container Path Issues
 ```bash
 # Ensure scripts are run from project root
-cd /mnt/c/Users/yusuk/workspace/android/TalkToBook
+cd /workspace
 ./scripts/run-tests.sh
 ```
 
@@ -260,7 +260,7 @@ cd /mnt/c/Users/yusuk/workspace/android/TalkToBook
 ./scripts/run-tests.sh -v
 ```
 
-For detailed troubleshooting, see `docs/testing/wsl-android-setup-troubleshooting.md`.
+For detailed troubleshooting, see `docs/testing/` directory for environment-specific guides.
 
 ## Contributing
 
@@ -270,4 +270,4 @@ When adding new scripts:
 2. Include comprehensive help text
 3. Add error handling and validation
 4. Update this README
-5. Test on clean WSL environment
+5. Test on clean Docker DevContainer environment

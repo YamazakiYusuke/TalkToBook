@@ -30,7 +30,7 @@ print_error() {
 
 # Setup Android environment
 setup_environment() {
-    export ANDROID_HOME="$HOME/android"
+    export ANDROID_HOME="/opt/android-sdk"
     export ANDROID_SDK_ROOT="$ANDROID_HOME"
     export JAVA_HOME="/usr/lib/jvm/java-17-openjdk-amd64"
     export PATH="$JAVA_HOME/bin:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"

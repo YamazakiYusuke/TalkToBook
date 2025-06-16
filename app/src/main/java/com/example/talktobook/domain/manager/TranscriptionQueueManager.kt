@@ -152,6 +152,19 @@ class TranscriptionQueueManager @Inject constructor(
         return getTranscriptionQueueUseCase()
     }
     
+    suspend fun getOfflineQueueSummary(): OfflineQueueSummary {
+        val pendingRecordings = getTranscriptionQueueUseCase().first()
+        val isOffline = !offlineManager.isOnline()
+        
+        return OfflineQueueSummary(
+            totalPending = pendingRecordings.size,
+            isOffline = isOffline,
+            queueState = _queueState.value,
+            oldestRecording = pendingRecordings.minByOrNull { it.timestamp },
+            newestRecording = pendingRecordings.maxByOrNull { it.timestamp }
+        )
+    }
+    
     enum class QueueState {
         IDLE,
         READY,
@@ -160,4 +173,12 @@ class TranscriptionQueueManager @Inject constructor(
         OFFLINE,
         ERROR
     }
+    
+    data class OfflineQueueSummary(
+        val totalPending: Int,
+        val isOffline: Boolean,
+        val queueState: QueueState,
+        val oldestRecording: Recording?,
+        val newestRecording: Recording?
+    )
 }
