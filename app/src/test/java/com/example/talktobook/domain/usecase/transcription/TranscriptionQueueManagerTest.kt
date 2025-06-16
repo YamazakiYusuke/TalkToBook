@@ -14,8 +14,10 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withTimeout
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -155,7 +157,14 @@ class TranscriptionQueueManagerTest {
             updateTranscriptionStatusUseCase,
             offlineManager
         )
-        delay(100) // Allow flow to process
+        
+        // Wait for the flow to be processed using withTimeout to avoid infinite wait
+        // Poll the pendingCount until it becomes 1 or timeout
+        withTimeout(3000) {
+            while (newManager.pendingCount.value != 1) {
+                delay(50)
+            }
+        }
 
         // Then
         assertEquals(1, newManager.pendingCount.value)
