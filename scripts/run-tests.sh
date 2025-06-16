@@ -81,8 +81,8 @@ EOF
 setup_android_environment() {
     print_header "Setting up Android Environment"
     
-    # Set environment variables as documented
-    export ANDROID_HOME="$HOME/android"
+    # Set environment variables for Docker DevContainer
+    export ANDROID_HOME="/opt/android-sdk"
     export ANDROID_SDK_ROOT="$ANDROID_HOME"
     export JAVA_HOME="/usr/lib/jvm/java-17-openjdk-amd64"
     export PATH="$JAVA_HOME/bin:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"

@@ -1,271 +1,271 @@
-# テスト実施から学んだ教訓
+# Testing Implementation Lessons Learned
 
-## スレッドでの試行錯誤プロセスサマリー
+## Thread Trial and Error Process Summary
 
-### 🚨 初期問題
-Windows環境のAndroid SDK Build Tools 35.0.0の破損エラー
+### 🚨 Initial Problem
+Android SDK Build Tools 35.0.0 corruption error in Docker DevContainer environment
 ```
-Build-tool 35.0.0 is missing AAPT at /mnt/c/Users/yusuk/AppData/Local/Android/Sdk/build-tools/35.0.0/aapt
+Build-tool 35.0.0 is missing AAPT at /opt/android-sdk/build-tools/35.0.0/aapt
 ```
 
-### 🔄 試行錯誤の経緯
+### 🔄 Trial and Error Process
 
-#### Attempt 1: 対症療法的アプローチ（失敗）
-- **試行内容**: buildToolsVersionを34.0.0に変更
-- **結果**: AGP 8.8.0が35.0.0以上を要求するため無視される
-- **学び**: 依存関係の要件を理解せずにバージョンを下げるのは非効率
+#### Attempt 1: Symptomatic Approach (Failed)
+- **Attempt**: Changed buildToolsVersion to 34.0.0
+- **Result**: AGP 8.8.0 requires 35.0.0+ so it was ignored
+- **Learning**: Downgrading versions without understanding dependencies is inefficient
 
-#### Attempt 2: AGPバージョンダウン（一時的解決）
-- **試行内容**: AGP 8.8.0 → 8.7.1に変更
-- **結果**: 一時的に問題回避も根本解決にならず
-- **学び**: バージョンダウンは将来的な問題を引き起こす可能性
+#### Attempt 2: AGP Version Downgrade (Temporary Solution)
+- **Attempt**: Changed AGP 8.8.0 → 8.7.1
+- **Result**: Temporarily avoided the problem but not a fundamental solution
+- **Learning**: Version downgrades can cause future problems
 
-#### Attempt 3: compileSdk調整（部分的解決）
-- **試行内容**: compileSdk 35 → 34、targetSdk 35 → 34
-- **結果**: ビルドは通るが、依存関係エラーが発生
-- **学び**: 下位互換性に頼った解決は持続可能性に欠ける
+#### Attempt 3: compileSdk Adjustment (Partial Solution)
+- **Attempt**: Changed compileSdk 35 → 34, targetSdk 35 → 34
+- **Result**: Build passes but dependency errors occur
+- **Learning**: Solutions relying on backward compatibility lack sustainability
 
-#### Attempt 4: 抜本的解決（成功）
-- **試行内容**: WSL内にAndroid SDKをネイティブインストール
-- **結果**: 完全に問題解決、安定した開発環境を構築
-- **学び**: 根本原因に対処する重要性
+#### Attempt 4: Fundamental Solution (Success)
+- **Attempt**: Migration to Docker DevContainer environment
+- **Result**: Complete problem resolution, stable development environment built
+- **Learning**: Importance of addressing root causes
 
-### 📝 実装過程での細かな問題解決
+### 📝 Detailed Problem Resolution During Implementation
 
-#### 1. Java版数の問題
+#### 1. Java Version Issue
 ```
 Android Gradle plugin requires Java 17 to run. You are currently using Java 11.
 ```
-**解決**: OpenJDK 11 → 17への更新
+**Solution**: Updated OpenJDK 11 → 17
 
-#### 2. テストコードのコンパイルエラー
+#### 2. Test Code Compilation Errors
 ```
 No value passed for parameter 'createdAt'.
 No value passed for parameter 'updatedAt'.
 ```
-**解決**: モデル変更に合わせてテストコード更新
+**Solution**: Updated test code to match model changes
 
-#### 3. Lintツールの互換性問題
+#### 3. Lint Tool Compatibility Issues
 ```
 Unexpected failure during lint analysis
 NonNullableMutableLiveDataDetector
 ```
-**解決**: 問題のあるLintルールを無効化
+**Solution**: Disabled problematic Lint rules
 
-## 重要な学習ポイント
+## Important Learning Points
 
-### 1. 問題解決のアプローチ
+### 1. Problem-Solving Approach
 
-#### ❌ 避けるべき手法
-- **安易なバージョンダウン**: 将来的な技術債務を生む
-- **対症療法**: 根本原因を解決しない
-- **環境の混在**: Windows/WSL間でのツール共有
+#### ❌ Methods to Avoid
+- **Easy version downgrades**: Creates future technical debt
+- **Symptomatic treatment**: Doesn't solve root causes
+- **Environment mixing**: Tool sharing between host/container
 
-#### ✅ 推奨する手法
-- **根本原因分析**: エラーメッセージを詳細に調査
-- **段階的解決**: 問題を小さく分割して対処
-- **環境の統一**: プラットフォーム固有の環境構築
+#### ✅ Recommended Methods
+- **Root cause analysis**: Detailed investigation of error messages
+- **Gradual resolution**: Break problems into small parts to address
+- **Environment unification**: Platform-specific environment construction
 
-### 2. 開発環境構築の原則
+### 2. Development Environment Setup Principles
 
-#### 一貫性の重要性
+#### Importance of Consistency
 ```bash
-# 良い例: 統一された環境
+# Good example: Unified environment
 export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
-export ANDROID_HOME=$HOME/android
-./gradlew build  # WSL内のツールを使用
+export ANDROID_HOME=/opt/android-sdk
+./gradlew build  # Use tools within Docker
 
-# 悪い例: 混在した環境
-export ANDROID_HOME=/mnt/c/Users/.../Android/Sdk  # Windows SDK
-java -version  # WSL内のJava
+# Bad example: Mixed environment
+export ANDROID_HOME=/mnt/host/Android/Sdk  # Host SDK
+java -version  # Container Java
 ```
 
-#### 明示的な設定
+#### Explicit Configuration
 ```properties
-# local.properties - 明示的なSDKパス指定
-sdk.dir=/home/yusuke/android
+# local.properties - Explicit SDK path specification
+sdk.dir=/opt/android-sdk
 ```
 
-### 3. テスト駆動開発での気づき
+### 3. Test-Driven Development Insights
 
-#### モデル変更の影響範囲
-- ドメインモデルの変更は即座にテストコードに反映される
-- TDDのRedフェーズで問題が早期発見される
-- 自動テストによる回帰検証の価値
+#### Model Change Impact Scope
+- Domain model changes are immediately reflected in test code
+- Problems are detected early in the Red phase of TDD
+- Value of automated testing for regression verification
 
-#### テストの品質保証
+#### Test Quality Assurance
 ```kotlin
-// 修正前: 不完全なコンストラクタ呼び出し
+// Before fix: Incomplete constructor call
 Chapter("1", "doc-1", 0, "Chapter 1", "Content 1")
 
-// 修正後: 完全なパラメータ指定
+// After fix: Complete parameter specification
 Chapter("1", "doc-1", 0, "Chapter 1", "Content 1", 1234567890L, 1234567900L)
 ```
 
-## 実践的な提言
+## Practical Recommendations
 
-### 1. 環境構築戦略
+### 1. Environment Setup Strategy
 
-#### 初期セットアップ
+#### Initial Setup
 ```bash
-# スクリプト化による再現可能性の確保
+# Script-based reproducibility assurance
 #!/bin/bash
-# setup-android-wsl.sh
-export ANDROID_HOME=$HOME/android
+# setup-android-devcontainer.sh
+export ANDROID_HOME=/opt/android-sdk
 export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
 sdkmanager --list_installed
 ```
 
-#### 検証手順の標準化
+#### Standardized Verification Procedures
 ```bash
-# 環境確認チェックリスト
-java -version           # Java 17確認
-adb --version          # Android Debug Bridge確認
-sdkmanager --version   # SDK Manager確認
-./gradlew --version    # Gradle確認
+# Environment verification checklist
+java -version           # Confirm Java 17
+adb --version          # Android Debug Bridge confirmation
+sdkmanager --version   # SDK Manager confirmation
+./gradlew --version    # Gradle confirmation
 ```
 
-### 2. トラブルシューティング手法
+### 2. Troubleshooting Methods
 
-#### 段階的デバッグ
-1. **エラーメッセージ分析**: ログの詳細確認
-2. **環境確認**: 各ツールの動作状況確認
-3. **最小再現**: 問題の最小セットでの再現
-4. **段階的修正**: 一つずつ問題を解決
+#### Gradual Debugging
+1. **Error message analysis**: Detailed log checking
+2. **Environment verification**: Check operation status of each tool
+3. **Minimal reproduction**: Reproduce problem with minimal set
+4. **Gradual fixing**: Solve problems one by one
 
-#### ドキュメント化の価値
-- 失敗例も含めた記録の重要性
-- 将来の自分や他の開発者への資産
-- 問題解決プロセスの透明性
+#### Value of Documentation
+- Importance of recording both failures and successes
+- Asset for future self and other developers
+- Transparency of problem-solving process
 
-### 3. 品質保証プロセス
+### 3. Quality Assurance Process
 
-#### 継続的検証
+#### Continuous Verification
 ```bash
-# 開発開始時の定期チェック
+# Regular check when starting development
 ./gradlew clean build test lint
 ```
 
-#### 環境の健全性監視
+#### Environment Health Monitoring
 ```bash
-# 定期的な環境確認
+# Regular environment checking
 sdkmanager --list | grep -E "(Available|Updates)"
 ```
 
-## 将来への適用
+## Application to Future
 
-### プロジェクト改善案
-1. **環境セットアップの自動化**
-2. **CI/CDパイプラインでの環境再現**
-3. **開発者オンボーディングの標準化**
+### Project Improvement Plans
+1. **Environment setup automation**
+2. **Environment reproduction in CI/CD pipeline**
+3. **Standardization of developer onboarding**
 
-### ナレッジ共有
-1. **チーム内でのトラブルシューティング事例共有**
-2. **環境構築ベストプラクティスの文書化**
-3. **定期的な環境メンテナンス手順の確立**
+### Knowledge Sharing
+1. **Team troubleshooting case sharing**
+2. **Documentation of environment setup best practices**
+3. **Establishment of regular environment maintenance procedures**
 
-## 最新の学習ポイント（2025年6月13日更新）
+## Latest Learning Points (Updated June 13, 2025)
 
-### ネットワーク層実装での新たな知見
+### New Insights from Network Layer Implementation
 
-#### TDD適用におけるテスト設計の重要性
+#### Importance of Test Design in TDD Application
 
-**Task 5（Network Layer）実装で学んだこと：**
+**Learnings from Task 5 (Network Layer) implementation:**
 
-##### 1. 依存関係管理の課題
+##### 1. Dependency Management Challenges
 ```kotlin
-// 問題: 新しい依存関係（mockk）の追加を忘れがち
-testImplementation(libs.mockk)  // libs.versions.tomlへの追加も必要
+// Issue: Forgetting to add new dependencies (mockk)
+testImplementation(libs.mockk)  // Need to add to libs.versions.toml too
 ```
 
-**学び**: 新機能実装時は依存関係の追加を必ず検討する
+**Learning**: Always consider dependency additions when implementing new features
 
-##### 2. Android権限とLintエラーの早期発見
+##### 2. Early Detection of Android Permissions and Lint Errors
 ```xml
-<!-- 忘れがちな権限追加 -->
+<!-- Easily forgotten permission addition -->
 <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 ```
 
-**解決プロセス:**
-1. Lintエラーで権限不足を発見
-2. AndroidManifest.xmlに権限追加
-3. 再テストで問題解決確認
+**Resolution Process:**
+1. Lint error discovers missing permissions
+2. Add permissions to AndroidManifest.xml
+3. Re-test to confirm problem resolution
 
-**学び**: Lintチェックはコンパイル後に必ず実行すべき
+**Learning**: Lint checks should always be run after compilation
 
-##### 3. ネットワーク層のテスト設計パターン
+##### 3. Network Layer Test Design Patterns
 ```kotlin
-// 成功例: モックを活用した単体テスト
+// Success example: Unit tests utilizing mocks
 private val mockContext = mockk<Context>(relaxed = true)
 private val authInterceptor = AuthInterceptor()
 private val networkConnectivityInterceptor = NetworkConnectivityInterceptor(mockContext)
 ```
 
-**効果的なテストパターン:**
-- インターセプターの個別テスト
-- エラーハンドリングの網羅的テスト
-- 例外階層の完全性テスト
+**Effective Test Patterns:**
+- Individual interceptor testing
+- Comprehensive error handling testing
+- Exception hierarchy completeness testing
 
-#### 実装効率向上のポイント
+#### Points for Improving Implementation Efficiency
 
-##### 段階的実装の価値
-1. **API Interface作成** → コンパイル確認
-2. **DTOモデル定義** → データ構造検証
-3. **エラーハンドリング** → 例外処理網羅
-4. **インターセプター実装** → 横断的関心事処理
-5. **DI設定更新** → 依存関係統合
-6. **テスト作成** → 品質保証
+##### Value of Gradual Implementation
+1. **API Interface creation** → Compilation verification
+2. **DTO model definition** → Data structure verification
+3. **Error handling** → Exception processing coverage
+4. **Interceptor implementation** → Cross-cutting concerns processing
+5. **DI configuration update** → Dependency integration
+6. **Test creation** → Quality assurance
 
-**学び**: 各段階でのコンパイル確認により問題の早期発見が可能
+**Learning**: Compilation verification at each stage enables early problem detection
 
-##### テスト実行の最適化
+##### Test Execution Optimization
 ```bash
-# 効率的なテスト実行順序
-./gradlew testDebugUnitTest    # 約30秒 - 先に単体テスト
-./gradlew lintDebug           # 約10秒 - 次にlintチェック
-./gradlew assembleDebug       # 2分+ - 最後にビルド全体
+# Efficient test execution order
+./gradlew testDebugUnitTest    # About 30 seconds - unit tests first
+./gradlew lintDebug           # About 10 seconds - lint checks next
+./gradlew assembleDebug       # 2+ minutes - full build last
 ```
 
-**時間効率の考慮:**
-- 高速なテストを先に実行して早期フィードバック
-- 長時間かかるビルドは必要時のみ実行
+**Time Efficiency Considerations:**
+- Run fast tests first for early feedback
+- Run time-consuming builds only when necessary
 
-### 継続的品質向上のプロセス
+### Continuous Quality Improvement Process
 
-#### コミット前チェックリスト（更新版）
+#### Pre-Commit Checklist (Updated Version)
 ```bash
-# 1. 単体テスト実行（必須 - 30秒）
+# 1. Unit test execution (required - 30 seconds)
 ./gradlew testDebugUnitTest
 
-# 2. Lintチェック（必須 - 10秒）  
+# 2. Lint check (required - 10 seconds)  
 ./gradlew lintDebug
 
-# 3. 権限・マニフェスト確認（手動）
+# 3. Permission/manifest verification (manual)
 grep -i "permission" app/src/main/AndroidManifest.xml
 
-# 4. 新しい依存関係の確認（手動）
+# 4. New dependency verification (manual)
 git diff gradle/libs.versions.toml app/build.gradle.kts
 ```
 
-#### PR作成時の品質保証
-1. **機能テスト**: 実装した機能の動作確認
-2. **回帰テスト**: 既存機能への影響確認
-3. **パフォーマンステスト**: ビルド時間・テスト実行時間の確認
-4. **ドキュメント更新**: 実装内容の文書化
+#### Quality Assurance for PR Creation
+1. **Feature testing**: Operation verification of implemented features
+2. **Regression testing**: Impact verification on existing features
+3. **Performance testing**: Build time and test execution time verification
+4. **Documentation updates**: Implementation content documentation
 
-## 結論
+## Conclusion
 
-今回の試行錯誤を通じて、以下の価値を再確認：
+Through this trial and error process, we reaffirmed the following values:
 
-- **根本解決の重要性**: 対症療法ではなく本質的な問題解決
-- **環境一貫性の価値**: クロスプラットフォーム開発での統一環境
-- **段階的アプローチ**: 複雑な問題を小さく分割して解決
-- **ドキュメント化の効果**: 失敗と成功の両方を記録する意義
+- **Importance of fundamental solutions**: Essential problem-solving rather than symptomatic treatment
+- **Value of environment consistency**: Unified environment in cross-platform development
+- **Gradual approach**: Solving complex problems by breaking them into small parts
+- **Effect of documentation**: Significance of recording both failures and successes
 
-### 新たに追加された学び（Network Layer実装）
-- **TDD効果の実証**: テストファーストでの品質向上確認
-- **依存関係管理**: 新機能追加時の systematic approach
-- **Lint活用**: 静的解析による品質保証の重要性
-- **段階的検証**: 各実装段階でのコンパイル確認の価値
+### Newly Added Learnings (Network Layer Implementation)
+- **TDD effect demonstration**: Confirmed quality improvement with test-first approach
+- **Dependency management**: Systematic approach when adding new features
+- **Lint utilization**: Importance of quality assurance through static analysis
+- **Gradual verification**: Value of compilation verification at each implementation stage
 
-これらの学びは、今後の開発プロジェクトにおける品質向上と効率化に直接貢献するものである。
+These learnings directly contribute to quality improvement and efficiency in future development projects.
