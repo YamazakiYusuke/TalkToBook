@@ -7,13 +7,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-abstract class BaseViewModel<T : UiState> : ViewModel() {
+abstract class BaseViewModel : ViewModel() {
 
     protected val _isLoading = MutableStateFlow(false)
     protected val _error = MutableStateFlow<String?>(null)
-
-    abstract val initialState: T
-    abstract val uiState: StateFlow<T>
 
     protected fun setLoading(isLoading: Boolean) {
         _isLoading.value = isLoading
