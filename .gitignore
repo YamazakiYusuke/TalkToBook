@@ -23,3 +23,7 @@ lint-output-*.log
 
 # Test artifacts (specific files, not the test directory)
 /test
+
+# Firebase configuration files (contain sensitive API keys)
+google-services.json
+GoogleService-Info.plist
