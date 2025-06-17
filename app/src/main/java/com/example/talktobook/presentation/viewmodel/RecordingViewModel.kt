@@ -8,6 +8,7 @@ import android.os.IBinder
 import androidx.lifecycle.viewModelScope
 import com.example.talktobook.domain.model.Recording
 import com.example.talktobook.domain.model.RecordingState
+import com.example.talktobook.data.analytics.AnalyticsManager
 import com.example.talktobook.domain.usecase.audio.StartRecordingUseCase
 import com.example.talktobook.domain.usecase.audio.StopRecordingUseCase
 import com.example.talktobook.domain.usecase.audio.PauseRecordingUseCase
@@ -43,7 +44,8 @@ class RecordingViewModel @Inject constructor(
     private val stopRecordingUseCase: StopRecordingUseCase,
     private val pauseRecordingUseCase: PauseRecordingUseCase,
     private val resumeRecordingUseCase: ResumeRecordingUseCase,
-    private val permissionUtils: PermissionUtils
+    private val permissionUtils: PermissionUtils,
+    private val analyticsManager: AnalyticsManager
 ) : BaseViewModel<RecordingUiState>() {
 
     private val _isServiceConnected = MutableStateFlow(false)
@@ -53,6 +55,8 @@ class RecordingViewModel @Inject constructor(
     private var audioService: AudioRecordingService? = null
     private var serviceBound = false
     private var serviceStateJob: Job? = null
+    private var recordingStartTime: Long = 0L
+    private var pauseStartTime: Long = 0L
 
     private val serviceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
@@ -122,12 +126,22 @@ class RecordingViewModel @Inject constructor(
         }
 
         setLoading(true)
+        recordingStartTime = System.currentTimeMillis()
         viewModelScope.launch {
             startRecordingUseCase().fold(
                 onSuccess = { recording ->
+                    analyticsManager.logVoiceRecordingStarted(
+                        documentId = recording.id, // Using recording ID as document ID for now
+                        chapterId = null
+                    )
                     clearError()
                 },
                 onFailure = { exception ->
+                    analyticsManager.logError(
+                        errorType = "recording_start_failed",
+                        errorMessage = exception.message ?: "Unknown error",
+                        context = "RecordingViewModel"
+                    )
                     setError("Recording error: ${exception.message}")
                 }
             )
@@ -146,9 +160,27 @@ class RecordingViewModel @Inject constructor(
         viewModelScope.launch {
             stopRecordingUseCase(currentRecording.id).fold(
                 onSuccess = { recording ->
+                    val durationSeconds = if (recordingStartTime > 0) {
+                        (System.currentTimeMillis() - recordingStartTime) / 1000
+                    } else {
+                        _recordingDuration.value / 1000
+                    }
+                    
+                    analyticsManager.logVoiceRecordingCompleted(
+                        documentId = recording.id,
+                        durationSeconds = durationSeconds,
+                        chapterId = null,
+                        fileSize = null // File size would need to be obtained from the recording
+                    )
+                    recordingStartTime = 0L
                     clearError()
                 },
                 onFailure = { exception ->
+                    analyticsManager.logError(
+                        errorType = "recording_stop_failed",
+                        errorMessage = exception.message ?: "Unknown error",
+                        context = "RecordingViewModel"
+                    )
                     setError("Stop recording error: ${exception.message}")
                 }
             )
@@ -163,12 +195,28 @@ class RecordingViewModel @Inject constructor(
             return
         }
 
+        pauseStartTime = System.currentTimeMillis()
         viewModelScope.launch {
             pauseRecordingUseCase(currentRecording.id).fold(
                 onSuccess = { recording ->
+                    val durationBeforePause = if (recordingStartTime > 0) {
+                        (pauseStartTime - recordingStartTime) / 1000
+                    } else {
+                        _recordingDuration.value / 1000
+                    }
+                    
+                    analyticsManager.logVoiceRecordingPaused(
+                        documentId = recording.id,
+                        durationBeforePause = durationBeforePause
+                    )
                     clearError()
                 },
                 onFailure = { exception ->
+                    analyticsManager.logError(
+                        errorType = "recording_pause_failed",
+                        errorMessage = exception.message ?: "Unknown error",
+                        context = "RecordingViewModel"
+                    )
                     setError("Pause recording error: ${exception.message}")
                 }
             )
@@ -185,9 +233,25 @@ class RecordingViewModel @Inject constructor(
         viewModelScope.launch {
             resumeRecordingUseCase(currentRecording.id).fold(
                 onSuccess = { recording ->
+                    val pauseDuration = if (pauseStartTime > 0) {
+                        (System.currentTimeMillis() - pauseStartTime) / 1000
+                    } else {
+                        0L
+                    }
+                    
+                    analyticsManager.logVoiceRecordingResumed(
+                        documentId = recording.id,
+                        pauseDuration = pauseDuration
+                    )
+                    pauseStartTime = 0L
                     clearError()
                 },
                 onFailure = { exception ->
+                    analyticsManager.logError(
+                        errorType = "recording_resume_failed",
+                        errorMessage = exception.message ?: "Unknown error",
+                        context = "RecordingViewModel"
+                    )
                     setError("Resume recording error: ${exception.message}")
                 }
             )

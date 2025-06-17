@@ -2,6 +2,7 @@ package com.example.talktobook.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.talktobook.data.analytics.AnalyticsManager
 import com.example.talktobook.domain.model.Document
 import com.example.talktobook.domain.usecase.document.CreateDocumentUseCase
 import com.example.talktobook.domain.usecase.document.DeleteDocumentUseCase
@@ -27,7 +28,8 @@ class DocumentViewModel @Inject constructor(
     private val updateDocumentUseCase: UpdateDocumentUseCase,
     private val getDocumentUseCase: GetDocumentUseCase,
     private val deleteDocumentUseCase: DeleteDocumentUseCase,
-    private val getAllDocumentsUseCase: GetAllDocumentsUseCase
+    private val getAllDocumentsUseCase: GetAllDocumentsUseCase,
+    private val analyticsManager: AnalyticsManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DocumentUiState())
@@ -119,6 +121,10 @@ class DocumentViewModel @Inject constructor(
             val result = createDocumentUseCase(CreateDocumentUseCase.Params(title, content))
             result.fold(
                 onSuccess = { document ->
+                    analyticsManager.logDocumentCreated(
+                        documentId = document.id,
+                        creationMethod = "manual"
+                    )
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         selectedDocument = document,
@@ -128,6 +134,11 @@ class DocumentViewModel @Inject constructor(
                     loadDocuments()
                 },
                 onFailure = { exception ->
+                    analyticsManager.logError(
+                        errorType = "document_creation_failed",
+                        errorMessage = exception.message ?: "Unknown error",
+                        context = "DocumentViewModel"
+                    )
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         error = exception.message ?: "Failed to create document"
@@ -173,6 +184,10 @@ class DocumentViewModel @Inject constructor(
             val result = updateDocumentUseCase(UpdateDocumentUseCase.Params(document))
             result.fold(
                 onSuccess = { updatedDocument ->
+                    analyticsManager.logDocumentUpdated(
+                        documentId = updatedDocument.id,
+                        updateType = "content_updated"
+                    )
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         selectedDocument = updatedDocument,
@@ -182,6 +197,11 @@ class DocumentViewModel @Inject constructor(
                     loadDocuments()
                 },
                 onFailure = { exception ->
+                    analyticsManager.logError(
+                        errorType = "document_update_failed",
+                        errorMessage = exception.message ?: "Unknown error",
+                        context = "DocumentViewModel"
+                    )
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         error = exception.message ?: "Failed to update document"
@@ -198,9 +218,19 @@ class DocumentViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             
+            // Get document info before deletion for analytics
+            val documentToDelete = _uiState.value.documents.find { it.id == documentId }
+            
             val result = deleteDocumentUseCase(DeleteDocumentUseCase.Params(documentId))
             result.fold(
                 onSuccess = {
+                    documentToDelete?.let { doc ->
+                        analyticsManager.logDocumentDeleted(
+                            documentId = doc.id,
+                            chapterCount = 0, // Would need to get actual chapter count
+                            totalLength = doc.content.length
+                        )
+                    }
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         selectedDocument = null,
@@ -210,6 +240,11 @@ class DocumentViewModel @Inject constructor(
                     loadDocuments()
                 },
                 onFailure = { exception ->
+                    analyticsManager.logError(
+                        errorType = "document_deletion_failed",
+                        errorMessage = exception.message ?: "Unknown error",
+                        context = "DocumentViewModel"
+                    )
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         error = exception.message ?: "Failed to delete document"
