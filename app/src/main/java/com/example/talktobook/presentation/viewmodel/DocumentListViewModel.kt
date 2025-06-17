@@ -36,19 +36,15 @@ class DocumentListViewModel @Inject constructor(
     override val initialState = DocumentListUiState()
 
     override val uiState: StateFlow<DocumentListUiState> = combine(
-        _documents,
-        _selectedDocuments,
-        _selectedDocumentsOrder,
-        _isSelectionMode,
-        _isLoading,
-        _error
-    ) { values ->
-        val documents = values[0] as DataState<List<Document>>
-        val selectedDocs = values[1] as Set<String>
-        val selectedDocsOrder = values[2] as List<String>
-        val selectionMode = values[3] as Boolean
-        val isLoading = values[4] as Boolean
-        val error = values[5] as String?
+        combine(_documents, _selectedDocuments, _selectedDocumentsOrder) { documents, selectedDocs, selectedDocsOrder ->
+            Triple(documents, selectedDocs, selectedDocsOrder)
+        },
+        combine(_isSelectionMode, _isLoading, _error) { selectionMode, isLoading, error ->
+            Triple(selectionMode, isLoading, error)
+        }
+    ) { documentsGroup, statusGroup ->
+        val (documents, selectedDocs, selectedDocsOrder) = documentsGroup
+        val (selectionMode, isLoading, error) = statusGroup
         
         DocumentListUiState(
             documents = documents,

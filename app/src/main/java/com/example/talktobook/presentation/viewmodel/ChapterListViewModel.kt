@@ -43,26 +43,23 @@ class ChapterListViewModel @Inject constructor(
     override val initialState = ChapterListUiState()
 
     override val uiState: StateFlow<ChapterListUiState> = combine(
-        _isLoading,
-        _chapters,
-        _documentId,
-        _error,
-        _isCreatingChapter,
-        _isDeletingChapter,
-        _isReordering
-    ) { values ->
-        val isLoading = values[0] as Boolean
-        val chapters = values[1] as List<Chapter>
-        val documentId = values[2] as String
-        val error = values[3] as String?
-        val isCreating = values[4] as Boolean
-        val isDeleting = values[5] as Boolean
-        val isReordering = values[6] as Boolean
-        ChapterListUiState(
-            isLoading = isLoading,
-            chapters = chapters,
-            documentId = documentId,
-            error = error,
+        combine(_isLoading, _chapters, _documentId, _error) { isLoading, chapters, documentId, error ->
+            ChapterListUiState(
+                isLoading = isLoading,
+                chapters = chapters,
+                documentId = documentId,
+                error = error,
+                isCreatingChapter = false,
+                isDeletingChapter = false,
+                isReordering = false
+            )
+        },
+        combine(_isCreatingChapter, _isDeletingChapter, _isReordering) { isCreating, isDeleting, isReordering ->
+            Triple(isCreating, isDeleting, isReordering)
+        }
+    ) { baseState, operationStates ->
+        val (isCreating, isDeleting, isReordering) = operationStates
+        baseState.copy(
             isCreatingChapter = isCreating,
             isDeletingChapter = isDeleting,
             isReordering = isReordering
