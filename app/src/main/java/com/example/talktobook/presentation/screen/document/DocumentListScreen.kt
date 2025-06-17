@@ -63,7 +63,7 @@ fun DocumentListScreen(
                 }
                 uiState.error != null -> {
                     ErrorContent(
-                        error = uiState.error ?: \"\",
+                        error = uiState.error ?: "",
                         onRetry = { viewModel.clearDocumentError() }
                     )
                 }

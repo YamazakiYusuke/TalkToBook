@@ -58,7 +58,7 @@ fun DocumentDetailScreen(
             LoadingContent()
         } else if (documentUiState.error != null) {
             ErrorContent(
-                error = documentUiState.error ?: \"\",
+                error = documentUiState.error ?: "",
                 onRetry = { documentViewModel.loadDocument(documentId) },
                 onDismiss = documentViewModel::clearError,
                 onNavigateBack = onNavigateBack

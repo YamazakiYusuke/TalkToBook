@@ -80,7 +80,7 @@ class VoiceCorrectionViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             
-            val result = stopRecordingUseCase(\"current_recording\")
+            val result = stopRecordingUseCase("current_recording")
             result.fold(
                 onSuccess = { recording ->
                     _uiState.value = _uiState.value.copy(
@@ -183,7 +183,7 @@ class VoiceCorrectionViewModel @Inject constructor(
         viewModelScope.launch {
             // Stop recording if active
             if (_uiState.value.isRecording) {
-                stopRecordingUseCase(\"current_recording\")
+                stopRecordingUseCase("current_recording")
             }
             
             // Clean up any temporary recording
