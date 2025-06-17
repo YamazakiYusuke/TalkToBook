@@ -25,10 +25,12 @@ data class DocumentMergeUiState(
 @HiltViewModel
 class DocumentMergeViewModel @Inject constructor(
     private val documentRepository: DocumentRepository
-) : BaseViewModel() {
+) : BaseViewModel<DocumentMergeUiState>() {
 
     private val _uiState = MutableStateFlow(DocumentMergeUiState())
-    val uiState: StateFlow<DocumentMergeUiState> = _uiState.asStateFlow()
+    
+    override val initialState = DocumentMergeUiState()
+    override val uiState: StateFlow<DocumentMergeUiState> = _uiState.asStateFlow()
 
     init {
         loadDocuments()
@@ -127,7 +129,7 @@ class DocumentMergeViewModel @Inject constructor(
         return mergedDocumentId
     }
 
-    fun clearError() {
+    fun onClearError() {
         _uiState.value = _uiState.value.copy(errorMessage = null)
     }
 

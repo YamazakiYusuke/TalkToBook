@@ -6,24 +6,52 @@ import com.example.talktobook.domain.repository.DocumentRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
+data class DocumentListUiState(
+    val documents: DataState<List<Document>> = DataState.Loading,
+    val selectedDocuments: Set<String> = emptySet(),
+    val isSelectionMode: Boolean = false,
+    val isLoading: Boolean = false,
+    val error: String? = null
+) : UiState
 
 @HiltViewModel
 class DocumentListViewModel @Inject constructor(
     private val documentRepository: DocumentRepository
-) : BaseViewModel() {
+) : BaseViewModel<DocumentListUiState>() {
 
-    private val _uiState = MutableStateFlow<DataState<List<Document>>>(DataState.Loading)
-    val uiState: StateFlow<DataState<List<Document>>> = _uiState.asStateFlow()
-
+    private val _documents = MutableStateFlow<DataState<List<Document>>>(DataState.Loading)
     private val _selectedDocuments = MutableStateFlow<Set<String>>(emptySet())
-    val selectedDocuments: StateFlow<Set<String>> = _selectedDocuments.asStateFlow()
-
     private val _isSelectionMode = MutableStateFlow(false)
-    val isSelectionMode: StateFlow<Boolean> = _isSelectionMode.asStateFlow()
+
+    override val initialState = DocumentListUiState()
+
+    override val uiState: StateFlow<DocumentListUiState> = combine(
+        _documents,
+        _selectedDocuments,
+        _isSelectionMode,
+        _isLoading,
+        _error
+    ) { documents, selectedDocs, selectionMode, isLoading, error ->
+        DocumentListUiState(
+            documents = documents,
+            selectedDocuments = selectedDocs,
+            isSelectionMode = selectionMode,
+            isLoading = isLoading,
+            error = error
+        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = initialState
+    )
 
     init {
         loadDocuments()
@@ -31,16 +59,16 @@ class DocumentListViewModel @Inject constructor(
 
     fun loadDocuments() {
         launchSafe {
-            _uiState.value = DataState.Loading
+            _documents.value = DataState.Loading
             documentRepository.getAllDocuments()
                 .catch { error ->
-                    _uiState.value = DataState.Error(
+                    _documents.value = DataState.Error(
                         message = error.message ?: "Failed to load documents",
                         exception = error
                     )
                 }
                 .collect { documents ->
-                    _uiState.value = DataState.Success(documents)
+                    _documents.value = DataState.Success(documents)
                 }
         }
     }
@@ -49,9 +77,7 @@ class DocumentListViewModel @Inject constructor(
         launchSafe {
             val result = documentRepository.deleteDocument(documentId)
             if (result.isFailure) {
-                _uiState.value = DataState.Error(
-                    message = result.exceptionOrNull()?.message ?: "Failed to delete document"
-                )
+                setError(result.exceptionOrNull()?.message ?: "Failed to delete document")
             }
             // Documents will be automatically updated through the Flow
         }
@@ -90,8 +116,9 @@ class DocumentListViewModel @Inject constructor(
         return _selectedDocuments.value.toList()
     }
 
-    fun clearError() {
-        if (_uiState.value is DataState.Error) {
+    fun onClearError() {
+        clearError()
+        if (_documents.value is DataState.Error) {
             loadDocuments()
         }
     }

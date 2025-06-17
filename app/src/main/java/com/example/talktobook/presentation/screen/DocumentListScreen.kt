@@ -61,20 +61,18 @@ fun DocumentListScreen(
     viewModel: DocumentListViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val selectedDocuments by viewModel.selectedDocuments.collectAsState()
-    val isSelectionMode by viewModel.isSelectionMode.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     
     var showDeleteDialog by remember { mutableStateOf<Document?>(null) }
 
     // Handle error states
-    LaunchedEffect(uiState) {
-        if (uiState is DataState.Error) {
+    LaunchedEffect(uiState.error) {
+        uiState.error?.let { message ->
             snackbarHostState.showSnackbar(
-                message = uiState.message,
+                message = message,
                 actionLabel = "Retry"
             )
-            viewModel.clearError()
+            viewModel.onClearError()
         }
     }
 
@@ -83,8 +81,8 @@ fun DocumentListScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = if (isSelectionMode) {
-                            "${selectedDocuments.size} selected"
+                        text = if (uiState.isSelectionMode) {
+                            "${uiState.selectedDocuments.size} selected"
                         } else {
                             "My Documents"
                         },
@@ -94,7 +92,7 @@ fun DocumentListScreen(
             )
         },
         floatingActionButton = {
-            if (isSelectionMode) {
+            if (uiState.isSelectionMode) {
                 if (viewModel.canMergeDocuments()) {
                     FloatingActionButton(
                         onClick = {
@@ -102,7 +100,7 @@ fun DocumentListScreen(
                         },
                         containerColor = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.clearAndSetSemantics {
-                            contentDescription = "Merge ${selectedDocuments.size} selected documents"
+                            contentDescription = "Merge ${uiState.selectedDocuments.size} selected documents"
                         }
                     ) {
                         Icon(
@@ -141,7 +139,7 @@ fun DocumentListScreen(
                     .padding(vertical = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                if (isSelectionMode) {
+                if (uiState.isSelectionMode) {
                     TalkToBookSecondaryButton(
                         text = "Cancel",
                         onClick = viewModel::exitSelectionMode,
@@ -149,7 +147,7 @@ fun DocumentListScreen(
                     )
                     if (viewModel.canMergeDocuments()) {
                         TalkToBookPrimaryButton(
-                            text = "Merge (${selectedDocuments.size})",
+                            text = "Merge (${uiState.selectedDocuments.size})",
                             onClick = {
                                 onNavigateToMergeWithSelection(viewModel.getSelectedDocumentIds())
                             },
@@ -179,14 +177,14 @@ fun DocumentListScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             // Document list content
-            when (uiState) {
+            when (uiState.documents) {
                 is DataState.Loading -> {
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
                         Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
+                            horizontalAlignment = Alignment.CenterVertically,
                             verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
                             CircularProgressIndicator(
@@ -202,13 +200,13 @@ fun DocumentListScreen(
                 }
                 
                 is DataState.Success -> {
-                    if (uiState.data.isEmpty()) {
+                    if (uiState.documents.data.isEmpty()) {
                         Box(
                             modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
                         ) {
                             Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
+                                horizontalAlignment = Alignment.CenterVertically,
                                 verticalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
                                 Text(
@@ -232,15 +230,15 @@ fun DocumentListScreen(
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             items(
-                                items = uiState.data,
+                                items = uiState.documents.data,
                                 key = { it.id }
                             ) { document ->
                                 DocumentCard(
                                     document = document,
                                     onClick = { onNavigateToDocument(document.id) },
                                     onDelete = { showDeleteDialog = document },
-                                    isSelected = selectedDocuments.contains(document.id),
-                                    isSelectionMode = isSelectionMode,
+                                    isSelected = uiState.selectedDocuments.contains(document.id),
+                                    isSelectionMode = uiState.isSelectionMode,
                                     onSelectionToggle = { 
                                         viewModel.toggleDocumentSelection(document.id) 
                                     }
@@ -256,7 +254,7 @@ fun DocumentListScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
+                            horizontalAlignment = Alignment.CenterVertically,
                             verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
                             Text(
@@ -266,7 +264,7 @@ fun DocumentListScreen(
                                 textAlign = TextAlign.Center
                             )
                             Text(
-                                text = uiState.message,
+                                text = uiState.documents.message,
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.onSurface,
                                 textAlign = TextAlign.Center

@@ -68,7 +68,7 @@ fun DocumentMergeScreen(
     LaunchedEffect(uiState.errorMessage) {
         uiState.errorMessage?.let { message ->
             snackbarHostState.showSnackbar(message)
-            viewModel.clearError()
+            viewModel.onClearError()
         }
     }
 
