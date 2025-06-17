@@ -1,27 +1,29 @@
 package com.example.talktobook.presentation.screen
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.talktobook.presentation.viewmodel.ChapterEditViewModel
 import com.example.talktobook.ui.components.TalkToBookScreen
-import com.example.talktobook.ui.components.TalkToBookTextEditor
 import com.example.talktobook.ui.components.TalkToBookPrimaryButton
 import com.example.talktobook.ui.components.TalkToBookSecondaryButton
+import com.example.talktobook.ui.components.TalkToBookTextField
 import com.example.talktobook.ui.theme.SeniorComponentDefaults
 
-/**
- * Screen for editing individual chapters
- * Allows users to edit chapter title and content with auto-save functionality
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChapterEditScreen(
@@ -30,93 +32,57 @@ fun ChapterEditScreen(
     viewModel: ChapterEditViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    var showDeleteDialog by remember { mutableStateOf(false) }
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val titleFocusRequester = remember { FocusRequester() }
     var showDiscardDialog by remember { mutableStateOf(false) }
 
-    // Load chapter when screen starts
     LaunchedEffect(chapterId) {
         viewModel.loadChapter(chapterId)
     }
 
-    // Auto-save every 10 seconds if there are unsaved changes
-    LaunchedEffect(uiState.hasUnsavedChanges) {
-        if (uiState.hasUnsavedChanges) {
-            kotlinx.coroutines.delay(10000) // 10 seconds
-            viewModel.autoSave()
-        }
-    }
-
     TalkToBookScreen(
-        title = uiState.selectedChapter?.title ?: "Edit Chapter",
+        title = "Edit Chapter",
         scrollable = false
     ) {
-        if (uiState.isLoading) {
+        if (uiState.isLoading && uiState.chapter == null) {
             LoadingContent()
-        } else if (uiState.error != null) {
-            ErrorContent(
-                error = uiState.error ?: "",
-                onRetry = { viewModel.loadChapter(chapterId) },
-                onDismiss = viewModel::clearError,
-                onNavigateBack = onNavigateBack
-            )
-        } else if (uiState.selectedChapter != null) {
-            ChapterEditingContent(
+        } else if (uiState.chapter != null) {
+            ChapterEditContent(
                 uiState = uiState,
-                onTitleChange = viewModel::updateEditingTitle,
-                onContentChange = viewModel::updateEditingContent,
-                onFormatting = { formatting, start, end ->
-                    // Apply formatting to the content
-                    val currentContent = uiState.editingContent
-                    val selectedText = currentContent.substring(start, end)
-                    val formattedText = when (formatting) {
-                        com.example.talktobook.presentation.viewmodel.TextFormatting.BOLD -> "**$selectedText**"
-                        com.example.talktobook.presentation.viewmodel.TextFormatting.ITALIC -> "*$selectedText*"
-                        com.example.talktobook.presentation.viewmodel.TextFormatting.HEADING_1 -> "# $selectedText"
-                        com.example.talktobook.presentation.viewmodel.TextFormatting.HEADING_2 -> "## $selectedText"
-                        com.example.talktobook.presentation.viewmodel.TextFormatting.HEADING_3 -> "### $selectedText"
-                        com.example.talktobook.presentation.viewmodel.TextFormatting.BULLET_POINT -> "- $selectedText"
-                        com.example.talktobook.presentation.viewmodel.TextFormatting.NUMBERED_LIST -> "1. $selectedText"
-                    }
-                    val newContent = currentContent.substring(0, start) + formattedText + currentContent.substring(end)
-                    viewModel.updateEditingContent(newContent)
+                onTitleChange = viewModel::updateTitle,
+                onContentChange = viewModel::updateContent,
+                onSaveChapter = {
+                    viewModel.saveChapter()
+                    keyboardController?.hide()
                 },
-                onSave = viewModel::saveChapter,
-                onDelete = { showDeleteDialog = true },
+                onDiscardChanges = { showDiscardDialog = true },
                 onNavigateBack = {
                     if (uiState.hasUnsavedChanges) {
                         showDiscardDialog = true
                     } else {
                         onNavigateBack()
                     }
-                }
+                },
+                onClearError = viewModel::onClearError,
+                titleFocusRequester = titleFocusRequester
+            )
+        } else {
+            ErrorContent(
+                error = uiState.error ?: "Chapter not found",
+                onNavigateBack = onNavigateBack,
+                onClearError = viewModel::onClearError
             )
         }
     }
 
-    // Delete Confirmation Dialog
-    if (showDeleteDialog) {
-        DeleteChapterDialog(
-            chapterTitle = uiState.selectedChapter?.title ?: "",
-            onConfirm = {
-                viewModel.deleteChapter(chapterId)
-                showDeleteDialog = false
-                onNavigateBack()
-            },
-            onDismiss = { showDeleteDialog = false }
-        )
-    }
-
-    // Discard Changes Dialog
     if (showDiscardDialog) {
         DiscardChangesDialog(
-            onConfirm = {
-                showDiscardDialog = false
-                onNavigateBack()
-            },
             onDismiss = { showDiscardDialog = false },
-            onSave = {
-                viewModel.saveChapter()
+            onDiscardChanges = {
                 showDiscardDialog = false
+                if (uiState.hasUnsavedChanges) {
+                    viewModel.discardChanges()
+                }
                 onNavigateBack()
             }
         )
@@ -134,13 +100,241 @@ private fun LoadingContent() {
             verticalArrangement = Arrangement.spacedBy(SeniorComponentDefaults.Spacing.Medium)
         ) {
             CircularProgressIndicator(
-                modifier = Modifier.size(48.dp),
-                color = MaterialTheme.colorScheme.primary
+                modifier = Modifier.size(SeniorComponentDefaults.TouchTarget.LargeTouchTarget),
+                color = MaterialTheme.colorScheme.primary,
+                strokeWidth = 4.dp
             )
             Text(
                 text = "Loading chapter...",
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onBackground
+            )
+        }
+    }
+}
+
+@Composable
+private fun ChapterEditContent(
+    uiState: com.example.talktobook.presentation.viewmodel.ChapterEditUiState,
+    onTitleChange: (String) -> Unit,
+    onContentChange: (String) -> Unit,
+    onSaveChapter: () -> Unit,
+    onDiscardChanges: () -> Unit,
+    onNavigateBack: () -> Unit,
+    onClearError: () -> Unit,
+    titleFocusRequester: FocusRequester
+) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(SeniorComponentDefaults.Spacing.Medium)
+    ) {
+        // Error display
+        uiState.error?.let { error ->
+            ErrorCard(
+                error = error,
+                onDismiss = onClearError
+            )
+        }
+
+        // Unsaved changes indicator
+        if (uiState.hasUnsavedChanges) {
+            UnsavedChangesIndicator()
+        }
+
+        // Form content
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(SeniorComponentDefaults.Spacing.Large)
+        ) {
+            // Chapter title field
+            TalkToBookTextField(
+                value = uiState.title,
+                onValueChange = onTitleChange,
+                label = "Chapter Title",
+                placeholder = "Enter chapter title...",
+                singleLine = true,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .focusRequester(titleFocusRequester)
+            )
+
+            // Chapter content field
+            TalkToBookTextField(
+                value = uiState.content,
+                onValueChange = onContentChange,
+                label = "Chapter Content",
+                placeholder = "Write your chapter content here...",
+                singleLine = false,
+                maxLines = Int.MAX_VALUE,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 200.dp, max = 400.dp)
+            )
+
+            // Chapter info
+            uiState.chapter?.let { chapter ->
+                ChapterInfoCard(
+                    chapterPosition = chapter.orderIndex + 1,
+                    createdAt = chapter.createdAt,
+                    updatedAt = chapter.updatedAt
+                )
+            }
+        }
+
+        // Action buttons
+        ActionButtonsSection(
+            onSaveChapter = onSaveChapter,
+            onDiscardChanges = onDiscardChanges,
+            onNavigateBack = onNavigateBack,
+            hasUnsavedChanges = uiState.hasUnsavedChanges,
+            isSaving = uiState.isSaving,
+            canSave = uiState.title.isNotBlank()
+        )
+    }
+}
+
+@Composable
+private fun UnsavedChangesIndicator() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(SeniorComponentDefaults.Spacing.Medium),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(SeniorComponentDefaults.Spacing.Small)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Warning,
+                contentDescription = "Unsaved changes",
+                modifier = Modifier.size(SeniorComponentDefaults.Spacing.Large)
+            )
+            Text(
+                text = "You have unsaved changes",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium
+            )
+        }
+    }
+}
+
+@Composable
+private fun ChapterInfoCard(
+    chapterPosition: Int,
+    createdAt: Long,
+    updatedAt: Long
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = SeniorComponentDefaults.Card.colors(),
+        elevation = CardDefaults.cardElevation(defaultElevation = SeniorComponentDefaults.Card.DefaultElevation)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(SeniorComponentDefaults.Spacing.Medium),
+            verticalArrangement = Arrangement.spacedBy(SeniorComponentDefaults.Spacing.Small)
+        ) {
+            Text(
+                text = "Chapter Information",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            
+            InfoRow(
+                label = "Position:",
+                value = "Chapter $chapterPosition"
+            )
+            
+            InfoRow(
+                label = "Created:",
+                value = formatTimestamp(createdAt)
+            )
+            
+            InfoRow(
+                label = "Last modified:",
+                value = formatTimestamp(updatedAt)
+            )
+        }
+    }
+}
+
+@Composable
+private fun InfoRow(
+    label: String,
+    value: String
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            fontWeight = FontWeight.Medium
+        )
+    }
+}
+
+@Composable
+private fun ActionButtonsSection(
+    onSaveChapter: () -> Unit,
+    onDiscardChanges: () -> Unit,
+    onNavigateBack: () -> Unit,
+    hasUnsavedChanges: Boolean,
+    isSaving: Boolean,
+    canSave: Boolean
+) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(SeniorComponentDefaults.Spacing.Medium)
+    ) {
+        // Save button
+        TalkToBookPrimaryButton(
+            text = if (isSaving) "Saving..." else "Save Chapter",
+            onClick = onSaveChapter,
+            enabled = canSave && !isSaving,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(SeniorComponentDefaults.Button.RecommendedButtonSize)
+        )
+
+        // Secondary actions
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(SeniorComponentDefaults.Spacing.Medium)
+        ) {
+            if (hasUnsavedChanges) {
+                TalkToBookSecondaryButton(
+                    text = "Discard Changes",
+                    onClick = onDiscardChanges,
+                    enabled = !isSaving,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(SeniorComponentDefaults.TouchTarget.RecommendedTouchTarget)
+                )
+            }
+            
+            TalkToBookSecondaryButton(
+                text = if (hasUnsavedChanges) "Cancel" else "Back",
+                onClick = onNavigateBack,
+                enabled = !isSaving,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(SeniorComponentDefaults.TouchTarget.RecommendedTouchTarget)
             )
         }
     }
@@ -149,306 +343,133 @@ private fun LoadingContent() {
 @Composable
 private fun ErrorContent(
     error: String,
-    onRetry: () -> Unit,
-    onDismiss: () -> Unit,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onClearError: () -> Unit
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(SeniorComponentDefaults.Spacing.Large),
+        modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Icon(
-            imageVector = Icons.Default.Error,
-            contentDescription = "Error",
-            modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.error
-        )
-
-        Spacer(modifier = Modifier.height(SeniorComponentDefaults.Spacing.Large))
-
-        Text(
-            text = "Unable to load chapter",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onBackground
-        )
-
-        Spacer(modifier = Modifier.height(SeniorComponentDefaults.Spacing.Medium))
-
-        Text(
-            text = error,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onBackground
-        )
-
-        Spacer(modifier = Modifier.height(SeniorComponentDefaults.Spacing.ExtraLarge))
-
-        TalkToBookPrimaryButton(
-            text = "Try Again",
-            onClick = {
-                onDismiss()
-                onRetry()
-            },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(SeniorComponentDefaults.Spacing.Medium))
-
-        TalkToBookSecondaryButton(
-            text = "Go Back",
-            onClick = onNavigateBack,
-            modifier = Modifier.fillMaxWidth()
-        )
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.errorContainer,
+                contentColor = MaterialTheme.colorScheme.onErrorContainer
+            )
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(SeniorComponentDefaults.Spacing.Large),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(SeniorComponentDefaults.Spacing.Medium)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Warning,
+                    contentDescription = "Error",
+                    modifier = Modifier.size(SeniorComponentDefaults.TouchTarget.LargeTouchTarget),
+                    tint = MaterialTheme.colorScheme.error
+                )
+                
+                Text(
+                    text = "Error Loading Chapter",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
+                
+                Text(
+                    text = error,
+                    style = MaterialTheme.typography.bodyLarge,
+                    textAlign = TextAlign.Center
+                )
+                
+                TalkToBookPrimaryButton(
+                    text = "Go Back",
+                    onClick = onNavigateBack,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
     }
 }
 
 @Composable
-private fun ChapterEditingContent(
-    uiState: com.example.talktobook.presentation.viewmodel.ChapterEditUiState,
-    onTitleChange: (String) -> Unit,
-    onContentChange: (String) -> Unit,
-    onFormatting: (com.example.talktobook.presentation.viewmodel.TextFormatting, Int, Int) -> Unit,
-    onSave: () -> Unit,
-    onDelete: () -> Unit,
-    onNavigateBack: () -> Unit
+private fun DiscardChangesDialog(
+    onDismiss: () -> Unit,
+    onDiscardChanges: () -> Unit
 ) {
-    Column(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        // Status Bar
-        if (uiState.hasUnsavedChanges || uiState.isLoading) {
-            StatusBar(
-                hasUnsavedChanges = uiState.hasUnsavedChanges,
-                isSaving = uiState.isLoading,
-                chapterIndex = uiState.selectedChapter?.orderIndex
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "Discard Changes",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.error
+            )
+        },
+        text = {
+            Text(
+                text = "You have unsaved changes. Are you sure you want to discard them?",
+                style = MaterialTheme.typography.bodyLarge
+            )
+        },
+        confirmButton = {
+            TalkToBookPrimaryButton(
+                text = "Discard",
+                onClick = onDiscardChanges
+            )
+        },
+        dismissButton = {
+            TalkToBookSecondaryButton(
+                text = "Keep Editing",
+                onClick = onDismiss
             )
         }
-
-        // Main Text Editor
-        TalkToBookTextEditor(
-            value = uiState.editingContent,
-            onValueChange = onContentChange,
-            title = uiState.editingTitle,
-            onTitleChange = onTitleChange,
-            onFormatting = onFormatting,
-            showTitle = true,
-            showFormatting = true,
-            placeholder = "Write your chapter content here...",
-            error = uiState.error,
-            modifier = Modifier.weight(1f)
-        )
-
-        // Action Buttons
-        ActionButtons(
-            hasUnsavedChanges = uiState.hasUnsavedChanges,
-            isSaving = uiState.isLoading,
-            onSave = onSave,
-            onDelete = onDelete,
-            onNavigateBack = onNavigateBack
-        )
-    }
+    )
 }
 
 @Composable
-private fun StatusBar(
-    hasUnsavedChanges: Boolean,
-    isSaving: Boolean,
-    chapterIndex: Int?
+private fun ErrorCard(
+    error: String,
+    onDismiss: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = when {
-                isSaving -> MaterialTheme.colorScheme.primaryContainer
-                hasUnsavedChanges -> MaterialTheme.colorScheme.secondaryContainer
-                else -> MaterialTheme.colorScheme.surfaceVariant
-            }
+            containerColor = MaterialTheme.colorScheme.errorContainer,
+            contentColor = MaterialTheme.colorScheme.onErrorContainer
         )
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(SeniorComponentDefaults.Spacing.Medium),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(SeniorComponentDefaults.Spacing.Small),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = when {
-                        isSaving -> Icons.Default.CloudUpload
-                        hasUnsavedChanges -> Icons.Default.Edit
-                        else -> Icons.Default.Check
-                    },
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp)
-                )
-
-                Text(
-                    text = when {
-                        isSaving -> "Saving..."
-                        hasUnsavedChanges -> "Unsaved changes"
-                        else -> "All changes saved"
-                    },
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-
-            if (chapterIndex != null) {
-                Text(
-                    text = "Chapter ${chapterIndex + 1}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun ActionButtons(
-    hasUnsavedChanges: Boolean,
-    isSaving: Boolean,
-    onSave: () -> Unit,
-    onDelete: () -> Unit,
-    onNavigateBack: () -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = SeniorComponentDefaults.Card.colors()
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(SeniorComponentDefaults.Spacing.Large),
-            verticalArrangement = Arrangement.spacedBy(SeniorComponentDefaults.Spacing.Medium)
+                .padding(SeniorComponentDefaults.Spacing.Medium)
         ) {
-            // Primary actions
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(SeniorComponentDefaults.Spacing.Medium)
-            ) {
-                TalkToBookSecondaryButton(
-                    text = "Back",
-                    onClick = onNavigateBack,
-                    enabled = !isSaving,
-                    modifier = Modifier.weight(1f)
-                )
-
-                TalkToBookPrimaryButton(
-                    text = if (isSaving) "Saving..." else "Save Chapter",
-                    onClick = onSave,
-                    enabled = !isSaving && hasUnsavedChanges,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-
-            // Delete action
+            Text(
+                text = "Error",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(SeniorComponentDefaults.Spacing.Small))
+            Text(
+                text = error,
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Spacer(modifier = Modifier.height(SeniorComponentDefaults.Spacing.Medium))
             TalkToBookSecondaryButton(
-                text = "Delete Chapter",
-                onClick = onDelete,
-                enabled = !isSaving,
+                text = "Dismiss",
+                onClick = onDismiss,
                 modifier = Modifier.fillMaxWidth()
             )
         }
     }
 }
 
-@Composable
-private fun DeleteChapterDialog(
-    chapterTitle: String,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        icon = {
-            Icon(
-                imageVector = Icons.Default.Delete,
-                contentDescription = "Delete Chapter"
-            )
-        },
-        title = {
-            Text(
-                text = "Delete Chapter",
-                style = MaterialTheme.typography.headlineSmall
-            )
-        },
-        text = {
-            Text(
-                text = "Are you sure you want to delete \"$chapterTitle\"? This action cannot be undone.",
-                style = MaterialTheme.typography.bodyLarge
-            )
-        },
-        confirmButton = {
-            TalkToBookPrimaryButton(
-                text = "Delete",
-                onClick = onConfirm
-            )
-        },
-        dismissButton = {
-            TalkToBookSecondaryButton(
-                text = "Cancel",
-                onClick = onDismiss
-            )
-        }
-    )
-}
-
-@Composable
-private fun DiscardChangesDialog(
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit,
-    onSave: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        icon = {
-            Icon(
-                imageVector = Icons.Default.Warning,
-                contentDescription = "Warning"
-            )
-        },
-        title = {
-            Text(
-                text = "Unsaved Changes",
-                style = MaterialTheme.typography.headlineSmall
-            )
-        },
-        text = {
-            Text(
-                text = "You have unsaved changes. What would you like to do?",
-                style = MaterialTheme.typography.bodyLarge
-            )
-        },
-        confirmButton = {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(SeniorComponentDefaults.Spacing.Small)
-            ) {
-                TalkToBookPrimaryButton(
-                    text = "Save",
-                    onClick = onSave,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                
-                TalkToBookSecondaryButton(
-                    text = "Discard",
-                    onClick = onConfirm,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-        },
-        dismissButton = {
-            TalkToBookSecondaryButton(
-                text = "Cancel",
-                onClick = onDismiss
-            )
-        }
-    )
+private fun formatTimestamp(timestamp: Long): String {
+    val date = java.util.Date(timestamp)
+    val formatter = java.text.SimpleDateFormat("MMM dd, yyyy 'at' HH:mm", java.util.Locale.getDefault())
+    return formatter.format(date)
 }

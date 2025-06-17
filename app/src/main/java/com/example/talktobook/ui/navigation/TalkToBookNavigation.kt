@@ -16,6 +16,7 @@ import com.example.talktobook.presentation.screen.TextViewScreen
 import com.example.talktobook.presentation.screen.DocumentDetailScreen
 import com.example.talktobook.presentation.screen.document.DocumentListScreen
 import com.example.talktobook.presentation.screen.ChapterEditScreen
+import com.example.talktobook.presentation.screen.DocumentMergeScreen
 import com.example.talktobook.ui.components.TalkToBookScreen
 import com.example.talktobook.ui.components.TalkToBookPrimaryButton
 
@@ -98,6 +99,13 @@ fun TalkToBookNavigation(
                 },
                 onNavigateToDocument = { documentId ->
                     navController.navigate(Screen.DocumentDetail.createRoute(documentId))
+                },
+                onNavigateToMerge = {
+                    navController.navigate(Screen.DocumentMerge.route)
+                },
+                onNavigateToMergeWithSelection = { selectedIds ->
+                    val selectedIdsParam = selectedIds.joinToString(",")
+                    navController.navigate("${Screen.DocumentMerge.route}?selectedIds=$selectedIdsParam")
                 }
             )
         }
@@ -121,11 +129,28 @@ fun TalkToBookNavigation(
             )
         }
         
-        composable(Screen.DocumentMerge.route) {
+        composable(
+            route = "${Screen.DocumentMerge.route}?selectedIds={selectedIds}",
+            arguments = listOf(navArgument("selectedIds") { 
+                type = NavType.StringType
+                defaultValue = ""
+            })
+        ) { backStackEntry ->
+            val selectedIdsParam = backStackEntry.arguments?.getString("selectedIds") ?: ""
+            val selectedIds = if (selectedIdsParam.isNotEmpty()) {
+                selectedIdsParam.split(",")
+            } else {
+                emptyList()
+            }
+            
             DocumentMergeScreen(
                 onNavigateBack = {
                     navController.popBackStack()
-                }
+                },
+                onNavigateToDocument = { documentId ->
+                    navController.navigate(Screen.DocumentDetail.createRoute(documentId))
+                },
+                selectedDocumentIds = selectedIds
             )
         }
         
@@ -163,7 +188,11 @@ fun TalkToBookNavigation(
 
 // Placeholder composables for missing screens
 @Composable
-private fun DocumentMergeScreen(onNavigateBack: () -> Unit) {
+private fun DocumentMergeScreen(
+    onNavigateBack: () -> Unit,
+    onNavigateToDocument: (String) -> Unit = {},
+    selectedDocumentIds: List<String> = emptyList()
+) {
     TalkToBookScreen(title = "Document Merge") {
         TalkToBookPrimaryButton(
             text = "Back",
@@ -171,7 +200,6 @@ private fun DocumentMergeScreen(onNavigateBack: () -> Unit) {
         )
     }
 }
-
 @Composable
 private fun ChapterListScreen(
     documentId: String,

@@ -1,552 +1,318 @@
 package com.example.talktobook.presentation.screen
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Merge
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.talktobook.domain.model.Document
-import com.example.talktobook.presentation.viewmodel.DocumentViewModel
-import com.example.talktobook.ui.components.TalkToBookScreen
-import com.example.talktobook.ui.components.TalkToBookTextField
+import com.example.talktobook.presentation.viewmodel.DataState
+import com.example.talktobook.presentation.viewmodel.DocumentListViewModel
+import com.example.talktobook.ui.components.DocumentCard
 import com.example.talktobook.ui.components.TalkToBookPrimaryButton
 import com.example.talktobook.ui.components.TalkToBookSecondaryButton
-import com.example.talktobook.ui.theme.SeniorComponentDefaults
-import java.text.SimpleDateFormat
-import java.util.*
 
-/**
- * Screen for viewing and managing all documents
- * Provides search, filtering, and organization capabilities
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DocumentListScreen(
     onNavigateBack: () -> Unit,
     onNavigateToDocument: (String) -> Unit,
     onNavigateToMerge: () -> Unit,
-    viewModel: DocumentViewModel = hiltViewModel()
+    onNavigateToMergeWithSelection: (List<String>) -> Unit = { onNavigateToMerge() },
+    viewModel: DocumentListViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    var searchQuery by remember { mutableStateOf("") }
-    var showCreateDialog by remember { mutableStateOf(false) }
+    val uiState by viewModel.uiState.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    
+    var showDeleteDialog by remember { mutableStateOf<Document?>(null) }
 
-    // Load documents when screen starts
-    LaunchedEffect(Unit) {
-        viewModel.loadDocuments()
-    }
-
-    // Update search when query changes
-    LaunchedEffect(searchQuery) {
-        if (searchQuery.isBlank()) {
-            viewModel.loadDocuments()
-        } else {
-            viewModel.searchDocuments(searchQuery)
+    // Handle error states
+    LaunchedEffect(uiState.error) {
+        uiState.error?.let { message ->
+            snackbarHostState.showSnackbar(
+                message = message,
+                actionLabel = "Retry"
+            )
+            viewModel.onClearError()
         }
     }
 
-    TalkToBookScreen(
-        title = "My Documents",
-        scrollable = false
-    ) {
-        if (uiState.isLoading && uiState.documents.isEmpty()) {
-            LoadingContent()
-        } else if (uiState.error != null) {
-            ErrorContent(
-                error = uiState.error,
-                onRetry = viewModel::loadDocuments,
-                onDismiss = viewModel::clearError,
-                onNavigateBack = onNavigateBack
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = if (uiState.isSelectionMode) {
+                            "${uiState.selectedDocuments.size} selected"
+                        } else {
+                            "My Documents"
+                        },
+                        style = MaterialTheme.typography.headlineSmall
+                    )
+                }
             )
-        } else {
-            DocumentListContent(
-                documents = uiState.documents,
-                searchQuery = searchQuery,
-                onSearchQueryChange = { searchQuery = it },
-                isLoading = uiState.isLoading,
-                onCreateDocument = { showCreateDialog = true },
-                onNavigateToDocument = onNavigateToDocument,
-                onNavigateToMerge = onNavigateToMerge,
-                onNavigateBack = onNavigateBack
-            )
-        }
-    }
-
-    // Create Document Dialog
-    if (showCreateDialog) {
-        CreateDocumentDialog(
-            onConfirm = { title ->
-                viewModel.createDocument(title)
-                showCreateDialog = false
-            },
-            onDismiss = { showCreateDialog = false }
-        )
-    }
-}
-
-@Composable
-private fun LoadingContent() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(SeniorComponentDefaults.Spacing.Medium)
-        ) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(48.dp),
-                color = MaterialTheme.colorScheme.primary
-            )
-            Text(
-                text = "Loading documents...",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-        }
-    }
-}
-
-@Composable
-private fun ErrorContent(
-    error: String,
-    onRetry: () -> Unit,
-    onDismiss: () -> Unit,
-    onNavigateBack: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(SeniorComponentDefaults.Spacing.Large),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Icon(
-            imageVector = Icons.Default.Error,
-            contentDescription = "Error",
-            modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.error
-        )
-
-        Spacer(modifier = Modifier.height(SeniorComponentDefaults.Spacing.Large))
-
-        Text(
-            text = "Unable to load documents",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onBackground
-        )
-
-        Spacer(modifier = Modifier.height(SeniorComponentDefaults.Spacing.Medium))
-
-        Text(
-            text = error,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onBackground
-        )
-
-        Spacer(modifier = Modifier.height(SeniorComponentDefaults.Spacing.ExtraLarge))
-
-        TalkToBookPrimaryButton(
-            text = "Try Again",
-            onClick = {
-                onDismiss()
-                onRetry()
-            },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(SeniorComponentDefaults.Spacing.Medium))
-
-        TalkToBookSecondaryButton(
-            text = "Go Back",
-            onClick = onNavigateBack,
-            modifier = Modifier.fillMaxWidth()
-        )
-    }
-}
-
-@Composable
-private fun DocumentListContent(
-    documents: List<Document>,
-    searchQuery: String,
-    onSearchQueryChange: (String) -> Unit,
-    isLoading: Boolean,
-    onCreateDocument: () -> Unit,
-    onNavigateToDocument: (String) -> Unit,
-    onNavigateToMerge: () -> Unit,
-    onNavigateBack: () -> Unit
-) {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(SeniorComponentDefaults.Spacing.Medium),
-        contentPadding = PaddingValues(SeniorComponentDefaults.Spacing.Medium)
-    ) {
-        // Search Section
-        item {
-            SearchSection(
-                searchQuery = searchQuery,
-                onSearchQueryChange = onSearchQueryChange
-            )
-        }
-
-        // Action Buttons Section
-        item {
-            ActionButtonsSection(
-                onCreateDocument = onCreateDocument,
-                onNavigateToMerge = if (documents.size >= 2) onNavigateToMerge else null,
-                documentsCount = documents.size
-            )
-        }
-
-        // Documents List
-        if (isLoading && documents.isEmpty()) {
-            item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp),
-                    contentAlignment = Alignment.Center
+        },
+        floatingActionButton = {
+            if (uiState.isSelectionMode) {
+                if (viewModel.canMergeDocuments()) {
+                    FloatingActionButton(
+                        onClick = {
+                            onNavigateToMergeWithSelection(viewModel.getSelectedDocumentIds())
+                        },
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.clearAndSetSemantics {
+                            contentDescription = "Merge ${uiState.selectedDocuments.size} selected documents"
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Merge,
+                            contentDescription = null
+                        )
+                    }
+                }
+            } else {
+                FloatingActionButton(
+                    onClick = { /* TODO: Navigate to create new document */ },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.clearAndSetSemantics {
+                        contentDescription = "Create new document"
+                    }
                 ) {
-                    CircularProgressIndicator()
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = null
+                    )
                 }
             }
-        } else if (documents.isEmpty()) {
-            item {
-                EmptyDocumentsCard(
-                    hasSearchQuery = searchQuery.isNotBlank(),
-                    onCreateDocument = onCreateDocument
-                )
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(horizontal = 16.dp)
+        ) {
+            // Action buttons
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                if (uiState.isSelectionMode) {
+                    TalkToBookSecondaryButton(
+                        text = "Cancel",
+                        onClick = viewModel::exitSelectionMode,
+                        modifier = Modifier.weight(1f)
+                    )
+                    if (viewModel.canMergeDocuments()) {
+                        TalkToBookPrimaryButton(
+                            text = "Merge (${uiState.selectedDocuments.size})",
+                            onClick = {
+                                onNavigateToMergeWithSelection(viewModel.getSelectedDocumentIds())
+                            },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                } else {
+                    TalkToBookSecondaryButton(
+                        text = "Select Documents",
+                        onClick = viewModel::enterSelectionMode,
+                        modifier = Modifier.weight(1f)
+                    )
+                    TalkToBookPrimaryButton(
+                        text = "Merge All",
+                        onClick = onNavigateToMerge,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
             }
-        } else {
-            items(documents) { document ->
-                DocumentCard(
-                    document = document,
-                    onClick = { onNavigateToDocument(document.id) }
-                )
-            }
-        }
-
-        // Back Button
-        item {
-            Spacer(modifier = Modifier.height(SeniorComponentDefaults.Spacing.Medium))
+            
             TalkToBookSecondaryButton(
-                text = "Back to Main",
+                text = "Back",
                 onClick = onNavigateBack,
                 modifier = Modifier.fillMaxWidth()
             )
-        }
-    }
-}
 
-@Composable
-private fun SearchSection(
-    searchQuery: String,
-    onSearchQueryChange: (String) -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = SeniorComponentDefaults.Card.colors(),
-        elevation = CardDefaults.cardElevation(defaultElevation = SeniorComponentDefaults.Card.DefaultElevation)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(SeniorComponentDefaults.Spacing.Large)
-        ) {
-            Text(
-                text = "Search Documents",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+            Spacer(modifier = Modifier.height(16.dp))
 
-            Spacer(modifier = Modifier.height(SeniorComponentDefaults.Spacing.Medium))
-
-            TalkToBookTextField(
-                value = searchQuery,
-                onValueChange = onSearchQueryChange,
-                placeholder = "Search by title or content...",
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = "Search",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                },
-                trailingIcon = if (searchQuery.isNotBlank()) {
-                    {
-                        IconButton(onClick = { onSearchQueryChange("") }) {
-                            Icon(
-                                imageVector = Icons.Default.Clear,
-                                contentDescription = "Clear Search",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            // Document list content
+            when (uiState.documents) {
+                is DataState.Loading -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            CircularProgressIndicator(
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Text(
+                                text = "Loading documents...",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurface
                             )
                         }
                     }
-                } else null,
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-    }
-}
-
-@Composable
-private fun ActionButtonsSection(
-    onCreateDocument: () -> Unit,
-    onNavigateToMerge: (() -> Unit)?,
-    documentsCount: Int
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = SeniorComponentDefaults.Card.colors()
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(SeniorComponentDefaults.Spacing.Large),
-            verticalArrangement = Arrangement.spacedBy(SeniorComponentDefaults.Spacing.Medium)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Document Actions",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-
-                Text(
-                    text = "$documentsCount ${if (documentsCount == 1) "document" else "documents"}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(SeniorComponentDefaults.Spacing.Medium)
-            ) {
-                TalkToBookPrimaryButton(
-                    text = "New Document",
-                    onClick = onCreateDocument,
-                    modifier = Modifier.weight(1f)
-                )
-
-                TalkToBookSecondaryButton(
-                    text = "Merge Documents",
-                    onClick = onNavigateToMerge ?: {},
-                    enabled = onNavigateToMerge != null,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun EmptyDocumentsCard(
-    hasSearchQuery: Boolean,
-    onCreateDocument: () -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(SeniorComponentDefaults.Spacing.ExtraLarge),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Icon(
-                imageVector = if (hasSearchQuery) Icons.Default.SearchOff else Icons.Default.MenuBook,
-                contentDescription = if (hasSearchQuery) "No Search Results" else "No Documents",
-                modifier = Modifier.size(64.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Spacer(modifier = Modifier.height(SeniorComponentDefaults.Spacing.Large))
-
-            Text(
-                text = if (hasSearchQuery) "No documents found" else "No documents yet",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Spacer(modifier = Modifier.height(SeniorComponentDefaults.Spacing.Small))
-
-            Text(
-                text = if (hasSearchQuery) {
-                    "Try a different search term or create a new document"
-                } else {
-                    "Start by creating your first document"
-                },
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Spacer(modifier = Modifier.height(SeniorComponentDefaults.Spacing.ExtraLarge))
-
-            TalkToBookPrimaryButton(
-                text = "Create Document",
-                onClick = onCreateDocument,
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-    }
-}
-
-@Composable
-private fun DocumentCard(
-    document: Document,
-    onClick: () -> Unit
-) {
-    Card(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        colors = SeniorComponentDefaults.Card.colors(),
-        elevation = CardDefaults.cardElevation(defaultElevation = SeniorComponentDefaults.Card.DefaultElevation)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(SeniorComponentDefaults.Spacing.Large),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Top
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = document.title,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-
-                Spacer(modifier = Modifier.height(SeniorComponentDefaults.Spacing.Small))
-
-                val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
-                Text(
-                    text = "Updated: ${dateFormat.format(Date(document.updatedAt))}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-
-                if (document.content.isNotBlank()) {
-                    Spacer(modifier = Modifier.height(SeniorComponentDefaults.Spacing.Small))
-                    Text(
-                        text = document.content.take(100) + if (document.content.length > 100) "..." else "",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
                 }
-
-                if (document.chapters.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(SeniorComponentDefaults.Spacing.Small))
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(SeniorComponentDefaults.Spacing.Small)
+                
+                is DataState.Success -> {
+                    if (uiState.documents.data.isEmpty()) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                Text(
+                                    text = "No documents yet",
+                                    style = MaterialTheme.typography.headlineSmall,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    textAlign = TextAlign.Center
+                                )
+                                Text(
+                                    text = "Start recording to create your first document",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        }
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(vertical = 8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(
+                                items = uiState.documents.data,
+                                key = { it.id }
+                            ) { document ->
+                                DocumentCard(
+                                    document = document,
+                                    onClick = { onNavigateToDocument(document.id) },
+                                    onDelete = { showDeleteDialog = document },
+                                    isSelected = uiState.selectedDocuments.contains(document.id),
+                                    isSelectionMode = uiState.isSelectionMode,
+                                    onSelectionToggle = { 
+                                        viewModel.toggleDocumentSelection(document.id) 
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+                
+                is DataState.Error -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.MenuBook,
-                            contentDescription = "Chapters",
-                            modifier = Modifier.size(16.dp),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                        Text(
-                            text = "${document.chapters.size} ${if (document.chapters.size == 1) "chapter" else "chapters"}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.primary
-                        )
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            Text(
+                                text = "Error loading documents",
+                                style = MaterialTheme.typography.headlineSmall,
+                                color = MaterialTheme.colorScheme.error,
+                                textAlign = TextAlign.Center
+                            )
+                            Text(
+                                text = uiState.documents.message,
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                textAlign = TextAlign.Center
+                            )
+                            TalkToBookPrimaryButton(
+                                text = "Retry",
+                                onClick = viewModel::loadDocuments
+                            )
+                        }
                     }
                 }
             }
-
-            Icon(
-                imageVector = Icons.Default.ChevronRight,
-                contentDescription = "Open Document",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(24.dp)
-            )
         }
     }
-}
 
-@Composable
-private fun CreateDocumentDialog(
-    onConfirm: (String) -> Unit,
-    onDismiss: () -> Unit
-) {
-    var title by remember { mutableStateOf("") }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        icon = {
-            Icon(
-                imageVector = Icons.Default.Add,
-                contentDescription = "Create Document"
-            )
-        },
-        title = {
-            Text(
-                text = "Create New Document",
-                style = MaterialTheme.typography.headlineSmall
-            )
-        },
-        text = {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(SeniorComponentDefaults.Spacing.Medium)
-            ) {
+    // Delete confirmation dialog
+    showDeleteDialog?.let { document ->
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = null },
+            title = {
                 Text(
-                    text = "Enter a title for your new document:",
+                    text = "Delete Document",
+                    style = MaterialTheme.typography.headlineSmall
+                )
+            },
+            text = {
+                Text(
+                    text = "Are you sure you want to delete \"${document.title}\"? This action cannot be undone.",
                     style = MaterialTheme.typography.bodyLarge
                 )
-
-                TalkToBookTextField(
-                    value = title,
-                    onValueChange = { title = it },
-                    placeholder = "Document title...",
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-        },
-        confirmButton = {
-            TalkToBookPrimaryButton(
-                text = "Create",
-                onClick = {
-                    if (title.isNotBlank()) {
-                        onConfirm(title.trim())
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.deleteDocument(document.id)
+                        showDeleteDialog = null
                     }
-                },
-                enabled = title.isNotBlank()
-            )
-        },
-        dismissButton = {
-            TalkToBookSecondaryButton(
-                text = "Cancel",
-                onClick = onDismiss
-            )
-        }
-    )
+                ) {
+                    Text("Delete", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showDeleteDialog = null }
+                ) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 }

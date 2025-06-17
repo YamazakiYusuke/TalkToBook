@@ -3,32 +3,30 @@ package com.example.talktobook.domain.usecase.chapter
 import com.example.talktobook.domain.repository.DocumentRepository
 import com.example.talktobook.domain.usecase.BaseUseCase
 import javax.inject.Inject
+import javax.inject.Singleton
 
 /**
  * Use case for deleting a chapter
  * Ensures chapter exists before deletion and handles order index updates
  */
+@Singleton
 class DeleteChapterUseCase @Inject constructor(
     private val documentRepository: DocumentRepository
-) : BaseUseCase<DeleteChapterUseCase.Params, Unit>() {
+) : BaseUseCase<String, Unit>() {
 
-    data class Params(
-        val chapterId: String
-    )
-
-    override suspend fun execute(params: Params): Result<Unit> {
+    override suspend fun execute(parameters: String): Result<Unit> {
         return try {
             // Validate input
-            if (params.chapterId.isBlank()) {
+            if (parameters.isBlank()) {
                 return Result.failure(IllegalArgumentException("Chapter ID cannot be blank"))
             }
 
             // Check if chapter exists
-            val chapter = documentRepository.getChapter(params.chapterId)
-                ?: return Result.failure(NoSuchElementException("Chapter with ID ${params.chapterId} not found"))
+            val chapter = documentRepository.getChapter(parameters)
+                ?: return Result.failure(NoSuchElementException("Chapter with ID $parameters not found"))
 
             // Delete chapter
-            val deleteResult = documentRepository.deleteChapter(params.chapterId)
+            val deleteResult = documentRepository.deleteChapter(parameters)
             
             if (deleteResult.isSuccess) {
                 // After successful deletion, reorder remaining chapters to maintain sequential indices

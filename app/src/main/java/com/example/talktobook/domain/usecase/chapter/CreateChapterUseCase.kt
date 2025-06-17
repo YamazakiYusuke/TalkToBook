@@ -5,11 +5,13 @@ import com.example.talktobook.domain.repository.DocumentRepository
 import com.example.talktobook.domain.usecase.BaseUseCase
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
+import javax.inject.Singleton
 
 /**
  * Use case for creating a new chapter within a document
  * Handles chapter ordering and validation
  */
+@Singleton
 class CreateChapterUseCase @Inject constructor(
     private val documentRepository: DocumentRepository
 ) : BaseUseCase<CreateChapterUseCase.Params, Chapter>() {

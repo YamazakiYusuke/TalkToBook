@@ -4,22 +4,20 @@ import com.example.talktobook.domain.model.Chapter
 import com.example.talktobook.domain.repository.DocumentRepository
 import com.example.talktobook.domain.usecase.BaseUseCase
 import javax.inject.Inject
+import javax.inject.Singleton
 
 /**
  * Use case for updating an existing chapter
  * Handles validation and ensures data integrity
  */
+@Singleton
 class UpdateChapterUseCase @Inject constructor(
     private val documentRepository: DocumentRepository
-) : BaseUseCase<UpdateChapterUseCase.Params, Chapter>() {
+) : BaseUseCase<Chapter, Chapter>() {
 
-    data class Params(
-        val chapter: Chapter
-    )
-
-    override suspend fun execute(params: Params): Result<Chapter> {
+    override suspend fun execute(parameters: Chapter): Result<Chapter> {
         return try {
-            val chapter = params.chapter
+            val chapter = parameters
 
             // Validate chapter data
             if (chapter.id.isBlank()) {
