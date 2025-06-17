@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.talktobook.domain.model.Chapter
-import com.example.talktobook.presentation.viewmodel.chapter.ChapterEditViewModel
+import com.example.talktobook.presentation.viewmodel.ChapterEditViewModel
 import com.example.talktobook.ui.components.*
 import com.example.talktobook.ui.theme.SeniorComponentDefaults
 import java.text.SimpleDateFormat
@@ -56,26 +56,25 @@ fun ChapterEditScreen(
             
             if (uiState.chapter != null) {
                 Row {
-                    if (uiState.isEditing) {
+                    if (uiState.hasUnsavedChanges) {
                         TalkToBookPrimaryButton(
                             text = "保存",
                             onClick = {
                                 viewModel.saveChapter()
-                                viewModel.stopEditing()
                             },
                             modifier = Modifier.padding(end = SeniorComponentDefaults.Spacing.Small)
                         )
                         TalkToBookSecondaryButton(
                             text = "キャンセル",
                             onClick = {
-                                viewModel.stopEditing()
+                                viewModel.discardChanges()
                             }
                         )
                     } else {
                         TalkToBookSecondaryButton(
                             text = "編集",
                             icon = Icons.Default.Edit,
-                            onClick = { viewModel.startEditing() },
+                            onClick = { /* Enable editing mode */ },
                             modifier = Modifier.padding(end = SeniorComponentDefaults.Spacing.Small)
                         )
                         TalkToBookSecondaryButton(
@@ -101,11 +100,11 @@ fun ChapterEditScreen(
             uiState.chapter != null -> {
                 ChapterEditContent(
                     chapter = uiState.chapter!!,
-                    isEditing = uiState.isEditing,
+                    isEditing = uiState.hasUnsavedChanges,
                     isSaving = uiState.isSaving,
-                    lastSaved = uiState.lastSaved,
-                    onTitleChange = viewModel::updateChapterTitle,
-                    onContentChange = viewModel::updateChapterContent
+                    lastSaved = 0L, // TODO: Add lastSaved to UiState
+                    onTitleChange = viewModel::updateTitle,
+                    onContentChange = viewModel::updateContent
                 )
             }
         }
@@ -118,9 +117,8 @@ fun ChapterEditScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        viewModel.deleteChapter {
-                            onNavigateBack()
-                        }
+                        // TODO: Implement delete chapter
+                        onNavigateBack()
                         showDeleteDialog = false
                     }
                 ) {
@@ -269,9 +267,7 @@ private fun ChapterEditContent(
         // Voice input hint when editing
         if (isEditing) {
             TalkToBookCard(
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
-                )
+                backgroundColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
             ) {
                 Row(
                     modifier = Modifier

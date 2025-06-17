@@ -22,7 +22,6 @@ fun MainScreen(
 ) {
     TalkToBookScreen(
         title = "TalkToBook",
-        showBackButton = false,
         modifier = modifier
     ) {
         Column(
@@ -103,9 +102,15 @@ private fun MainRecordingButton(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Large recording button (1/3 of screen as specified)
-            TalkToBookCard(
-                modifier = Modifier.size(SeniorComponentDefaults.TouchTarget.LargeTouchTarget * 2.5f),
-                onClick = onNavigateToRecording
+            Card(
+                modifier = Modifier
+                    .size(SeniorComponentDefaults.TouchTarget.LargeTouchTarget * 2.5f),
+                onClick = onNavigateToRecording,
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
             ) {
                 Box(
                     modifier = Modifier.fillMaxSize(),

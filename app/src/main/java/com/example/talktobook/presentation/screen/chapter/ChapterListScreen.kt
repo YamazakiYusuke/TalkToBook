@@ -15,7 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.talktobook.domain.model.Chapter
-import com.example.talktobook.presentation.viewmodel.chapter.ChapterListViewModel
+import com.example.talktobook.presentation.viewmodel.ChapterListViewModel
 import com.example.talktobook.ui.components.*
 import com.example.talktobook.ui.theme.SeniorComponentDefaults
 
@@ -87,7 +87,7 @@ fun ChapterListScreen(
     if (showCreateChapterDialog) {
         CreateChapterDialog(
             onConfirm = { title ->
-                viewModel.createChapter(documentId, title)
+                viewModel.createNewChapter(title)
                 showCreateChapterDialog = false
             },
             onDismiss = { showCreateChapterDialog = false }
@@ -157,9 +157,14 @@ private fun ChapterItem(
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showReorderOptions by remember { mutableStateOf(false) }
 
-    TalkToBookCard(
+    Card(
         modifier = modifier.fillMaxWidth(),
-        onClick = onClick
+        onClick = onClick,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.onSurface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(
             modifier = Modifier

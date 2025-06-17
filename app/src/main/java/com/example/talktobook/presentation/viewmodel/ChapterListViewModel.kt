@@ -50,7 +50,14 @@ class ChapterListViewModel @Inject constructor(
         _isCreatingChapter,
         _isDeletingChapter,
         _isReordering
-    ) { isLoading, chapters, documentId, error, isCreating, isDeleting, isReordering ->
+    ) { values ->
+        val isLoading = values[0] as Boolean
+        val chapters = values[1] as List<Chapter>
+        val documentId = values[2] as String
+        val error = values[3] as String?
+        val isCreating = values[4] as Boolean
+        val isDeleting = values[5] as Boolean
+        val isReordering = values[6] as Boolean
         ChapterListUiState(
             isLoading = isLoading,
             chapters = chapters,

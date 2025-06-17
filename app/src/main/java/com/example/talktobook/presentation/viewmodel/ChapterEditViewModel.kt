@@ -45,7 +45,14 @@ class ChapterEditViewModel @Inject constructor(
         _isSaving,
         _hasUnsavedChanges,
         _error
-    ) { isLoading, chapter, title, content, isSaving, hasUnsavedChanges, error ->
+    ) { values ->
+        val isLoading = values[0] as Boolean
+        val chapter = values[1] as Chapter?
+        val title = values[2] as String
+        val content = values[3] as String
+        val isSaving = values[4] as Boolean
+        val hasUnsavedChanges = values[5] as Boolean
+        val error = values[6] as String?
         ChapterEditUiState(
             isLoading = isLoading,
             chapter = chapter,

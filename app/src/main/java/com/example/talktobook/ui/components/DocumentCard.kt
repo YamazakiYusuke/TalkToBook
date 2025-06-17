@@ -1,13 +1,17 @@
 package com.example.talktobook.ui.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -27,6 +31,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.talktobook.domain.model.Document
@@ -43,7 +48,8 @@ fun DocumentCard(
     onDelete: (() -> Unit)? = null,
     isSelected: Boolean = false,
     isSelectionMode: Boolean = false,
-    onSelectionToggle: (() -> Unit)? = null
+    onSelectionToggle: (() -> Unit)? = null,
+    selectionOrder: Int? = null // Add selection order for numbered badges
 ) {
     val haptic = LocalHapticFeedback.current
     val dateFormatter = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
@@ -78,27 +84,51 @@ fun DocumentCard(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Selection checkbox
+            // Selection badge with number
             if (isSelectionMode && onSelectionToggle != null) {
-                Checkbox(
-                    checked = isSelected,
-                    onCheckedChange = { 
-                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        onSelectionToggle() 
-                    },
+                Box(
                     modifier = Modifier
+                        .size(40.dp)
+                        .background(
+                            color = if (isSelected) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.outline
+                            },
+                            shape = CircleShape
+                        )
                         .clearAndSetSemantics {
                             contentDescription = if (isSelected) {
-                                "Deselect document ${document.title}"
+                                "Selected document ${document.title}, order ${selectionOrder ?: 0}"
                             } else {
-                                "Select document ${document.title}"
+                                "Tap to select document ${document.title}"
                             }
                             onClick(label = "Toggle selection") {
                                 onSelectionToggle()
                                 true
                             }
-                        }
-                )
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (isSelected && selectionOrder != null) {
+                        Text(
+                            text = selectionOrder.toString(),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            fontWeight = FontWeight.Bold
+                        )
+                    } else {
+                        // Show empty circle when not selected
+                        Box(
+                            modifier = Modifier
+                                .size(24.dp)
+                                .background(
+                                    color = Color.Transparent,
+                                    shape = CircleShape
+                                )
+                        )
+                    }
+                }
                 Spacer(modifier = Modifier.width(12.dp))
             }
             
