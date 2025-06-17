@@ -4,11 +4,13 @@ import com.example.talktobook.domain.model.Document
 import com.example.talktobook.domain.repository.DocumentRepository
 import com.example.talktobook.domain.usecase.BaseUseCase
 import javax.inject.Inject
+import javax.inject.Singleton
 
 /**
  * Use case for creating a new document
  * Follows TDD principles with comprehensive error handling
  */
+@Singleton
 class CreateDocumentUseCase @Inject constructor(
     private val documentRepository: DocumentRepository
 ) : BaseUseCase<CreateDocumentUseCase.Params, Document>() {

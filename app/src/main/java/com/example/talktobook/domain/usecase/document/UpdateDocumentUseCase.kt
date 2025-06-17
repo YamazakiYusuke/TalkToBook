@@ -4,11 +4,13 @@ import com.example.talktobook.domain.model.Document
 import com.example.talktobook.domain.repository.DocumentRepository
 import com.example.talktobook.domain.usecase.BaseUseCase
 import javax.inject.Inject
+import javax.inject.Singleton
 
 /**
  * Use case for updating an existing document
  * Handles validation and ensures data integrity
  */
+@Singleton
 class UpdateDocumentUseCase @Inject constructor(
     private val documentRepository: DocumentRepository
 ) : BaseUseCase<UpdateDocumentUseCase.Params, Document>() {

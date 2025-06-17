@@ -3,11 +3,13 @@ package com.example.talktobook.domain.usecase.document
 import com.example.talktobook.domain.model.Document
 import com.example.talktobook.domain.repository.DocumentRepository
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
+import java.io.IOException
 
 /**
  * Unit tests for CreateDocumentUseCase
@@ -52,6 +54,7 @@ class CreateDocumentUseCaseTest {
         assertNotNull("Document should not be null", document)
         assertEquals("Title should match", title, document?.title)
         assertEquals("Content should match", content, document?.content)
+        coVerify { documentRepository.createDocument(title, content) }
     }
 
     @Test
@@ -153,6 +156,7 @@ class CreateDocumentUseCaseTest {
         val document = result.getOrNull()
         assertNotNull("Document should not be null", document)
         assertEquals("Content should be empty", "", document?.content)
+        coVerify { documentRepository.createDocument(title, content) }
     }
 
     @Test
@@ -182,6 +186,7 @@ class CreateDocumentUseCaseTest {
         assertTrue("Result should be successful", result.isSuccess)
         val document = result.getOrNull()
         assertEquals("Title should be trimmed", trimmedTitle, document?.title)
+        coVerify { documentRepository.createDocument(trimmedTitle, content) }
     }
 
     @Test
@@ -189,7 +194,7 @@ class CreateDocumentUseCaseTest {
         // Arrange
         val title = "Test Document"
         val content = "Content"
-        val repositoryException = RuntimeException("Database error")
+        val repositoryException = IOException("Database error")
 
         coEvery { 
             documentRepository.createDocument(title, content) 
@@ -205,6 +210,7 @@ class CreateDocumentUseCaseTest {
         val exception = result.exceptionOrNull()
         assertEquals("Exception should be the repository exception", 
             repositoryException, exception)
+        coVerify { documentRepository.createDocument(title, content) }
     }
 
     @Test
@@ -228,5 +234,31 @@ class CreateDocumentUseCaseTest {
         val exception = result.exceptionOrNull()
         assertEquals("Exception should be the unexpected exception", 
             unexpectedException, exception)
+        coVerify { documentRepository.createDocument(title, content) }
+    }
+
+    @Test
+    fun `invoke creates document with empty content when not provided`() = runTest {
+        val params = CreateDocumentUseCase.Params(title = "Test Document")
+        val expectedDocument = Document(
+            id = "test-document-id",
+            title = "Test Document",
+            createdAt = System.currentTimeMillis(),
+            updatedAt = System.currentTimeMillis(),
+            content = "",
+            chapters = emptyList()
+        )
+        coEvery { 
+            documentRepository.createDocument(
+                title = "Test Document",
+                content = ""
+            ) 
+        } returns Result.success(expectedDocument)
+
+        val result = createDocumentUseCase(params)
+
+        assertTrue("Result should be success", result.isSuccess)
+        assertEquals("Should return the created document", expectedDocument, result.getOrNull())
+        coVerify { documentRepository.createDocument("Test Document", "") }
     }
 }
