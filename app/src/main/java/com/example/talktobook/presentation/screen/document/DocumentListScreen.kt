@@ -35,6 +35,7 @@ import java.util.*
 fun DocumentListScreen(
     onNavigateToDocument: (String) -> Unit,
     onNavigateBack: () -> Unit,
+    onNavigateToMerge: (List<String>) -> Unit = { },
     modifier: Modifier = Modifier,
     viewModel: DocumentListViewModel = hiltViewModel()
 ) {
@@ -51,10 +52,33 @@ fun DocumentListScreen(
                 .padding(bottom = SeniorComponentDefaults.Spacing.Medium),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            TalkToBookSecondaryButton(
-                text = "戻る",
-                onClick = onNavigateBack
-            )
+            if (uiState.isSelectionMode) {
+                TalkToBookSecondaryButton(
+                    text = "キャンセル",
+                    onClick = viewModel::exitSelectionMode
+                )
+                
+                if (uiState.canMerge) {
+                    TalkToBookPrimaryButton(
+                        text = "結合 (${uiState.selectedDocuments.size})",
+                        onClick = {
+                            onNavigateToMerge(viewModel.getSelectedDocumentsInOrder())
+                        }
+                    )
+                }
+            } else {
+                TalkToBookSecondaryButton(
+                    text = "戻る",
+                    onClick = onNavigateBack
+                )
+                
+                if (uiState.documents.size >= 2) {
+                    TalkToBookSecondaryButton(
+                        text = "選択",
+                        onClick = viewModel::enterSelectionMode
+                    )
+                }
+            }
         }
         Box(modifier = Modifier.fillMaxSize()) {
             when {
@@ -76,10 +100,17 @@ fun DocumentListScreen(
                 else -> {
                     DocumentListContent(
                         documents = uiState.documents,
+                        isSelectionMode = uiState.isSelectionMode,
+                        selectedDocuments = uiState.selectedDocuments,
                         onDocumentClick = { document ->
-                            onNavigateToDocument(document.id)
+                            if (uiState.isSelectionMode) {
+                                viewModel.toggleDocumentSelection(document.id)
+                            } else {
+                                onNavigateToDocument(document.id)
+                            }
                         },
-                        onDeleteDocument = viewModel::deleteDocument
+                        onDeleteDocument = viewModel::deleteDocument,
+                        getSelectionOrder = viewModel::getSelectionOrder
                     )
                 }
             }
@@ -91,8 +122,11 @@ fun DocumentListScreen(
 @Composable
 private fun DocumentListContent(
     documents: List<Document>,
+    isSelectionMode: Boolean,
+    selectedDocuments: List<String>,
     onDocumentClick: (Document) -> Unit,
     onDeleteDocument: (String) -> Unit,
+    getSelectionOrder: (String) -> Int?,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -106,6 +140,9 @@ private fun DocumentListContent(
         ) { document ->
             DocumentItem(
                 document = document,
+                isSelectionMode = isSelectionMode,
+                isSelected = selectedDocuments.contains(document.id),
+                selectionOrder = getSelectionOrder(document.id),
                 onClick = { onDocumentClick(document) },
                 onDelete = { onDeleteDocument(document.id) }
             )
@@ -117,6 +154,9 @@ private fun DocumentListContent(
 @Composable
 private fun DocumentItem(
     document: Document,
+    isSelectionMode: Boolean,
+    isSelected: Boolean,
+    selectionOrder: Int?,
     onClick: () -> Unit,
     onDelete: () -> Unit,
     modifier: Modifier = Modifier
@@ -127,7 +167,15 @@ private fun DocumentItem(
     TalkToBookCard(
         modifier = modifier
             .fillMaxWidth()
-            .clickable { onClick() }
+            .clickable { onClick() },
+        colors = if (isSelected) {
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+        } else {
+            CardDefaults.cardColors()
+        }
     ) {
         Row(
             modifier = Modifier
@@ -135,6 +183,40 @@ private fun DocumentItem(
                 .padding(SeniorComponentDefaults.Spacing.Large),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Selection indicator/order badge
+            if (isSelectionMode) {
+                Box(
+                    modifier = Modifier
+                        .size(SeniorComponentDefaults.TouchTarget.RecommendedTouchTarget)
+                        .clip(CircleShape)
+                        .background(
+                            if (isSelected) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                            }
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (isSelected && selectionOrder != null) {
+                        Text(
+                            text = selectionOrder.toString(),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
+                    } else if (!isSelected) {
+                        Icon(
+                            imageVector = Icons.Default.RadioButtonUnchecked,
+                            contentDescription = "未選択",
+                            tint = MaterialTheme.colorScheme.outline,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.width(SeniorComponentDefaults.Spacing.Medium))
+            }
+
             // Document info
             Column(
                 modifier = Modifier.weight(1f)
@@ -184,17 +266,19 @@ private fun DocumentItem(
                 }
             }
 
-            // Delete button
-            IconButton(
-                onClick = { showDeleteDialog = true },
-                modifier = Modifier.size(SeniorComponentDefaults.TouchTarget.RecommendedTouchTarget)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = "削除",
-                    modifier = Modifier.size(24.dp),
-                    tint = MaterialTheme.colorScheme.error
-                )
+            // Delete button (only show when not in selection mode)
+            if (!isSelectionMode) {
+                IconButton(
+                    onClick = { showDeleteDialog = true },
+                    modifier = Modifier.size(SeniorComponentDefaults.TouchTarget.RecommendedTouchTarget)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "削除",
+                        modifier = Modifier.size(24.dp),
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                }
             }
         }
     }

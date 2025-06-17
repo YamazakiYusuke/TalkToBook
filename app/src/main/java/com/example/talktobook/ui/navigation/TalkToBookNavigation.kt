@@ -9,9 +9,13 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.talktobook.presentation.screen.MainScreen
 import com.example.talktobook.presentation.screen.RecordingScreen
+import com.example.talktobook.presentation.screen.SettingsScreen
 import com.example.talktobook.presentation.screen.document.DocumentListScreen
 import com.example.talktobook.presentation.screen.document.DocumentDetailScreen
+import com.example.talktobook.presentation.screen.chapter.ChapterListScreen
+import com.example.talktobook.presentation.screen.chapter.ChapterEditScreen
 import com.example.talktobook.ui.components.TalkToBookScreen
 import com.example.talktobook.ui.components.TalkToBookPrimaryButton
 
@@ -85,6 +89,10 @@ fun TalkToBookNavigation(
                 },
                 onNavigateToDocument = { documentId ->
                     navController.navigate(Screen.DocumentDetail.createRoute(documentId))
+                },
+                onNavigateToMerge = { selectedDocuments ->
+                    // Pass selected documents to merge screen - for now navigate to merge screen
+                    navController.navigate(Screen.DocumentMerge.route)
                 }
             )
         }
@@ -169,27 +177,6 @@ fun TalkToBookNavigation(
 }
 
 // Placeholder screens for demonstration
-@Composable
-private fun MainScreen(
-    onNavigateToRecording: () -> Unit,
-    onNavigateToDocuments: () -> Unit,
-    onNavigateToSettings: () -> Unit
-) {
-    TalkToBookScreen(title = "TalkToBook") {
-        TalkToBookPrimaryButton(
-            text = "Start Recording",
-            onClick = onNavigateToRecording
-        )
-        TalkToBookPrimaryButton(
-            text = "View Documents",
-            onClick = onNavigateToDocuments
-        )
-        TalkToBookPrimaryButton(
-            text = "Settings",
-            onClick = onNavigateToSettings
-        )
-    }
-}
 
 @Composable
 private fun ProcessingScreen(
@@ -245,52 +232,7 @@ private fun DocumentMergeScreen(
     }
 }
 
-@Composable
-private fun ChapterListScreen(
-    documentId: String,
-    onNavigateBack: () -> Unit,
-    onNavigateToChapter: (String) -> Unit
-) {
-    TalkToBookScreen(title = "Chapters") {
-        TalkToBookPrimaryButton(
-            text = "Edit Chapter (Demo)",
-            onClick = { onNavigateToChapter("demo-chapter-id") }
-        )
-        TalkToBookPrimaryButton(
-            text = "Back",
-            onClick = onNavigateBack
-        )
-    }
-}
 
-@Composable
-private fun ChapterEditScreen(
-    chapterId: String,
-    onNavigateBack: () -> Unit
-) {
-    TalkToBookScreen(title = "Edit Chapter") {
-        TalkToBookPrimaryButton(
-            text = "Save Chapter",
-            onClick = onNavigateBack
-        )
-        TalkToBookPrimaryButton(
-            text = "Cancel",
-            onClick = onNavigateBack
-        )
-    }
-}
-
-@Composable
-private fun SettingsScreen(
-    onNavigateBack: () -> Unit
-) {
-    TalkToBookScreen(title = "Settings") {
-        TalkToBookPrimaryButton(
-            text = "Back",
-            onClick = onNavigateBack
-        )
-    }
-}
 
 @Composable
 private fun ErrorScreen(
