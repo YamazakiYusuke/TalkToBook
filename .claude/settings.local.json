@@ -35,7 +35,13 @@
       "Bash(./scripts/quick-test.sh:*)",
       "Bash(./scripts/run-tests.sh:*)",
       "Bash(./scripts/test-specific.sh:*)",
-      "Bash(/workspace/scripts/run-tests.sh:*)"
+      "Bash(/workspace/scripts/run-tests.sh:*)",
+      "Bash(gh issue:*)",
+      "Bash(git checkout:*)",
+      "Bash(git commit:*)",
+      "Bash(gh pr diff:*)",
+      "Bash(gh pr view:*)",
+      "Bash(gh issue list:*)"
     ],
     "deny": []
   }
