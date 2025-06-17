@@ -10,6 +10,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
@@ -21,7 +25,8 @@ fun TalkToBookButton(
     enabled: Boolean = true,
     icon: ImageVector? = null,
     backgroundColor: Color = MaterialTheme.colorScheme.primary,
-    contentColor: Color = MaterialTheme.colorScheme.onPrimary
+    contentColor: Color = MaterialTheme.colorScheme.onPrimary,
+    contentDescription: String? = null
 ) {
     val haptic = LocalHapticFeedback.current
     
@@ -32,7 +37,11 @@ fun TalkToBookButton(
         },
         modifier = modifier
             .height(56.dp) // Minimum 48dp as per specification, but 56dp for better accessibility
-            .fillMaxWidth(),
+            .fillMaxWidth()
+            .semantics {
+                role = Role.Button
+                this.contentDescription = contentDescription ?: text
+            },
         enabled = enabled,
         shape = RoundedCornerShape(8.dp),
         colors = ButtonDefaults.buttonColors(
@@ -53,7 +62,7 @@ fun TalkToBookButton(
             if (icon != null) {
                 Icon(
                     imageVector = icon,
-                    contentDescription = null,
+                    contentDescription = null, // Icon is decorative when text is present
                     modifier = Modifier.size(24.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
@@ -74,7 +83,8 @@ fun TalkToBookPrimaryButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    icon: ImageVector? = null
+    icon: ImageVector? = null,
+    contentDescription: String? = null
 ) {
     TalkToBookButton(
         text = text,
@@ -83,7 +93,8 @@ fun TalkToBookPrimaryButton(
         enabled = enabled,
         icon = icon,
         backgroundColor = MaterialTheme.colorScheme.primary,
-        contentColor = MaterialTheme.colorScheme.onPrimary
+        contentColor = MaterialTheme.colorScheme.onPrimary,
+        contentDescription = contentDescription
     )
 }
 
@@ -93,7 +104,8 @@ fun TalkToBookSecondaryButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    icon: ImageVector? = null
+    icon: ImageVector? = null,
+    contentDescription: String? = null
 ) {
     TalkToBookButton(
         text = text,
@@ -102,6 +114,7 @@ fun TalkToBookSecondaryButton(
         enabled = enabled,
         icon = icon,
         backgroundColor = MaterialTheme.colorScheme.secondary,
-        contentColor = MaterialTheme.colorScheme.onSecondary
+        contentColor = MaterialTheme.colorScheme.onSecondary,
+        contentDescription = contentDescription
     )
 }

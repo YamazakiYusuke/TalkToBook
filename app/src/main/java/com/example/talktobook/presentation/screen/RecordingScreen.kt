@@ -21,6 +21,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
@@ -34,6 +36,7 @@ import com.example.talktobook.ui.components.TalkToBookSecondaryButton
 import com.example.talktobook.ui.components.WaveformVisualization
 import com.example.talktobook.ui.components.RecordingPulse
 import com.example.talktobook.ui.theme.SeniorComponentDefaults
+import com.example.talktobook.ui.theme.ContentDescriptions
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -107,7 +110,7 @@ private fun PermissionRequiredContent(
     ) {
         Icon(
             imageVector = Icons.Default.Mic,
-            contentDescription = "Microphone",
+            contentDescription = "マイクロフォンアイコン",
             modifier = Modifier.size(SeniorComponentDefaults.TouchTarget.LargeTouchTarget),
             tint = MaterialTheme.colorScheme.primary
         )
@@ -137,7 +140,8 @@ private fun PermissionRequiredContent(
         TalkToBookPrimaryButton(
             text = "Grant Permission",
             onClick = onRequestPermission,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            contentDescription = "マイクロフォンの許可を与える"
         )
         
         Spacer(modifier = Modifier.height(SeniorComponentDefaults.Spacing.Medium))
@@ -145,7 +149,8 @@ private fun PermissionRequiredContent(
         TalkToBookSecondaryButton(
             text = "Go Back",
             onClick = onNavigateBack,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            contentDescription = ContentDescriptions.BACK_BUTTON
         )
     }
 }
@@ -217,7 +222,10 @@ private fun RecordingStatusCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = SeniorComponentDefaults.Spacing.Medium),
+            .padding(vertical = SeniorComponentDefaults.Spacing.Medium)
+            .semantics { 
+                contentDescription = ContentDescriptions.RECORDING_STATUS 
+            },
         colors = SeniorComponentDefaults.Card.colors(),
         elevation = CardDefaults.cardElevation(defaultElevation = SeniorComponentDefaults.Card.DefaultElevation)
     ) {
@@ -240,6 +248,14 @@ private fun RecordingStatusCard(
                     RecordingState.RECORDING -> MaterialTheme.colorScheme.primary
                     RecordingState.PAUSED -> MaterialTheme.colorScheme.secondary
                     else -> MaterialTheme.colorScheme.onSurface
+                },
+                modifier = Modifier.semantics {
+                    contentDescription = when (recordingState) {
+                        RecordingState.IDLE -> "録音準備完了"
+                        RecordingState.RECORDING -> "録音中"
+                        RecordingState.PAUSED -> "録音一時停止中"
+                        RecordingState.STOPPED -> "録音完了"
+                    }
                 }
             )
 
@@ -249,7 +265,12 @@ private fun RecordingStatusCard(
                     text = formatDuration(duration),
                     style = MaterialTheme.typography.displayMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.semantics {
+                        val minutes = (duration / 1000) / 60
+                        val seconds = (duration / 1000) % 60
+                        contentDescription = ContentDescriptions.recordingTime(minutes.toInt(), seconds.toInt())
+                    }
                 )
             }
 
@@ -276,7 +297,15 @@ private fun RecordingVisualizationSection(
         // Background pulse animation
         RecordingPulse(
             isRecording = recordingState == RecordingState.RECORDING,
-            modifier = Modifier.size(SeniorComponentDefaults.TouchTarget.LargeTouchTarget * 2f),
+            modifier = Modifier
+                .size(SeniorComponentDefaults.TouchTarget.LargeTouchTarget * 2f)
+                .semantics {
+                    contentDescription = when (recordingState) {
+                        RecordingState.RECORDING -> "録音中のアニメーション表示"
+                        RecordingState.PAUSED -> "録音一時停止中の表示"
+                        else -> "録音準備完了の表示"
+                    }
+                },
             color = when (recordingState) {
                 RecordingState.RECORDING -> MaterialTheme.colorScheme.primary
                 RecordingState.PAUSED -> MaterialTheme.colorScheme.secondary

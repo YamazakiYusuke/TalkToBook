@@ -222,6 +222,10 @@ object ContentDescriptions {
     const val SAVING_STATUS = "保存状態"
     const val NETWORK_STATUS = "ネットワーク接続状態"
     
+    // Audio visualization
+    const val WAVEFORM_INACTIVE = "音声波形表示：非アクティブ"
+    const val WAVEFORM_RECORDING = "音声波形表示：録音中"
+    
     // Helper function to create dynamic content description
     fun documentItem(title: String, createdDate: String): String {
         return "文書: $title、作成日: $createdDate"
@@ -234,4 +238,145 @@ object ContentDescriptions {
     fun transcriptionStatus(status: String): String {
         return "文字起こし状態: $status"
     }
+    
+    fun waveformActivityLevel(isRecording: Boolean, activityLevel: String): String {
+        return if (isRecording) {
+            when (activityLevel) {
+                "high" -> "音声波形表示: 高レベルの音声を録音中"
+                "medium-high" -> "音声波形表示: 中高レベルの音声を録音中"
+                "medium" -> "音声波形表示: 中レベルの音声を録音中"
+                "low-medium" -> "音声波形表示: 低中レベルの音声を録音中"
+                "low" -> "音声波形表示: 低レベルの音声を録音中"
+                else -> "音声波形表示: 録音中"
+            }
+        } else {
+            "音声波形表示: 録音停止中"
+        }
+    }
+}
+
+/**
+ * Content descriptions for Voice Correction Panel accessibility
+ * Provides comprehensive Japanese TalkBack support with step-by-step guidance
+ */
+object VoiceCorrectionDescriptions {
+    
+    // Panel state descriptions
+    fun panelInitial(): String = 
+        "音声修正パネル: 選択したテキストを再録音で修正します。3つのステップで進行します。" +
+        "1. テキスト選択の確認、2. 修正内容の録音、3. 修正の適用。"
+    
+    fun panelRecording(): String = 
+        "音声修正パネル: 現在録音中です。修正内容を話し終わったら録音停止ボタンをタップしてください。"
+    
+    fun panelCorrectionReady(): String = 
+        "音声修正パネル: 音声認識が完了しました。修正内容を確認して適用ボタンをタップしてください。"
+    
+    // Step descriptions
+    fun stepSelection(): String = "ステップ1: テキスト選択の確認"
+    fun stepRecording(): String = "ステップ2: 修正内容の録音"
+    fun stepReview(): String = "ステップ3: 修正内容の確認と適用"
+    
+    // Header descriptions
+    fun headerStatus(isRecording: Boolean, hasCorrection: Boolean): String {
+        return when {
+            isRecording -> "音声修正: 録音中 - 修正内容を話してください"
+            hasCorrection -> "音声修正: 修正内容の確認 - 修正を適用できます"
+            else -> "音声修正: 開始 - 選択したテキストを再録音で修正します"
+        }
+    }
+    
+    // Selected text section
+    fun selectedTextSection(selectedText: String, isActive: Boolean): String {
+        val status = if (isActive) "アクティブ" else "非アクティブ"
+        val charCount = selectedText.length
+        return "選択されたテキスト: $status, 文字数: $charCount文字。修正対象: ${selectedText.take(50)}${if (selectedText.length > 50) "..." else ""}"
+    }
+    
+    fun selectedTextContent(selectedText: String): String {
+        val charCount = selectedText.length
+        return "修正対象のテキスト: $charCount文字。内容: $selectedText"
+    }
+    
+    // Recording controls section
+    fun recordingControlsSection(isRecording: Boolean, selectedTextPreview: String): String {
+        return if (isRecording) {
+            "録音コントロール: 現在録音中。対象テキスト: $selectedTextPreview"
+        } else {
+            "録音コントロール: 録音待機中。録音開始ボタンをタップして修正内容を話してください。対象テキスト: $selectedTextPreview"
+        }
+    }
+    
+    // Recording state descriptions
+    fun recordingActive(selectedTextPreview: String): String =
+        "録音中: 対象テキスト「$selectedTextPreview」の修正内容を話してください。話し終わったら録音停止ボタンをタップしてください。"
+    
+    fun recordingInactive(selectedTextPreview: String): String =
+        "録音待機中: 対象テキスト「$selectedTextPreview」の修正内容を録音できます。録音開始ボタンをタップしてください。"
+    
+    // Button descriptions
+    fun startRecordingButton(selectedTextPreview: String): String =
+        "録音開始ボタン: タップして修正内容を録音してください。対象テキスト: $selectedTextPreview"
+    
+    fun stopRecordingButton(): String =
+        "録音停止ボタン: タップして録音を終了してください。音声認識が開始されます。"
+    
+    fun cancelButton(isRecording: Boolean): String {
+        return if (isRecording) {
+            "キャンセルボタン: 録音中のため無効です。先に録音を停止してください。"
+        } else {
+            "キャンセルボタン: 音声修正を中止して元の画面に戻ります。"
+        }
+    }
+    
+    fun applyButton(hasCorrection: Boolean, isRecording: Boolean, selectedText: String): String {
+        return when {
+            isRecording -> "修正を適用ボタン: 録音中のため無効です。先に録音を停止してください。"
+            hasCorrection -> "修正を適用ボタン: 修正内容を元のテキストに適用します。対象: ${selectedText.take(30)}${if (selectedText.length > 30) "..." else ""}"
+            else -> "修正を適用ボタン: 修正内容がありません。先に録音を行ってください。"
+        }
+    }
+    
+    // Corrected text section
+    fun correctedTextSection(originalText: String, correctedText: String): String {
+        val originalLength = originalText.length
+        val correctedLength = correctedText.length
+        return "修正されたテキスト: 音声認識完了。元の文字数: $originalLength、修正後の文字数: $correctedLength。" +
+               "修正内容を確認して適用ボタンをタップしてください。"
+    }
+    
+    fun correctedTextContent(correctedText: String): String {
+        val charCount = correctedText.length
+        return "修正されたテキスト内容: $charCount文字。内容: $correctedText"
+    }
+    
+    // Action buttons section
+    fun actionButtonsSection(hasCorrection: Boolean, isRecording: Boolean): String {
+        return when {
+            isRecording -> "操作ボタン: 録音中です。録音停止後に操作が可能になります。"
+            hasCorrection -> "操作ボタン: 修正内容を適用するか、キャンセルして元に戻すかを選択してください。"
+            else -> "操作ボタン: 修正内容がありません。録音を行うか、キャンセルして元に戻してください。"
+        }
+    }
+    
+    // Confirmation dialog
+    fun confirmationDialog(originalText: String, correctedText: String): String {
+        return "修正内容の確認ダイアログ: 元のテキストを修正内容で置き換えます。" +
+               "元のテキスト: ${originalText.take(50)}${if (originalText.length > 50) "..." else ""}。" +
+               "修正内容: ${correctedText.take(50)}${if (correctedText.length > 50) "..." else ""}。" +
+               "適用ボタンで修正を確定、キャンセルボタンで取り消しできます。"
+    }
+    
+    fun originalTextInDialog(originalText: String): String =
+        "元のテキスト: $originalText"
+    
+    fun correctedTextInDialog(correctedText: String): String =
+        "修正内容: $correctedText"
+    
+    fun confirmApplyButton(originalText: String, correctedText: String): String =
+        "適用ボタン: 修正内容を確定します。「${originalText.take(20)}${if (originalText.length > 20) "..." else ""}」を" +
+        "「${correctedText.take(20)}${if (correctedText.length > 20) "..." else ""}」に置き換えます。"
+    
+    fun cancelDialogButton(): String =
+        "キャンセルボタン: 修正を取り消してダイアログを閉じます。"
 }

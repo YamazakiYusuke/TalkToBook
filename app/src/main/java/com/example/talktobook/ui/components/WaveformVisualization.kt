@@ -9,12 +9,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.example.talktobook.ui.theme.ContentDescriptions
 import kotlin.math.sin
 import kotlin.random.Random
 
 /**
  * A waveform visualization component that displays animated waves during recording
+ * with accessibility support for screen readers
  */
 @Composable
 fun WaveformVisualization(
@@ -51,10 +55,34 @@ fun WaveformVisualization(
         )
     }
     
+    // Calculate average activity level for accessibility description
+    val averageAmplitude = remember(waveAnimations) {
+        waveAnimations.map { it.first }.average().toFloat()
+    }
+    
+    // Determine activity level description
+    val activityLevel = when {
+        !isRecording -> "inactive"
+        averageAmplitude > 0.8f -> "high"
+        averageAmplitude > 0.6f -> "medium-high"
+        averageAmplitude > 0.4f -> "medium"
+        averageAmplitude > 0.2f -> "low-medium"
+        else -> "low"
+    }
+    
+    // Create accessibility description using centralized function
+    // Using remember with keys to update when recording state or activity level changes
+    val accessibilityDescription = remember(isRecording, activityLevel) {
+        ContentDescriptions.waveformActivityLevel(isRecording, activityLevel)
+    }
+    
     Canvas(
         modifier = modifier
             .fillMaxWidth()
             .height(100.dp)
+            .semantics { 
+                contentDescription = accessibilityDescription
+            }
     ) {
         val width = size.width
         val height = size.height
