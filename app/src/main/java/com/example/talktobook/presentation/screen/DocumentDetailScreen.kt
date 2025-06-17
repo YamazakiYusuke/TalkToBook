@@ -42,10 +42,9 @@ fun DocumentDetailScreen(
     val chapterUiState by chapterViewModel.uiState.collectAsStateWithLifecycle()
     var showDeleteDialog by remember { mutableStateOf(false) }
 
-    // Load document and chapters when screen starts
+    // Load document when screen starts
     LaunchedEffect(documentId) {
         documentViewModel.loadDocument(documentId)
-        chapterViewModel.loadChapters(documentId)
     }
 
     val document = documentUiState.selectedDocument
@@ -66,8 +65,8 @@ fun DocumentDetailScreen(
         } else if (document != null) {
             DocumentContent(
                 document = document,
-                chapters = chapterUiState.chapters,
-                isLoading = chapterUiState.isLoading,
+                chapters = emptyList(), // TODO: Use proper chapter list ViewModel
+                isLoading = false,
                 onEditDocument = { /* Navigate to document edit */ },
                 onDeleteDocument = { showDeleteDialog = true },
                 onAddChapter = { /* Navigate to add chapter */ },
@@ -414,7 +413,7 @@ private fun ChaptersHeader(
             ) {
                 IconButton(
                     onClick = onAddChapter,
-                    modifier = Modifier.size(SeniorComponentDefaults.TouchTarget.MinimumTouchTarget)
+                    modifier = Modifier.size(SeniorComponentDefaults.TouchTarget.RecommendedTouchTarget)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,
