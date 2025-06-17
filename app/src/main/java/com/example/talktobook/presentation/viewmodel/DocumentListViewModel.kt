@@ -17,6 +17,7 @@ import javax.inject.Inject
 data class DocumentListUiState(
     val documents: DataState<List<Document>> = DataState.Loading,
     val selectedDocuments: Set<String> = emptySet(),
+    val selectedDocumentsOrder: List<String> = emptyList(), // Track selection order
     val isSelectionMode: Boolean = false,
     val isLoading: Boolean = false,
     val error: String? = null
@@ -29,20 +30,26 @@ class DocumentListViewModel @Inject constructor(
 
     private val _documents = MutableStateFlow<DataState<List<Document>>>(DataState.Loading)
     private val _selectedDocuments = MutableStateFlow<Set<String>>(emptySet())
+    private val _selectedDocumentsOrder = MutableStateFlow<List<String>>(emptyList())
     private val _isSelectionMode = MutableStateFlow(false)
 
     override val initialState = DocumentListUiState()
 
     override val uiState: StateFlow<DocumentListUiState> = combine(
-        _documents,
-        _selectedDocuments,
-        _isSelectionMode,
-        _isLoading,
-        _error
-    ) { documents, selectedDocs, selectionMode, isLoading, error ->
+        combine(_documents, _selectedDocuments, _selectedDocumentsOrder) { documents, selectedDocs, selectedDocsOrder ->
+            Triple(documents, selectedDocs, selectedDocsOrder)
+        },
+        combine(_isSelectionMode, _isLoading, _error) { selectionMode, isLoading, error ->
+            Triple(selectionMode, isLoading, error)
+        }
+    ) { documentsGroup, statusGroup ->
+        val (documents, selectedDocs, selectedDocsOrder) = documentsGroup
+        val (selectionMode, isLoading, error) = statusGroup
+        
         DocumentListUiState(
             documents = documents,
             selectedDocuments = selectedDocs,
+            selectedDocumentsOrder = selectedDocsOrder,
             isSelectionMode = selectionMode,
             isLoading = isLoading,
             error = error
@@ -85,12 +92,20 @@ class DocumentListViewModel @Inject constructor(
 
     fun toggleDocumentSelection(documentId: String) {
         val currentSelection = _selectedDocuments.value.toMutableSet()
+        val currentOrder = _selectedDocumentsOrder.value.toMutableList()
+        
         if (currentSelection.contains(documentId)) {
+            // Deselect: remove from both set and order list
             currentSelection.remove(documentId)
+            currentOrder.remove(documentId)
         } else {
+            // Select: add to set and append to order list
             currentSelection.add(documentId)
+            currentOrder.add(documentId)
         }
+        
         _selectedDocuments.value = currentSelection
+        _selectedDocumentsOrder.value = currentOrder
 
         // Exit selection mode if no documents are selected
         if (currentSelection.isEmpty()) {
@@ -101,11 +116,13 @@ class DocumentListViewModel @Inject constructor(
     fun enterSelectionMode() {
         _isSelectionMode.value = true
         _selectedDocuments.value = emptySet()
+        _selectedDocumentsOrder.value = emptyList()
     }
 
     fun exitSelectionMode() {
         _isSelectionMode.value = false
         _selectedDocuments.value = emptySet()
+        _selectedDocumentsOrder.value = emptyList()
     }
 
     fun canMergeDocuments(): Boolean {
@@ -113,7 +130,11 @@ class DocumentListViewModel @Inject constructor(
     }
 
     fun getSelectedDocumentIds(): List<String> {
-        return _selectedDocuments.value.toList()
+        return _selectedDocumentsOrder.value
+    }
+    
+    fun getSelectionOrder(documentId: String): Int? {
+        return _selectedDocumentsOrder.value.indexOf(documentId).takeIf { it >= 0 }?.plus(1)
     }
 
     fun onClearError() {

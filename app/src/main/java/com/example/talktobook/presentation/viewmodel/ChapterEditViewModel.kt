@@ -38,22 +38,26 @@ class ChapterEditViewModel @Inject constructor(
     override val initialState = ChapterEditUiState()
 
     override val uiState: StateFlow<ChapterEditUiState> = combine(
-        _isLoading,
-        _chapter,
-        _title,
-        _content,
-        _isSaving,
-        _hasUnsavedChanges,
-        _error
-    ) { flows ->
-        ChapterEditUiState(
-            isLoading = flows[0] as Boolean,
-            chapter = flows[1] as Chapter?,
-            title = flows[2] as String,
-            content = flows[3] as String,
-            isSaving = flows[4] as Boolean,
-            hasUnsavedChanges = flows[5] as Boolean,
-            error = flows[6] as String?
+        combine(_isLoading, _chapter, _title, _content) { isLoading, chapter, title, content ->
+            ChapterEditUiState(
+                isLoading = isLoading,
+                chapter = chapter,
+                title = title,
+                content = content,
+                isSaving = false,
+                hasUnsavedChanges = false,
+                error = null
+            )
+        },
+        combine(_isSaving, _hasUnsavedChanges, _error) { isSaving, hasUnsavedChanges, error ->
+            Triple(isSaving, hasUnsavedChanges, error)
+        }
+    ) { baseState, statusGroup ->
+        val (isSaving, hasUnsavedChanges, error) = statusGroup
+        baseState.copy(
+            isSaving = isSaving,
+            hasUnsavedChanges = hasUnsavedChanges,
+            error = error
         )
     }.stateIn(
         scope = viewModelScope,

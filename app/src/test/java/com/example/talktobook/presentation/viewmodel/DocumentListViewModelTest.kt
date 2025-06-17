@@ -2,6 +2,7 @@ package com.example.talktobook.presentation.viewmodel
 
 import com.example.talktobook.domain.model.Document
 import com.example.talktobook.domain.repository.DocumentRepository
+import com.example.talktobook.presentation.viewmodel.DataState
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -16,9 +17,9 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class DocumentListViewModelTest {
@@ -60,14 +61,14 @@ class DocumentListViewModelTest {
     @Test
     fun `uiState starts with loading and then shows success`() = runTest {
         // Initial state should be loading
-        assertEquals(DataState.Loading, viewModel.uiState.value)
+        assertEquals(DataState.Loading, viewModel.uiState.value.documents)
 
         advanceUntilIdle()
 
         // Should load documents successfully
         val finalState = viewModel.uiState.value
-        assertTrue(finalState is DataState.Success)
-        assertEquals(mockDocuments, finalState.data)
+        assertTrue(finalState.documents is DataState.Success)
+        assertEquals(mockDocuments, (finalState.documents as DataState.Success).data)
     }
 
     @Test
@@ -75,24 +76,24 @@ class DocumentListViewModelTest {
         advanceUntilIdle()
 
         // Initially no documents selected
-        assertTrue(viewModel.selectedDocuments.value.isEmpty())
+        assertTrue(viewModel.uiState.value.selectedDocuments.isEmpty())
 
         // Select first document
         viewModel.toggleDocumentSelection("1")
-        assertTrue(viewModel.selectedDocuments.value.contains("1"))
-        assertEquals(1, viewModel.selectedDocuments.value.size)
+        assertTrue(viewModel.uiState.value.selectedDocuments.contains("1"))
+        assertEquals(1, viewModel.uiState.value.selectedDocuments.size)
 
         // Select second document
         viewModel.toggleDocumentSelection("2")
-        assertTrue(viewModel.selectedDocuments.value.contains("1"))
-        assertTrue(viewModel.selectedDocuments.value.contains("2"))
-        assertEquals(2, viewModel.selectedDocuments.value.size)
+        assertTrue(viewModel.uiState.value.selectedDocuments.contains("1"))
+        assertTrue(viewModel.uiState.value.selectedDocuments.contains("2"))
+        assertEquals(2, viewModel.uiState.value.selectedDocuments.size)
 
         // Deselect first document
         viewModel.toggleDocumentSelection("1")
-        assertFalse(viewModel.selectedDocuments.value.contains("1"))
-        assertTrue(viewModel.selectedDocuments.value.contains("2"))
-        assertEquals(1, viewModel.selectedDocuments.value.size)
+        assertFalse(viewModel.uiState.value.selectedDocuments.contains("1"))
+        assertTrue(viewModel.uiState.value.selectedDocuments.contains("2"))
+        assertEquals(1, viewModel.uiState.value.selectedDocuments.size)
     }
 
     @Test
@@ -105,8 +106,8 @@ class DocumentListViewModelTest {
 
         viewModel.enterSelectionMode()
 
-        assertTrue(viewModel.isSelectionMode.value)
-        assertTrue(viewModel.selectedDocuments.value.isEmpty())
+        assertTrue(viewModel.uiState.value.isSelectionMode)
+        assertTrue(viewModel.uiState.value.selectedDocuments.isEmpty())
     }
 
     @Test
@@ -118,8 +119,8 @@ class DocumentListViewModelTest {
 
         viewModel.exitSelectionMode()
 
-        assertFalse(viewModel.isSelectionMode.value)
-        assertTrue(viewModel.selectedDocuments.value.isEmpty())
+        assertFalse(viewModel.uiState.value.isSelectionMode)
+        assertTrue(viewModel.uiState.value.selectedDocuments.isEmpty())
     }
 
     @Test
@@ -170,11 +171,11 @@ class DocumentListViewModelTest {
         viewModel.enterSelectionMode()
         viewModel.toggleDocumentSelection("1")
         
-        assertTrue(viewModel.isSelectionMode.value)
+        assertTrue(viewModel.uiState.value.isSelectionMode)
 
         // Deselecting the last document should exit selection mode
         viewModel.toggleDocumentSelection("1")
         
-        assertFalse(viewModel.isSelectionMode.value)
+        assertFalse(viewModel.uiState.value.isSelectionMode)
     }
 }

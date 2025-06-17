@@ -11,11 +11,14 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.talktobook.presentation.screen.MainScreen
 import com.example.talktobook.presentation.screen.RecordingScreen
+import com.example.talktobook.presentation.screen.SettingsScreen
 import com.example.talktobook.presentation.screen.TextViewScreen
-import com.example.talktobook.presentation.screen.DocumentDetailScreen
 import com.example.talktobook.presentation.screen.document.DocumentListScreen
-import com.example.talktobook.presentation.screen.ChapterEditScreen
+import com.example.talktobook.presentation.screen.document.DocumentDetailScreen
+import com.example.talktobook.presentation.screen.chapter.ChapterListScreen
+import com.example.talktobook.presentation.screen.chapter.ChapterEditScreen
 import com.example.talktobook.presentation.screen.DocumentMergeScreen
 import com.example.talktobook.ui.components.TalkToBookScreen
 import com.example.talktobook.ui.components.TalkToBookPrimaryButton
@@ -31,34 +34,19 @@ fun TalkToBookNavigation(
         startDestination = startDestination,
         modifier = modifier
     ) {
-        // Main Screen - Placeholder for now
+        // Main Screen
         composable(Screen.Main.route) {
-            TalkToBookScreen(
-                title = "TalkToBook",
-                scrollable = false
-            ) {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
-                    verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center
-                ) {
-                    TalkToBookPrimaryButton(
-                        text = "Start Recording",
-                        onClick = {
-                            navController.navigate(Screen.Recording.route)
-                        }
-                    )
-                    
-                    androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(16.dp))
-                    
-                    TalkToBookPrimaryButton(
-                        text = "View Documents",
-                        onClick = {
-                            navController.navigate(Screen.DocumentList.route)
-                        }
-                    )
+            MainScreen(
+                onNavigateToRecording = {
+                    navController.navigate(Screen.Recording.route)
+                },
+                onNavigateToDocuments = {
+                    navController.navigate(Screen.DocumentList.route)
+                },
+                onNavigateToSettings = {
+                    navController.navigate(Screen.Settings.route)
                 }
-            }
+            )
         }
 
         // Recording Screen
@@ -67,10 +55,8 @@ fun TalkToBookNavigation(
                 onNavigateBack = {
                     navController.popBackStack()
                 },
-                onNavigateToProcessing = {
-                    // Navigate to text view with a placeholder recordingId
-                    // The actual recordingId should be handled by the RecordingScreen when recording completes
-                    navController.navigate(Screen.TextView.createRoute("current"))
+                onNavigateToProcessing = { recordingId ->
+                    navController.navigate(Screen.TextView.createRoute(recordingId))
                 }
             )
         }
@@ -92,6 +78,7 @@ fun TalkToBookNavigation(
             )
         }
         
+        // Document List Screen
         composable(Screen.DocumentList.route) {
             DocumentListScreen(
                 onNavigateBack = {
@@ -99,10 +86,15 @@ fun TalkToBookNavigation(
                 },
                 onNavigateToDocument = { documentId ->
                     navController.navigate(Screen.DocumentDetail.createRoute(documentId))
+                },
+                onNavigateToMerge = { selectedIds ->
+                    val idsString = selectedIds.joinToString(",")
+                    navController.navigate("${Screen.DocumentMerge.route}?selectedIds=$idsString")
                 }
             )
         }
         
+        // Document Detail Screen
         composable(
             route = Screen.DocumentDetail.route,
             arguments = listOf(navArgument(DOCUMENT_ID_KEY) { type = NavType.StringType })
@@ -122,6 +114,7 @@ fun TalkToBookNavigation(
             )
         }
         
+        // Document Merge Screen
         composable(
             route = "${Screen.DocumentMerge.route}?selectedIds={selectedIds}",
             arguments = listOf(navArgument("selectedIds") { 
@@ -129,24 +122,25 @@ fun TalkToBookNavigation(
                 defaultValue = ""
             })
         ) { backStackEntry ->
-            val selectedIdsParam = backStackEntry.arguments?.getString("selectedIds") ?: ""
-            val selectedIds = if (selectedIdsParam.isNotEmpty()) {
-                selectedIdsParam.split(",")
+            val selectedIdsString = backStackEntry.arguments?.getString("selectedIds") ?: ""
+            val selectedIds = if (selectedIdsString.isNotEmpty()) {
+                selectedIdsString.split(",")
             } else {
                 emptyList()
             }
             
             DocumentMergeScreen(
+                selectedDocumentIds = selectedIds,
                 onNavigateBack = {
                     navController.popBackStack()
                 },
                 onNavigateToDocument = { documentId ->
                     navController.navigate(Screen.DocumentDetail.createRoute(documentId))
-                },
-                selectedDocumentIds = selectedIds
+                }
             )
         }
         
+        // Chapter List Screen
         composable(
             route = Screen.ChapterList.route,
             arguments = listOf(navArgument(DOCUMENT_ID_KEY) { type = NavType.StringType })
@@ -163,6 +157,7 @@ fun TalkToBookNavigation(
             )
         }
         
+        // Chapter Edit Screen
         composable(
             route = Screen.ChapterEdit.route,
             arguments = listOf(navArgument(CHAPTER_ID_KEY) { type = NavType.StringType })
@@ -175,34 +170,14 @@ fun TalkToBookNavigation(
                 }
             )
         }
-    }
-}
-
-
-// Placeholder composables for missing screens
-@Composable
-private fun DocumentMergeScreen(
-    onNavigateBack: () -> Unit,
-    onNavigateToDocument: (String) -> Unit = {},
-    selectedDocumentIds: List<String> = emptyList()
-) {
-    TalkToBookScreen(title = "Document Merge") {
-        TalkToBookPrimaryButton(
-            text = "Back",
-            onClick = onNavigateBack
-        )
-    }
-}
-@Composable
-private fun ChapterListScreen(
-    documentId: String,
-    onNavigateBack: () -> Unit,
-    onNavigateToChapterEdit: (String) -> Unit
-) {
-    TalkToBookScreen(title = "Chapters") {
-        TalkToBookPrimaryButton(
-            text = "Back",
-            onClick = onNavigateBack
-        )
+        
+        // Settings Screen
+        composable(Screen.Settings.route) {
+            SettingsScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
     }
 }

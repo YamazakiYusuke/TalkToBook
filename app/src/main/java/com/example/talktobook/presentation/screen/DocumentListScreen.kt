@@ -242,7 +242,8 @@ fun DocumentListScreen(
                                     isSelectionMode = uiState.isSelectionMode,
                                     onSelectionToggle = { 
                                         viewModel.toggleDocumentSelection(document.id) 
-                                    }
+                                    },
+                                    selectionOrder = viewModel.getSelectionOrder(document.id)
                                 )
                             }
                         }
