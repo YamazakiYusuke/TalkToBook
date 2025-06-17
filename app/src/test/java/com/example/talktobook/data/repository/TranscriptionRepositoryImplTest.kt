@@ -37,7 +37,7 @@ class TranscriptionRepositoryImplTest {
     @MockK
     private lateinit var memoryCache: MemoryCache
 
-    @MockK
+    @MockK(relaxed = true)
     private lateinit var audioFile: File
 
     private lateinit var repository: TranscriptionRepositoryImpl
@@ -263,14 +263,8 @@ class TranscriptionRepositoryImplTest {
         coEvery { recordingDao.updateTranscriptionStatus(recordingEntity.id, TranscriptionStatus.COMPLETED) } just Runs
         coEvery { recordingDao.updateTranscribedText(recordingEntity.id, expectedText) } just Runs
 
-        // Mock file and API response
-        mockkConstructor(File::class)
-        every { anyConstructed<File>().exists() } returns true
-        every { anyConstructed<File>().absolutePath } returns "/path/to/audio.mp3"
-        every { anyConstructed<File>().lastModified() } returns 123456789L
-        every { anyConstructed<File>().name } returns "audio.mp3"
+        // Mock memory cache and API response directly without File constructor mocking
         coEvery { memoryCache.get<String>(any()) } returns null
-        every { anyConstructed<File>().asRequestBody(any()) } returns mockk<RequestBody>()
         coEvery { openAIApi.transcribeAudio(any(), any(), any(), any(), any()) } returns 
             Response.success(TranscriptionResponse(expectedText))
         coEvery { memoryCache.put(any(), expectedText, any()) } just Runs
@@ -304,15 +298,9 @@ class TranscriptionRepositoryImplTest {
         coEvery { recordingDao.updateTranscriptionStatus(recordingId, TranscriptionStatus.COMPLETED) } just Runs
         coEvery { recordingDao.updateTranscribedText(recordingId, expectedText) } just Runs
 
-        // Mock file and API response
-        mockkConstructor(File::class)
-        every { anyConstructed<File>().exists() } returns true
-        every { anyConstructed<File>().absolutePath } returns "/path/to/audio.mp3"
-        every { anyConstructed<File>().lastModified() } returns 123456789L
-        every { anyConstructed<File>().name } returns "audio.mp3"
+        // Mock dependencies directly without File constructor mocking
         coEvery { memoryCache.get<String>(any()) } returns null
         every { offlineManager.isOnline() } returns true
-        every { anyConstructed<File>().asRequestBody(any()) } returns mockk<RequestBody>()
         coEvery { openAIApi.transcribeAudio(any(), any(), any(), any(), any()) } returns 
             Response.success(TranscriptionResponse(expectedText))
         coEvery { memoryCache.put(any(), expectedText, any()) } just Runs
@@ -360,15 +348,9 @@ class TranscriptionRepositoryImplTest {
         coEvery { recordingDao.updateTranscriptionStatus(recordingId, TranscriptionStatus.IN_PROGRESS) } just Runs
         coEvery { recordingDao.updateTranscriptionStatus(recordingId, TranscriptionStatus.FAILED) } just Runs
 
-        // Mock file and API response to fail
-        mockkConstructor(File::class)
-        every { anyConstructed<File>().exists() } returns true
-        every { anyConstructed<File>().absolutePath } returns "/path/to/audio.mp3"
-        every { anyConstructed<File>().lastModified() } returns 123456789L
-        every { anyConstructed<File>().name } returns "audio.mp3"
+        // Mock dependencies to fail without File constructor mocking
         coEvery { memoryCache.get<String>(any()) } returns null
         every { offlineManager.isOnline() } returns true
-        every { anyConstructed<File>().asRequestBody(any()) } returns mockk<RequestBody>()
         coEvery { openAIApi.transcribeAudio(any(), any(), any(), any(), any()) } returns 
             Response.error(500, "Server error".toResponseBody())
 
