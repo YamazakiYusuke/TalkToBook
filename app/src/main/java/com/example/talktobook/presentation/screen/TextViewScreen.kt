@@ -263,7 +263,10 @@ private fun TextEditingContent(
         // Voice Correction Button (when text is selected)
         if (!uiState.isVoiceCorrectionActive) {
             VoiceCorrectionButton(
-                onStartVoiceCorrection = onStartVoiceCorrection
+                onStartVoiceCorrection = onStartVoiceCorrection,
+                enabled = uiState.editingText.isNotBlank(),
+                selectionStart = 0,
+                selectionEnd = minOf(uiState.editingText.length, 100) // Select first 100 chars or less
             )
         }
 

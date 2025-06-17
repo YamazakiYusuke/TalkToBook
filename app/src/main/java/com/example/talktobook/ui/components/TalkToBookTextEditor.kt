@@ -3,6 +3,8 @@ package com.example.talktobook.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -291,36 +293,3 @@ private val formattingOptions = listOf(
     FormattingOption(TextFormatting.NUMBERED_LIST, Icons.Default.FormatListNumbered, "Number")
 )
 
-@Composable
-private fun LazyRow(
-    modifier: Modifier = Modifier,
-    horizontalArrangement: Arrangement.Horizontal = Arrangement.Start,
-    contentPadding: PaddingValues = PaddingValues(0.dp),
-    content: @Composable LazyRowScope.() -> Unit
-) {
-    Row(
-        modifier = modifier
-            .horizontalScroll(rememberScrollState())
-            .padding(contentPadding),
-        horizontalArrangement = horizontalArrangement
-    ) {
-        content(LazyRowScopeImpl())
-    }
-}
-
-private class LazyRowScopeImpl : LazyRowScope {
-    override fun items(count: Int, key: ((index: Int) -> Any)?, itemContent: @Composable (index: Int) -> Unit) {
-        // Implementation for LazyRowScope
-    }
-    
-    override fun item(key: Any?, content: @Composable () -> Unit) {
-        content()
-    }
-}
-
-// Extension function for items with list
-private fun LazyRowScope.items(items: List<FormattingOption>, itemContent: @Composable (FormattingOption) -> Unit) {
-    items.forEach { item ->
-        itemContent(item)
-    }
-}

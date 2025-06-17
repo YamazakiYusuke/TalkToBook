@@ -9,10 +9,11 @@ import com.example.talktobook.ui.theme.SeniorComponentDefaults
 @Composable
 fun VoiceCorrectionButton(
     onStartVoiceCorrection: (Int, Int) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    selectionStart: Int = 0,
+    selectionEnd: Int = 0
 ) {
-    // This is a simplified voice correction trigger
-    // In a real implementation, you would detect text selection
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = SeniorComponentDefaults.Card.colors()
@@ -20,9 +21,12 @@ fun VoiceCorrectionButton(
         TalkToBookSecondaryButton(
             text = "Correct with Voice",
             onClick = { 
-                // For demo purposes, select the first 50 characters
-                onStartVoiceCorrection(0, 50)
+                // Use provided selection range or default to beginning
+                val start = if (selectionStart >= 0 && selectionEnd > selectionStart) selectionStart else 0
+                val end = if (selectionStart >= 0 && selectionEnd > selectionStart) selectionEnd else 0
+                onStartVoiceCorrection(start, end)
             },
+            enabled = enabled,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(SeniorComponentDefaults.Spacing.Medium)

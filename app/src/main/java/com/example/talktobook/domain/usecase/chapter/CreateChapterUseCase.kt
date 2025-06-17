@@ -3,6 +3,7 @@ package com.example.talktobook.domain.usecase.chapter
 import com.example.talktobook.domain.model.Chapter
 import com.example.talktobook.domain.repository.DocumentRepository
 import com.example.talktobook.domain.usecase.BaseUseCase
+import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 
 /**
@@ -51,11 +52,8 @@ class CreateChapterUseCase @Inject constructor(
                 params.orderIndex
             } else {
                 // Get existing chapters to determine next index
-                val existingChapters = documentRepository.getChaptersByDocument(params.documentId)
-                var maxIndex = -1
-                existingChapters.collect { chapters ->
-                    maxIndex = chapters.maxOfOrNull { it.orderIndex } ?: -1
-                }
+                val existingChapters = documentRepository.getChaptersByDocument(params.documentId).first()
+                val maxIndex = existingChapters.maxOfOrNull { it.orderIndex } ?: -1
                 maxIndex + 1
             }
 
