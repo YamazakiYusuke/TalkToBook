@@ -11,7 +11,6 @@ abstract class BaseViewModel<T : UiState> : ViewModel() {
 
     protected val _isLoading = MutableStateFlow(false)
     protected val _error = MutableStateFlow<String?>(null)
-    
     abstract val initialState: T
     abstract val uiState: StateFlow<T>
 

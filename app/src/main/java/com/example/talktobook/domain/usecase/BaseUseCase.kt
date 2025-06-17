@@ -5,16 +5,16 @@ import kotlinx.coroutines.withContext
 
 abstract class BaseUseCase<in P, R> {
 
-    suspend operator fun invoke(parameters: P): Result<R> = try {
+    suspend operator fun invoke(params: P): Result<R> = try {
         withContext(Dispatchers.IO) {
-            execute(parameters)
+            execute(params)
         }
     } catch (exception: Exception) {
         Result.failure(exception)
     }
 
     @Throws(RuntimeException::class)
-    protected abstract suspend fun execute(parameters: P): Result<R>
+    protected abstract suspend fun execute(params: P): Result<R>
 }
 
 abstract class BaseUseCaseNoParams<R> {

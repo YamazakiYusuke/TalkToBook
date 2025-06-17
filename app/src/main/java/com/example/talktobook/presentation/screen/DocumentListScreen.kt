@@ -200,8 +200,8 @@ fun DocumentListScreen(
                 }
                 
                 is DataState.Success -> {
-                    val documentsData = (uiState.documents as DataState.Success).data
-                    if (documentsData.isEmpty()) {
+                    val successState = uiState.documents as DataState.Success
+                    if (successState.data.isEmpty()) {
                         Box(
                             modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
@@ -231,7 +231,7 @@ fun DocumentListScreen(
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             items(
-                                items = documentsData,
+                                items = successState.data,
                                 key = { it.id }
                             ) { document ->
                                 DocumentCard(
@@ -251,6 +251,7 @@ fun DocumentListScreen(
                 }
                 
                 is DataState.Error -> {
+                    val errorState = uiState.documents as DataState.Error
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
@@ -266,7 +267,7 @@ fun DocumentListScreen(
                                 textAlign = TextAlign.Center
                             )
                             Text(
-                                text = (uiState.documents as DataState.Error).message,
+                                text = errorState.message,
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.onSurface,
                                 textAlign = TextAlign.Center

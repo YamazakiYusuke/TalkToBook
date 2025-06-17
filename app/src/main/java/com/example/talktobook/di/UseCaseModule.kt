@@ -1,13 +1,85 @@
 package com.example.talktobook.di
 
+import com.example.talktobook.domain.repository.DocumentRepository
+import com.example.talktobook.domain.usecase.document.CreateDocumentUseCase
+import com.example.talktobook.domain.usecase.document.UpdateDocumentUseCase
+import com.example.talktobook.domain.usecase.document.GetDocumentUseCase
+import com.example.talktobook.domain.usecase.document.DeleteDocumentUseCase
+import com.example.talktobook.domain.usecase.document.GetAllDocumentsUseCase
+import com.example.talktobook.domain.usecase.chapter.CreateChapterUseCase
+import com.example.talktobook.domain.usecase.chapter.UpdateChapterUseCase
+import com.example.talktobook.domain.usecase.chapter.DeleteChapterUseCase
+import com.example.talktobook.domain.usecase.chapter.ReorderChaptersUseCase
+import com.example.talktobook.domain.usecase.chapter.MergeChaptersUseCase
 import dagger.Module
+import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
 object UseCaseModule {
-    // Use cases will be provided here when they are implemented
-    // They will typically have @Provides annotations for concrete implementations
-    // that depend on repository interfaces
+
+    // Document Use Cases
+    @Provides
+    @Singleton
+    fun provideCreateDocumentUseCase(
+        documentRepository: DocumentRepository
+    ): CreateDocumentUseCase = CreateDocumentUseCase(documentRepository)
+
+    @Provides
+    @Singleton
+    fun provideUpdateDocumentUseCase(
+        documentRepository: DocumentRepository
+    ): UpdateDocumentUseCase = UpdateDocumentUseCase(documentRepository)
+
+    @Provides
+    @Singleton
+    fun provideGetDocumentUseCase(
+        documentRepository: DocumentRepository
+    ): GetDocumentUseCase = GetDocumentUseCase(documentRepository)
+
+    @Provides
+    @Singleton
+    fun provideDeleteDocumentUseCase(
+        documentRepository: DocumentRepository
+    ): DeleteDocumentUseCase = DeleteDocumentUseCase(documentRepository)
+
+    @Provides
+    @Singleton
+    fun provideGetAllDocumentsUseCase(
+        documentRepository: DocumentRepository
+    ): GetAllDocumentsUseCase = GetAllDocumentsUseCase(documentRepository)
+
+    // Chapter Use Cases
+    @Provides
+    @Singleton
+    fun provideCreateChapterUseCase(
+        documentRepository: DocumentRepository
+    ): CreateChapterUseCase = CreateChapterUseCase(documentRepository)
+
+    @Provides
+    @Singleton
+    fun provideUpdateChapterUseCase(
+        documentRepository: DocumentRepository
+    ): UpdateChapterUseCase = UpdateChapterUseCase(documentRepository)
+
+    @Provides
+    @Singleton
+    fun provideReorderChaptersUseCase(
+        documentRepository: DocumentRepository
+    ): ReorderChaptersUseCase = ReorderChaptersUseCase(documentRepository)
+
+    @Provides
+    @Singleton
+    fun provideDeleteChapterUseCase(
+        documentRepository: DocumentRepository
+    ): DeleteChapterUseCase = DeleteChapterUseCase(documentRepository)
+
+    @Provides
+    @Singleton
+    fun provideMergeChaptersUseCase(
+        documentRepository: DocumentRepository
+    ): MergeChaptersUseCase = MergeChaptersUseCase(documentRepository)
 }

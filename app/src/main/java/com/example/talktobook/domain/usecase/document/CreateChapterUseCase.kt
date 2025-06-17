@@ -18,9 +18,9 @@ class CreateChapterUseCase @Inject constructor(
         val content: String = ""
     )
 
-    override suspend fun execute(parameters: Params): Result<Chapter> {
+    override suspend fun execute(params: Params): Result<Chapter> {
         // Get current chapters to determine next order index
-        val existingChapters = documentRepository.getChaptersByDocument(parameters.documentId)
+        val existingChapters = documentRepository.getChaptersByDocument(params.documentId)
         val orderIndex = try {
             val chapters = existingChapters.first()
             (chapters.maxOfOrNull { it.orderIndex } ?: -1) + 1
@@ -29,9 +29,9 @@ class CreateChapterUseCase @Inject constructor(
         }
         
         return documentRepository.createChapter(
-            documentId = parameters.documentId,
-            title = parameters.title,
-            content = parameters.content,
+            documentId = params.documentId,
+            title = params.title,
+            content = params.content,
             orderIndex = orderIndex
         )
     }

@@ -25,7 +25,7 @@ data class DocumentListUiState(
     val canMerge: Boolean = false
 ) : UiState
 
-@HiltViewModel
+// @HiltViewModel - temporarily commented out for debugging
 class DocumentListViewModel @Inject constructor(
     private val getAllDocumentsUseCase: GetAllDocumentsUseCase,
     private val deleteDocumentUseCase: DeleteDocumentUseCase
@@ -83,7 +83,7 @@ class DocumentListViewModel @Inject constructor(
 
     fun deleteDocument(documentId: String) {
         launchSafe {
-            deleteDocumentUseCase(documentId)
+            deleteDocumentUseCase(DeleteDocumentUseCase.Params(documentId))
                 .fold(
                     onSuccess = {
                         // Documents will be updated through the flow

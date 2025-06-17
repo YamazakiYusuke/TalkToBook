@@ -1,7 +1,9 @@
 package com.example.talktobook.ui.navigation
 
+import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -12,7 +14,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.talktobook.presentation.screen.MainScreen
 import com.example.talktobook.presentation.screen.RecordingScreen
 import com.example.talktobook.presentation.screen.SettingsScreen
-import com.example.talktobook.presentation.screen.DocumentListScreen
+import com.example.talktobook.presentation.screen.TextViewScreen
+import com.example.talktobook.presentation.screen.document.DocumentListScreen
 import com.example.talktobook.presentation.screen.document.DocumentDetailScreen
 import com.example.talktobook.presentation.screen.chapter.ChapterListScreen
 import com.example.talktobook.presentation.screen.chapter.ChapterEditScreen
@@ -31,6 +34,7 @@ fun TalkToBookNavigation(
         startDestination = startDestination,
         modifier = modifier
     ) {
+        // Main Screen
         composable(Screen.Main.route) {
             MainScreen(
                 onNavigateToRecording = {
@@ -44,29 +48,20 @@ fun TalkToBookNavigation(
                 }
             )
         }
-        
+
+        // Recording Screen
         composable(Screen.Recording.route) {
             RecordingScreen(
                 onNavigateBack = {
                     navController.popBackStack()
                 },
-                onNavigateToProcessing = {
-                    navController.navigate(Screen.Processing.route)
-                }
-            )
-        }
-        
-        composable(Screen.Processing.route) {
-            ProcessingScreen(
-                onNavigateToTextView = { recordingId ->
+                onNavigateToProcessing = { recordingId ->
                     navController.navigate(Screen.TextView.createRoute(recordingId))
-                },
-                onNavigateToError = {
-                    navController.navigate(Screen.Error.route)
                 }
             )
         }
-        
+
+        // Text Editing Screen
         composable(
             route = Screen.TextView.route,
             arguments = listOf(navArgument(RECORDING_ID_KEY) { type = NavType.StringType })
@@ -83,6 +78,7 @@ fun TalkToBookNavigation(
             )
         }
         
+        // Document List Screen
         composable(Screen.DocumentList.route) {
             DocumentListScreen(
                 onNavigateBack = {
@@ -91,16 +87,14 @@ fun TalkToBookNavigation(
                 onNavigateToDocument = { documentId ->
                     navController.navigate(Screen.DocumentDetail.createRoute(documentId))
                 },
-                onNavigateToMerge = {
-                    navController.navigate(Screen.DocumentMerge.route)
-                },
-                onNavigateToMergeWithSelection = { selectedIds ->
-                    val selectedIdsParam = selectedIds.joinToString(",")
-                    navController.navigate("${Screen.DocumentMerge.route}?selectedIds=$selectedIdsParam")
+                onNavigateToMerge = { selectedIds ->
+                    val idsString = selectedIds.joinToString(",")
+                    navController.navigate("${Screen.DocumentMerge.route}?selectedIds=$idsString")
                 }
             )
         }
         
+        // Document Detail Screen
         composable(
             route = Screen.DocumentDetail.route,
             arguments = listOf(navArgument(DOCUMENT_ID_KEY) { type = NavType.StringType })
@@ -111,12 +105,16 @@ fun TalkToBookNavigation(
                 onNavigateBack = {
                     navController.popBackStack()
                 },
-                onNavigateToChapters = { docId ->
-                    navController.navigate(Screen.ChapterList.createRoute(docId))
+                onNavigateToChapters = {
+                    navController.navigate(Screen.ChapterList.createRoute(documentId))
+                },
+                onNavigateToChapterEdit = { chapterId ->
+                    navController.navigate(Screen.ChapterEdit.createRoute(chapterId))
                 }
             )
         }
         
+        // Document Merge Screen
         composable(
             route = "${Screen.DocumentMerge.route}?selectedIds={selectedIds}",
             arguments = listOf(navArgument("selectedIds") { 
@@ -124,24 +122,25 @@ fun TalkToBookNavigation(
                 defaultValue = ""
             })
         ) { backStackEntry ->
-            val selectedIdsParam = backStackEntry.arguments?.getString("selectedIds") ?: ""
-            val selectedIds = if (selectedIdsParam.isNotEmpty()) {
-                selectedIdsParam.split(",")
+            val selectedIdsString = backStackEntry.arguments?.getString("selectedIds") ?: ""
+            val selectedIds = if (selectedIdsString.isNotEmpty()) {
+                selectedIdsString.split(",")
             } else {
                 emptyList()
             }
             
             DocumentMergeScreen(
+                selectedDocumentIds = selectedIds,
                 onNavigateBack = {
                     navController.popBackStack()
                 },
                 onNavigateToDocument = { documentId ->
                     navController.navigate(Screen.DocumentDetail.createRoute(documentId))
-                },
-                selectedDocumentIds = selectedIds
+                }
             )
         }
         
+        // Chapter List Screen
         composable(
             route = Screen.ChapterList.route,
             arguments = listOf(navArgument(DOCUMENT_ID_KEY) { type = NavType.StringType })
@@ -152,12 +151,13 @@ fun TalkToBookNavigation(
                 onNavigateBack = {
                     navController.popBackStack()
                 },
-                onNavigateToChapter = { chapterId ->
+                onNavigateToChapterEdit = { chapterId ->
                     navController.navigate(Screen.ChapterEdit.createRoute(chapterId))
                 }
             )
         }
         
+        // Chapter Edit Screen
         composable(
             route = Screen.ChapterEdit.route,
             arguments = listOf(navArgument(CHAPTER_ID_KEY) { type = NavType.StringType })
@@ -171,6 +171,7 @@ fun TalkToBookNavigation(
             )
         }
         
+        // Settings Screen
         composable(Screen.Settings.route) {
             SettingsScreen(
                 onNavigateBack = {
@@ -178,77 +179,5 @@ fun TalkToBookNavigation(
                 }
             )
         }
-        
-        composable(Screen.Error.route) {
-            ErrorScreen(
-                onNavigateBack = {
-                    navController.popBackStack()
-                },
-                onNavigateToMain = {
-                    navController.navigate(Screen.Main.route) {
-                        popUpTo(Screen.Main.route) { inclusive = true }
-                    }
-                }
-            )
-        }
-    }
-}
-
-// Placeholder screens for demonstration
-
-@Composable
-private fun ProcessingScreen(
-    onNavigateToTextView: (String) -> Unit,
-    onNavigateToError: () -> Unit
-) {
-    TalkToBookScreen(title = "Processing...") {
-        TalkToBookPrimaryButton(
-            text = "View Text (Demo)",
-            onClick = { onNavigateToTextView("demo-recording-id") }
-        )
-        TalkToBookPrimaryButton(
-            text = "Simulate Error",
-            onClick = onNavigateToError
-        )
-    }
-}
-
-@Composable
-private fun TextViewScreen(
-    recordingId: String,
-    onNavigateBack: () -> Unit,
-    onNavigateToDocuments: () -> Unit
-) {
-    TalkToBookScreen(title = "Text View") {
-        TalkToBookPrimaryButton(
-            text = "Save to Documents",
-            onClick = onNavigateToDocuments
-        )
-        TalkToBookPrimaryButton(
-            text = "Back",
-            onClick = onNavigateBack
-        )
-    }
-}
-
-
-
-
-
-
-@Composable
-private fun ErrorScreen(
-    onNavigateBack: () -> Unit,
-    onNavigateToMain: () -> Unit
-) {
-    TalkToBookScreen(title = "Error") {
-        TalkToBookPrimaryButton(
-            text = "Retry",
-            onClick = onNavigateBack
-        )
-        TalkToBookPrimaryButton(
-            text = "Home",
-            onClick = onNavigateToMain
-        )
     }
 }

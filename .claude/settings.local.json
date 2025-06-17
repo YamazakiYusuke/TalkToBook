@@ -1,6 +1,7 @@
 {
   "permissions": {
     "allow": [
+      "Bash(-exec kotlinc -classpath /usr/lib/jvm/java-17-openjdk-amd64/lib/rt.jar {} -d /tmp/kotlin-check)"
       "Bash(git add:*)",
       "Bash(git push:*)",
       "Bash(mkdir:*)",
