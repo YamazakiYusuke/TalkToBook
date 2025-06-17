@@ -1,8 +1,16 @@
 package com.example.talktobook.di
 
 import com.example.talktobook.domain.repository.DocumentRepository
-import com.example.talktobook.domain.usecase.document.*
-import com.example.talktobook.domain.usecase.chapter.*
+import com.example.talktobook.domain.usecase.document.CreateDocumentUseCase
+import com.example.talktobook.domain.usecase.document.UpdateDocumentUseCase
+import com.example.talktobook.domain.usecase.document.GetDocumentUseCase
+import com.example.talktobook.domain.usecase.document.DeleteDocumentUseCase
+import com.example.talktobook.domain.usecase.document.GetAllDocumentsUseCase
+import com.example.talktobook.domain.usecase.chapter.CreateChapterUseCase
+import com.example.talktobook.domain.usecase.chapter.UpdateChapterUseCase
+import com.example.talktobook.domain.usecase.chapter.DeleteChapterUseCase
+import com.example.talktobook.domain.usecase.chapter.ReorderChaptersUseCase
+import com.example.talktobook.domain.usecase.chapter.MergeChaptersUseCase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

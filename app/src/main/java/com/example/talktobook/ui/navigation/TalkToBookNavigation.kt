@@ -66,15 +66,15 @@ fun TalkToBookNavigation(
                 onNavigateBack = {
                     navController.popBackStack()
                 },
-                onNavigateToTextView = { recordingId ->
-                    navController.navigate(Screen.TextEdit.createRoute(recordingId))
+                onNavigateToProcessing = { recordingId ->
+                    navController.navigate(Screen.TextView.createRoute(recordingId))
                 }
             )
         }
 
         // Text Editing Screen
         composable(
-            route = Screen.TextEdit.route,
+            route = Screen.TextView.route,
             arguments = listOf(navArgument(RECORDING_ID_KEY) { type = NavType.StringType })
         ) { backStackEntry ->
             val recordingId = backStackEntry.arguments?.getString(RECORDING_ID_KEY) ?: ""
@@ -158,30 +158,6 @@ fun TalkToBookNavigation(
     }
 }
 
-// Screen definitions
-sealed class Screen(val route: String) {
-    object Main : Screen("main")
-    object Recording : Screen("recording")
-    object TextEdit : Screen("text_edit/{$RECORDING_ID_KEY}") {
-        fun createRoute(recordingId: String) = "text_edit/$recordingId"
-    }
-    object DocumentList : Screen("document_list")
-    object DocumentDetail : Screen("document_detail/{$DOCUMENT_ID_KEY}") {
-        fun createRoute(documentId: String) = "document_detail/$documentId"
-    }
-    object DocumentMerge : Screen("document_merge")
-    object ChapterList : Screen("chapter_list/{$DOCUMENT_ID_KEY}") {
-        fun createRoute(documentId: String) = "chapter_list/$documentId"
-    }
-    object ChapterEdit : Screen("chapter_edit/{$CHAPTER_ID_KEY}") {
-        fun createRoute(chapterId: String) = "chapter_edit/$chapterId"
-    }
-}
-
-// Navigation argument keys
-const val RECORDING_ID_KEY = "recordingId"
-const val DOCUMENT_ID_KEY = "documentId"
-const val CHAPTER_ID_KEY = "chapterId"
 
 // Placeholder composables for missing screens
 @Composable
