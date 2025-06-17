@@ -9,7 +9,7 @@ class TranscribeAudioUseCase @Inject constructor(
     private val transcriptionRepository: TranscriptionRepository
 ) : BaseUseCase<File, String>() {
 
-    override suspend fun execute(parameters: File): Result<String> {
-        return transcriptionRepository.transcribeAudio(parameters)
+    override suspend fun execute(params: File): Result<String> {
+        return transcriptionRepository.transcribeAudio(params)
     }
 }

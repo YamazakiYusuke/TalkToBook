@@ -144,9 +144,7 @@ class DocumentDetailViewModel @Inject constructor(
             _isSavingFlow.value = true
             updateDocumentUseCase(
                 UpdateDocumentUseCase.Params(
-                    documentId = document.id,
-                    title = document.title,
-                    content = document.content
+                    document = document
                 )
             ).fold(
                 onSuccess = { updatedDocument ->
@@ -182,7 +180,7 @@ class DocumentDetailViewModel @Inject constructor(
 
     fun deleteDocument(onSuccess: () -> Unit) {
         launchSafe {
-            deleteDocumentUseCase(documentId)
+            deleteDocumentUseCase(DeleteDocumentUseCase.Params(documentId))
                 .fold(
                     onSuccess = {
                         onSuccess()

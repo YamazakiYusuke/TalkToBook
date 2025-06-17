@@ -6,12 +6,65 @@ import com.example.talktobook.domain.usecase.BaseUseCase
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Use case for updating an existing chapter
+ * Handles validation and ensures data integrity
+ */
 @Singleton
 class UpdateChapterUseCase @Inject constructor(
     private val documentRepository: DocumentRepository
 ) : BaseUseCase<Chapter, Chapter>() {
 
     override suspend fun execute(parameters: Chapter): Result<Chapter> {
-        return documentRepository.updateChapter(parameters)
+        return try {
+            val chapter = parameters
+
+            // Validate chapter data
+            if (chapter.id.isBlank()) {
+                return Result.failure(IllegalArgumentException("Chapter ID cannot be blank"))
+            }
+
+            if (chapter.documentId.isBlank()) {
+                return Result.failure(IllegalArgumentException("Document ID cannot be blank"))
+            }
+
+            if (chapter.title.isBlank()) {
+                return Result.failure(IllegalArgumentException("Chapter title cannot be blank"))
+            }
+
+            if (chapter.title.length > MAX_TITLE_LENGTH) {
+                return Result.failure(IllegalArgumentException("Chapter title cannot exceed $MAX_TITLE_LENGTH characters"))
+            }
+
+            if (chapter.content.length > MAX_CONTENT_LENGTH) {
+                return Result.failure(IllegalArgumentException("Chapter content cannot exceed $MAX_CONTENT_LENGTH characters"))
+            }
+
+            if (chapter.orderIndex < 0) {
+                return Result.failure(IllegalArgumentException("Order index cannot be negative"))
+            }
+
+            // Check if chapter exists
+            val existingChapter = documentRepository.getChapter(chapter.id)
+                ?: return Result.failure(NoSuchElementException("Chapter with ID ${chapter.id} not found"))
+
+            // Verify document exists
+            val document = documentRepository.getDocument(chapter.documentId)
+                ?: return Result.failure(NoSuchElementException("Document with ID ${chapter.documentId} not found"))
+
+            // Update chapter with new timestamp
+            val updatedChapter = chapter.copy(
+                updatedAt = System.currentTimeMillis()
+            )
+
+            documentRepository.updateChapter(updatedChapter)
+        } catch (exception: Exception) {
+            Result.failure(exception)
+        }
+    }
+
+    companion object {
+        const val MAX_TITLE_LENGTH = 255
+        const val MAX_CONTENT_LENGTH = 500_000
     }
 }

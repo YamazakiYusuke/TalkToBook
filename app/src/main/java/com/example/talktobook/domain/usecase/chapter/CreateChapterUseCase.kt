@@ -3,9 +3,14 @@ package com.example.talktobook.domain.usecase.chapter
 import com.example.talktobook.domain.model.Chapter
 import com.example.talktobook.domain.repository.DocumentRepository
 import com.example.talktobook.domain.usecase.BaseUseCase
+import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Use case for creating a new chapter within a document
+ * Handles chapter ordering and validation
+ */
 @Singleton
 class CreateChapterUseCase @Inject constructor(
     private val documentRepository: DocumentRepository
@@ -14,16 +19,60 @@ class CreateChapterUseCase @Inject constructor(
     data class Params(
         val documentId: String,
         val title: String,
-        val content: String,
-        val orderIndex: Int
+        val content: String = "",
+        val orderIndex: Int? = null // If null, will be appended to the end
     )
 
-    override suspend fun execute(parameters: Params): Result<Chapter> {
-        return documentRepository.createChapter(
-            documentId = parameters.documentId,
-            title = parameters.title,
-            content = parameters.content,
-            orderIndex = parameters.orderIndex
-        )
+    override suspend fun execute(params: Params): Result<Chapter> {
+        return try {
+            // Validate input parameters
+            if (params.documentId.isBlank()) {
+                return Result.failure(IllegalArgumentException("Document ID cannot be blank"))
+            }
+
+            if (params.title.isBlank()) {
+                return Result.failure(IllegalArgumentException("Chapter title cannot be blank"))
+            }
+
+            if (params.title.length > MAX_TITLE_LENGTH) {
+                return Result.failure(IllegalArgumentException("Chapter title cannot exceed $MAX_TITLE_LENGTH characters"))
+            }
+
+            if (params.content.length > MAX_CONTENT_LENGTH) {
+                return Result.failure(IllegalArgumentException("Chapter content cannot exceed $MAX_CONTENT_LENGTH characters"))
+            }
+
+            // Verify document exists
+            val document = documentRepository.getDocument(params.documentId)
+                ?: return Result.failure(NoSuchElementException("Document with ID ${params.documentId} not found"))
+
+            // Determine order index
+            val finalOrderIndex = if (params.orderIndex != null) {
+                if (params.orderIndex < 0) {
+                    return Result.failure(IllegalArgumentException("Order index cannot be negative"))
+                }
+                params.orderIndex
+            } else {
+                // Get existing chapters to determine next index
+                val existingChapters = documentRepository.getChaptersByDocument(params.documentId).first()
+                val maxIndex = existingChapters.maxOfOrNull { it.orderIndex } ?: -1
+                maxIndex + 1
+            }
+
+            // Create chapter
+            documentRepository.createChapter(
+                documentId = params.documentId,
+                title = params.title.trim(),
+                content = params.content,
+                orderIndex = finalOrderIndex
+            )
+        } catch (exception: Exception) {
+            Result.failure(exception)
+        }
+    }
+
+    companion object {
+        const val MAX_TITLE_LENGTH = 255
+        const val MAX_CONTENT_LENGTH = 500_000 // 500KB per chapter
     }
 }

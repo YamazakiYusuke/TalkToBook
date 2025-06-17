@@ -184,7 +184,7 @@ fun DocumentListScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Column(
-                            horizontalAlignment = Alignment.CenterVertically,
+                            horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
                             CircularProgressIndicator(
@@ -200,13 +200,14 @@ fun DocumentListScreen(
                 }
                 
                 is DataState.Success -> {
-                    if (uiState.documents.data.isEmpty()) {
+                    val successState = uiState.documents as DataState.Success
+                    if (successState.data.isEmpty()) {
                         Box(
                             modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
                         ) {
                             Column(
-                                horizontalAlignment = Alignment.CenterVertically,
+                                horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
                                 Text(
@@ -230,7 +231,7 @@ fun DocumentListScreen(
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             items(
-                                items = uiState.documents.data,
+                                items = successState.data,
                                 key = { it.id }
                             ) { document ->
                                 DocumentCard(
@@ -249,12 +250,13 @@ fun DocumentListScreen(
                 }
                 
                 is DataState.Error -> {
+                    val errorState = uiState.documents as DataState.Error
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
                         Column(
-                            horizontalAlignment = Alignment.CenterVertically,
+                            horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
                             Text(
@@ -264,7 +266,7 @@ fun DocumentListScreen(
                                 textAlign = TextAlign.Center
                             )
                             Text(
-                                text = uiState.documents.message,
+                                text = errorState.message,
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.onSurface,
                                 textAlign = TextAlign.Center
