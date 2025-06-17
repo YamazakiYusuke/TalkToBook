@@ -216,7 +216,7 @@ private fun FormattingButton(
     ) {
         OutlinedButton(
             onClick = onClick,
-            modifier = Modifier.size(SeniorComponentDefaults.TouchTarget.MinimumTouchTarget),
+            modifier = Modifier.size(SeniorComponentDefaults.TouchTarget.RecommendedTouchTarget),
             shape = RoundedCornerShape(8.dp),
             contentPadding = PaddingValues(4.dp)
         ) {

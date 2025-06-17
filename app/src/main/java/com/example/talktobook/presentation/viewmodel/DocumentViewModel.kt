@@ -42,33 +42,33 @@ class DocumentViewModel @Inject constructor(
      */
     fun loadDocuments() {
         viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            
             getAllDocumentsUseCase()
-                .onStart {
-                    _uiState.value = _uiState.value.copy(isLoading = true, error = null)
-                }
-                .catch { exception ->
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        error = exception.message ?: "Failed to load documents"
-                    )
-                }
-                .collect { result ->
-                    result.fold(
-                        onSuccess = { documents ->
-                            _uiState.value = _uiState.value.copy(
-                                isLoading = false,
-                                documents = documents,
-                                error = null
-                            )
-                        },
-                        onFailure = { exception ->
-                            _uiState.value = _uiState.value.copy(
-                                isLoading = false,
-                                error = exception.message ?: "Failed to load documents"
-                            )
-                        }
-                    )
-                }
+                .fold(
+                    onSuccess = { documentsFlow ->
+                        documentsFlow
+                            .catch { exception ->
+                                _uiState.value = _uiState.value.copy(
+                                    isLoading = false,
+                                    error = exception.message ?: "Failed to load documents"
+                                )
+                            }
+                            .collect { documents ->
+                                _uiState.value = _uiState.value.copy(
+                                    isLoading = false,
+                                    documents = documents,
+                                    error = null
+                                )
+                            }
+                    },
+                    onFailure = { exception ->
+                        _uiState.value = _uiState.value.copy(
+                            isLoading = false,
+                            error = exception.message ?: "Failed to load documents"
+                        )
+                    }
+                )
         }
     }
 

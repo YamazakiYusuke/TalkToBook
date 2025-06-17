@@ -47,14 +47,13 @@ fun TextViewScreen(
 
     TalkToBookScreen(
         title = "Edit Transcribed Text",
-        scrollable = false,
-        showBackButton = false // Custom back handling for unsaved changes
+        scrollable = false
     ) {
         if (uiState.isLoading) {
             LoadingContent()
         } else if (uiState.error != null) {
             ErrorContent(
-                error = uiState.error,
+                error = uiState.error ?: "",
                 onRetry = { viewModel.loadRecording(recordingId) },
                 onDismiss = viewModel::clearError,
                 onNavigateBack = onNavigateBack

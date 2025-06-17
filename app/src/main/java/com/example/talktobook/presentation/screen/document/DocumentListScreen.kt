@@ -62,13 +62,10 @@ fun DocumentListScreen(
                     LoadingContent()
                 }
                 uiState.error != null -> {
-                    val errorMessage = uiState.error
-                    if (errorMessage != null) {
-                        ErrorContent(
-                            error = errorMessage,
-                            onRetry = { viewModel.clearDocumentError() }
-                        )
-                    }
+                    ErrorContent(
+                        error = uiState.error ?: \"\",
+                        onRetry = { viewModel.clearDocumentError() }
+                    )
                 }
                 uiState.documents.isEmpty() -> {
                     EmptyContent()

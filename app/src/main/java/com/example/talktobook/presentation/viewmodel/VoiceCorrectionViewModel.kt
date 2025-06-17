@@ -80,7 +80,7 @@ class VoiceCorrectionViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             
-            val result = stopRecordingUseCase()
+            val result = stopRecordingUseCase(\"current_recording\")
             result.fold(
                 onSuccess = { recording ->
                     _uiState.value = _uiState.value.copy(
@@ -91,7 +91,7 @@ class VoiceCorrectionViewModel @Inject constructor(
                     )
                     
                     // Start transcription process
-                    transcribeRecording(recording.id)
+                    recording?.let { transcribeRecording(it.id) }
                 },
                 onFailure = { exception ->
                     _uiState.value = _uiState.value.copy(
@@ -119,9 +119,7 @@ class VoiceCorrectionViewModel @Inject constructor(
                 val recording = audioRepository.getRecording(recordingId)
                 if (recording != null) {
                     val transcriptionResult = transcribeAudioUseCase(
-                        com.example.talktobook.domain.usecase.transcription.TranscribeAudioUseCase.Params(
-                            audioFilePath = recording.audioFilePath
-                        )
+                        java.io.File(recording.audioFilePath)
                     )
                     
                     transcriptionResult.fold(
@@ -185,7 +183,7 @@ class VoiceCorrectionViewModel @Inject constructor(
         viewModelScope.launch {
             // Stop recording if active
             if (_uiState.value.isRecording) {
-                stopRecordingUseCase()
+                stopRecordingUseCase(\"current_recording\")
             }
             
             // Clean up any temporary recording

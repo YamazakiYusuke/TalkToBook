@@ -66,8 +66,10 @@ fun TalkToBookNavigation(
                 onNavigateBack = {
                     navController.popBackStack()
                 },
-                onNavigateToProcessing = { recordingId ->
-                    navController.navigate(Screen.TextView.createRoute(recordingId))
+                onNavigateToProcessing = {
+                    // Navigate to text view with a placeholder recordingId
+                    // The actual recordingId should be handled by the RecordingScreen when recording completes
+                    navController.navigate(Screen.TextView.createRoute(\"current\"))
                 }
             )
         }

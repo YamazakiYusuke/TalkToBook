@@ -58,7 +58,7 @@ fun DocumentDetailScreen(
             LoadingContent()
         } else if (documentUiState.error != null) {
             ErrorContent(
-                error = documentUiState.error,
+                error = documentUiState.error ?: \"\",
                 onRetry = { documentViewModel.loadDocument(documentId) },
                 onDismiss = documentViewModel::clearError,
                 onNavigateBack = onNavigateBack
@@ -316,7 +316,7 @@ private fun DocumentHeader(
                 ) {
                     IconButton(
                         onClick = onEditDocument,
-                        modifier = Modifier.size(SeniorComponentDefaults.TouchTarget.MinimumTouchTarget)
+                        modifier = Modifier.size(SeniorComponentDefaults.TouchTarget.RecommendedTouchTarget)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Edit,
@@ -327,7 +327,7 @@ private fun DocumentHeader(
 
                     IconButton(
                         onClick = onDeleteDocument,
-                        modifier = Modifier.size(SeniorComponentDefaults.TouchTarget.MinimumTouchTarget)
+                        modifier = Modifier.size(SeniorComponentDefaults.TouchTarget.RecommendedTouchTarget)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Delete,
@@ -426,7 +426,7 @@ private fun ChaptersHeader(
                 if (chapterCount > 0) {
                     IconButton(
                         onClick = onNavigateToChapters,
-                        modifier = Modifier.size(SeniorComponentDefaults.TouchTarget.MinimumTouchTarget)
+                        modifier = Modifier.size(SeniorComponentDefaults.TouchTarget.RecommendedTouchTarget)
                     ) {
                         Icon(
                             imageVector = Icons.Default.List,
