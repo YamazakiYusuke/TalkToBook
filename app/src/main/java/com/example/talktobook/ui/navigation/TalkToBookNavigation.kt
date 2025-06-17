@@ -10,6 +10,8 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.talktobook.presentation.screen.RecordingScreen
+import com.example.talktobook.presentation.screen.ChapterListScreen
+import com.example.talktobook.presentation.screen.ChapterEditScreen
 import com.example.talktobook.ui.components.TalkToBookScreen
 import com.example.talktobook.ui.components.TalkToBookPrimaryButton
 
@@ -284,40 +286,6 @@ private fun DocumentMergeScreen(
     }
 }
 
-@Composable
-private fun ChapterListScreen(
-    documentId: String,
-    onNavigateBack: () -> Unit,
-    onNavigateToChapter: (String) -> Unit
-) {
-    TalkToBookScreen(title = "Chapters") {
-        TalkToBookPrimaryButton(
-            text = "Edit Chapter (Demo)",
-            onClick = { onNavigateToChapter("demo-chapter-id") }
-        )
-        TalkToBookPrimaryButton(
-            text = "Back",
-            onClick = onNavigateBack
-        )
-    }
-}
-
-@Composable
-private fun ChapterEditScreen(
-    chapterId: String,
-    onNavigateBack: () -> Unit
-) {
-    TalkToBookScreen(title = "Edit Chapter") {
-        TalkToBookPrimaryButton(
-            text = "Save Chapter",
-            onClick = onNavigateBack
-        )
-        TalkToBookPrimaryButton(
-            text = "Cancel",
-            onClick = onNavigateBack
-        )
-    }
-}
 
 @Composable
 private fun SettingsScreen(

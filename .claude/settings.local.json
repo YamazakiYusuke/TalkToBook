@@ -33,7 +33,8 @@
       "Bash(dos2unix:*)",
       "Bash(sed:*)",
       "Bash(update-alternatives:*)",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "Bash(/workspace/scripts/quick-test.sh:*)"
     ],
     "deny": []
   }

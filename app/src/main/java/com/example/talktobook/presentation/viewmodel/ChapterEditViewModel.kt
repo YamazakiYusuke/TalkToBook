@@ -45,15 +45,15 @@ class ChapterEditViewModel @Inject constructor(
         _isSaving,
         _hasUnsavedChanges,
         _error
-    ) { isLoading, chapter, title, content, isSaving, hasUnsavedChanges, error ->
+    ) { flows ->
         ChapterEditUiState(
-            isLoading = isLoading,
-            chapter = chapter,
-            title = title,
-            content = content,
-            isSaving = isSaving,
-            hasUnsavedChanges = hasUnsavedChanges,
-            error = error
+            isLoading = flows[0] as Boolean,
+            chapter = flows[1] as Chapter?,
+            title = flows[2] as String,
+            content = flows[3] as String,
+            isSaving = flows[4] as Boolean,
+            hasUnsavedChanges = flows[5] as Boolean,
+            error = flows[6] as String?
         )
     }.stateIn(
         scope = viewModelScope,

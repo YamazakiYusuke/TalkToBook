@@ -50,15 +50,15 @@ class ChapterListViewModel @Inject constructor(
         _isCreatingChapter,
         _isDeletingChapter,
         _isReordering
-    ) { isLoading, chapters, documentId, error, isCreating, isDeleting, isReordering ->
+    ) { flows ->
         ChapterListUiState(
-            isLoading = isLoading,
-            chapters = chapters,
-            documentId = documentId,
-            error = error,
-            isCreatingChapter = isCreating,
-            isDeletingChapter = isDeleting,
-            isReordering = isReordering
+            isLoading = flows[0] as Boolean,
+            chapters = flows[1] as List<Chapter>,
+            documentId = flows[2] as String,
+            error = flows[3] as String?,
+            isCreatingChapter = flows[4] as Boolean,
+            isDeletingChapter = flows[5] as Boolean,
+            isReordering = flows[6] as Boolean
         )
     }.stateIn(
         scope = viewModelScope,
