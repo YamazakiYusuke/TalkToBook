@@ -4,7 +4,11 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.example.talktobook.domain.model.Chapter
 import com.example.talktobook.domain.model.Document
-import com.example.talktobook.domain.usecase.document.*
+import com.example.talktobook.domain.usecase.document.GetDocumentByIdUseCase
+import com.example.talktobook.domain.usecase.document.UpdateDocumentUseCase
+import com.example.talktobook.domain.usecase.document.DeleteDocumentUseCase
+import com.example.talktobook.domain.usecase.chapter.GetChaptersByDocumentUseCase
+import com.example.talktobook.domain.usecase.chapter.CreateChapterUseCase
 import com.example.talktobook.presentation.viewmodel.BaseViewModel
 import com.example.talktobook.presentation.viewmodel.UiState
 import com.example.talktobook.ui.navigation.DOCUMENT_ID_KEY

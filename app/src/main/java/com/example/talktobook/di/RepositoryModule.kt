@@ -3,9 +3,11 @@ package com.example.talktobook.di
 import com.example.talktobook.data.repository.AudioRepositoryImpl
 import com.example.talktobook.data.repository.DocumentRepositoryImpl
 import com.example.talktobook.data.repository.TranscriptionRepositoryImpl
+import com.example.talktobook.data.offline.OfflineManager
 import com.example.talktobook.domain.repository.AudioRepository
 import com.example.talktobook.domain.repository.DocumentRepository
 import com.example.talktobook.domain.repository.TranscriptionRepository
+import com.example.talktobook.domain.connectivity.ConnectivityProvider
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -33,4 +35,10 @@ abstract class RepositoryModule {
     abstract fun bindTranscriptionRepository(
         transcriptionRepositoryImpl: TranscriptionRepositoryImpl
     ): TranscriptionRepository
+    
+    @Binds
+    @Singleton
+    abstract fun bindConnectivityProvider(
+        offlineManager: OfflineManager
+    ): ConnectivityProvider
 }

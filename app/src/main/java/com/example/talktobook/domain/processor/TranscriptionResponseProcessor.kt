@@ -1,6 +1,6 @@
 package com.example.talktobook.domain.processor
 
-import com.example.talktobook.data.remote.dto.TranscriptionResponse
+import com.example.talktobook.domain.model.TranscriptionResult
 import com.example.talktobook.domain.model.TranscriptionStatus
 import com.example.talktobook.domain.usecase.transcription.UpdateTranscriptionStatusParams
 import com.example.talktobook.domain.usecase.transcription.UpdateTranscriptionStatusUseCase
@@ -14,7 +14,7 @@ class TranscriptionResponseProcessor @Inject constructor(
     
     suspend fun processSuccessfulResponse(
         recordingId: String,
-        response: TranscriptionResponse
+        response: TranscriptionResult
     ): Result<String> {
         return try {
             val transcribedText = response.text.trim()

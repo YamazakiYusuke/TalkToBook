@@ -5,6 +5,7 @@ import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
+import com.example.talktobook.domain.connectivity.ConnectivityProvider
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -16,11 +17,11 @@ import javax.inject.Singleton
 @Singleton
 class OfflineManager @Inject constructor(
     @ApplicationContext private val context: Context
-) {
+) : ConnectivityProvider {
     
     private val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
     
-    fun isOnline(): Boolean {
+    override fun isOnline(): Boolean {
         val activeNetwork = connectivityManager.activeNetwork ?: return false
         val networkCapabilities = connectivityManager.getNetworkCapabilities(activeNetwork) ?: return false
         
@@ -28,7 +29,7 @@ class OfflineManager @Inject constructor(
                networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
     }
     
-    fun observeConnectivity(): Flow<Boolean> = callbackFlow {
+    override fun observeConnectivity(): Flow<Boolean> = callbackFlow {
         val networkRequest = NetworkRequest.Builder()
             .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
             .addCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
