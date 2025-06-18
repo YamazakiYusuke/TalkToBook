@@ -1,6 +1,5 @@
 package com.example.talktobook.presentation.viewmodel
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.talktobook.domain.model.RecordingState
 import com.example.talktobook.domain.repository.AudioRepository
@@ -8,6 +7,8 @@ import com.example.talktobook.domain.repository.TranscriptionRepository
 import com.example.talktobook.domain.usecase.audio.StartRecordingUseCase
 import com.example.talktobook.domain.usecase.audio.StopRecordingUseCase
 import com.example.talktobook.domain.usecase.transcription.TranscribeAudioUseCase
+import com.example.talktobook.data.crashlytics.CrashlyticsManager
+import com.example.talktobook.data.crashlytics.BreadcrumbCategory
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,11 +26,13 @@ class VoiceCorrectionViewModel @Inject constructor(
     private val stopRecordingUseCase: StopRecordingUseCase,
     private val transcribeAudioUseCase: TranscribeAudioUseCase,
     private val audioRepository: AudioRepository,
-    private val transcriptionRepository: TranscriptionRepository
-) : ViewModel() {
+    private val transcriptionRepository: TranscriptionRepository,
+    private val crashlyticsManager: CrashlyticsManager
+) : BaseViewModel<VoiceCorrectionUiState>() {
 
     private val _uiState = MutableStateFlow(VoiceCorrectionUiState())
-    val uiState: StateFlow<VoiceCorrectionUiState> = _uiState.asStateFlow()
+    override val uiState: StateFlow<VoiceCorrectionUiState> = _uiState.asStateFlow()
+    override val initialState = VoiceCorrectionUiState()
 
     /**
      * Start a voice correction session for the selected text
@@ -135,6 +138,21 @@ class VoiceCorrectionViewModel @Inject constructor(
                                 isProcessing = false,
                                 error = exception.message ?: "Failed to transcribe correction"
                             )
+                            
+                            // Record transcription crash
+                            val recordingFile = java.io.File(recording.audioFilePath)
+                            crashlyticsManager.recordTranscriptionCrash(
+                                throwable = exception,
+                                apiEndpoint = "openai_whisper",
+                                networkType = "unknown", // Could be enhanced with network detection
+                                requestSize = recordingFile.length(),
+                                additionalData = mapOf(
+                                    "recording_id" to recordingId,
+                                    "file_path" to recording.audioFilePath,
+                                    "selected_text_length" to _uiState.value.selectedText.length.toString(),
+                                    "error_location" to "transcribeAudioUseCase"
+                                )
+                            )
                         }
                     )
                 } else {
@@ -144,6 +162,19 @@ class VoiceCorrectionViewModel @Inject constructor(
                     )
                 }
             } catch (exception: Exception) {
+                // Record general transcription processing crash
+                crashlyticsManager.recordTranscriptionCrash(
+                    throwable = exception,
+                    apiEndpoint = "openai_whisper",
+                    networkType = "unknown",
+                    requestSize = 0L,
+                    additionalData = mapOf(
+                        "recording_id" to recordingId,
+                        "error_location" to "transcribeRecording_general",
+                        "selected_text_length" to _uiState.value.selectedText.length.toString()
+                    )
+                )
+                
                 _uiState.value = _uiState.value.copy(
                     isProcessing = false,
                     error = exception.message ?: "Failed to process recording"
@@ -238,5 +269,5 @@ data class VoiceCorrectionUiState(
     val currentRecordingId: String? = null,
     val recordingState: RecordingState = RecordingState.IDLE,
     val error: String? = null
-)
+) : UiState
 

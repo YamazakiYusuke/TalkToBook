@@ -3,6 +3,8 @@ package com.example.talktobook.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.talktobook.data.remote.exception.NetworkException
+import com.example.talktobook.data.crashlytics.CrashlyticsManager
+import com.example.talktobook.data.crashlytics.CrashSeverity
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -10,8 +12,12 @@ import kotlinx.coroutines.launch
 import retrofit2.HttpException
 import java.io.IOException
 import java.net.SocketTimeoutException
+import javax.inject.Inject
 
 abstract class BaseViewModel<T : UiState> : ViewModel() {
+
+    @Inject
+    protected lateinit var crashlyticsManager: CrashlyticsManager
 
     protected val _isLoading = MutableStateFlow(false)
     protected val _error = MutableStateFlow<String?>(null)
@@ -85,6 +91,43 @@ abstract class BaseViewModel<T : UiState> : ViewModel() {
         setErrorUiState(errorUiState)
         setError(errorUiState.message)
         _operationState.value = OperationUiState.Failed(errorUiState)
+        
+        // Record crash in Crashlytics with context
+        recordCrashWithContext(throwable, errorUiState)
+    }
+    
+    /**
+     * Record crash with appropriate context and severity
+     */
+    protected open fun recordCrashWithContext(throwable: Throwable, errorUiState: ErrorUiState) {
+        val severity = when (errorUiState) {
+            is ErrorUiState.NetworkError -> CrashSeverity.MEDIUM
+            is ErrorUiState.ApiError -> if (errorUiState.httpCode in 500..599) CrashSeverity.HIGH else CrashSeverity.MEDIUM
+            is ErrorUiState.AudioError -> if (errorUiState.requiresPermission) CrashSeverity.HIGH else CrashSeverity.MEDIUM
+            is ErrorUiState.RateLimitError -> CrashSeverity.LOW
+            is ErrorUiState.UnknownError -> CrashSeverity.HIGH
+            else -> CrashSeverity.MEDIUM
+        }
+        
+        val context = this::class.simpleName ?: "BaseViewModel"
+        val additionalData = mapOf(
+            "error_type" to errorUiState::class.simpleName.orEmpty(),
+            "error_message" to errorUiState.message,
+            "viewmodel_class" to context
+        ).let { baseData ->
+            when (errorUiState) {
+                is ErrorUiState.ApiError -> baseData + ("http_code" to errorUiState.httpCode.toString())
+                is ErrorUiState.AudioError -> baseData + ("requires_permission" to errorUiState.requiresPermission.toString())
+                else -> baseData
+            }
+        }
+        
+        crashlyticsManager.recordNonFatalException(
+            throwable = throwable,
+            severity = severity,
+            context = context,
+            additionalData = additionalData
+        )
     }
 
     protected fun mapThrowableToErrorUiState(throwable: Throwable): ErrorUiState {
