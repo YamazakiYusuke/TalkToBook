@@ -170,4 +170,15 @@ class ChapterEditViewModel @Inject constructor(
     fun onClearError() {
         clearError()
     }
+
+    // Voice command interface methods
+    suspend fun createNewChapter(): Result<Unit> {
+        return try {
+            // This would need to be implemented with the document context
+            // For now, we'll return a placeholder implementation
+            Result.failure(Exception("New chapter creation requires document context"))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

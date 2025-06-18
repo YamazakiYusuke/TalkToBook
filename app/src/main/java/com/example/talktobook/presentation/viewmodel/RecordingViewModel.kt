@@ -297,6 +297,43 @@ class RecordingViewModel @Inject constructor(
         }
     }
 
+    // Voice command interface methods
+    suspend fun startRecording(): Result<Unit> {
+        return try {
+            onStartRecording()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun stopRecording(): Result<Unit> {
+        return try {
+            onStopRecording()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun pauseRecording(): Result<Unit> {
+        return try {
+            onPauseRecording()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun resumeRecording(): Result<Unit> {
+        return try {
+            onResumeRecording()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     override fun onCleared() {
         super.onCleared()
         serviceStateJob?.cancel()

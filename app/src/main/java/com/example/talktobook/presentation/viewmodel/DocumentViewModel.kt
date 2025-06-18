@@ -267,6 +267,30 @@ class DocumentViewModel @Inject constructor(
     fun clearSelectedDocument() {
         _uiState.value = _uiState.value.copy(selectedDocument = null)
     }
+
+    // Voice command interface methods
+    suspend fun saveDocument(): Result<Unit> {
+        return try {
+            val selectedDocument = _uiState.value.selectedDocument
+            if (selectedDocument != null) {
+                updateDocument(selectedDocument)
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("No document selected to save"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun createNewDocument(): Result<Unit> {
+        return try {
+            createDocument("新しいドキュメント", "")
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }
 
 /**
