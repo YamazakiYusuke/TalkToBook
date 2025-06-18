@@ -1,6 +1,6 @@
 package com.example.talktobook.domain.manager
 
-import com.example.talktobook.data.offline.OfflineManager
+import com.example.talktobook.domain.connectivity.ConnectivityProvider
 import com.example.talktobook.domain.model.Recording
 import com.example.talktobook.domain.model.TranscriptionStatus
 import com.example.talktobook.domain.usecase.transcription.GetTranscriptionQueueUseCase
@@ -26,7 +26,7 @@ class TranscriptionQueueManager @Inject constructor(
     private val getTranscriptionQueueUseCase: GetTranscriptionQueueUseCase,
     private val processTranscriptionQueueUseCase: ProcessTranscriptionQueueUseCase,
     private val updateTranscriptionStatusUseCase: UpdateTranscriptionStatusUseCase,
-    private val offlineManager: OfflineManager
+    private val connectivityProvider: ConnectivityProvider
 ) {
     
     private val managerScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -49,7 +49,7 @@ class TranscriptionQueueManager @Inject constructor(
     }
     
     private fun startConnectivityMonitoring() {
-        offlineManager.observeConnectivity().onEach { isOnline ->
+        connectivityProvider.observeConnectivity().onEach { isOnline ->
             if (isOnline && _queueState.value == QueueState.OFFLINE) {
                 _queueState.value = QueueState.READY
                 processQueueWhenReady()
@@ -64,7 +64,7 @@ class TranscriptionQueueManager @Inject constructor(
             getTranscriptionQueueUseCase().onEach { recordings ->
                 _pendingCount.value = recordings.size
                 
-                if (!offlineManager.isOnline()) {
+                if (!connectivityProvider.isOnline()) {
                     _offlineQueueCount.value = recordings.size
                     _queueState.value = QueueState.OFFLINE
                 } else {
@@ -126,7 +126,7 @@ class TranscriptionQueueManager @Inject constructor(
     }
     
     suspend fun retryProcessing(): Result<Unit> {
-        return if (offlineManager.isOnline()) {
+        return if (connectivityProvider.isOnline()) {
             _queueState.value = QueueState.READY
             processQueueWhenReady()
             Result.success(Unit)
@@ -140,7 +140,7 @@ class TranscriptionQueueManager @Inject constructor(
     }
     
     suspend fun resumeProcessing() {
-        if (offlineManager.isOnline()) {
+        if (connectivityProvider.isOnline()) {
             _queueState.value = QueueState.READY
             processQueueWhenReady()
         } else {
@@ -154,7 +154,7 @@ class TranscriptionQueueManager @Inject constructor(
     
     suspend fun getOfflineQueueSummary(): OfflineQueueSummary {
         val pendingRecordings = getTranscriptionQueueUseCase().first()
-        val isOffline = !offlineManager.isOnline()
+        val isOffline = !connectivityProvider.isOnline()
         
         return OfflineQueueSummary(
             totalPending = pendingRecordings.size,

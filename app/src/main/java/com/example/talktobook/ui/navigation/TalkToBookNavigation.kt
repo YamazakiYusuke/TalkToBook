@@ -15,7 +15,7 @@ import com.example.talktobook.presentation.screen.MainScreen
 import com.example.talktobook.presentation.screen.RecordingScreen
 import com.example.talktobook.presentation.screen.SettingsScreen
 import com.example.talktobook.presentation.screen.TextViewScreen
-import com.example.talktobook.presentation.screen.document.DocumentListScreen
+import com.example.talktobook.presentation.screen.DocumentListScreen
 import com.example.talktobook.presentation.screen.document.DocumentDetailScreen
 import com.example.talktobook.presentation.screen.chapter.ChapterListScreen
 import com.example.talktobook.presentation.screen.chapter.ChapterEditScreen

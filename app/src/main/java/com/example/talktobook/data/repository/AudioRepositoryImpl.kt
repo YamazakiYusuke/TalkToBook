@@ -35,9 +35,9 @@ class AudioRepositoryImpl @Inject constructor(
 
     private val recordingMutex = Mutex()
     private var currentMediaRecorder: MediaRecorder? = null
-    private var currentRecordingState: RecordingState? = null
+    private var currentRecordingSession: RecordingSession? = null
 
-    private data class RecordingState(
+    private data class RecordingSession(
         val recordingId: String,
         val startTime: Long,
         val pausedDuration: Long = 0,
@@ -87,7 +87,7 @@ class AudioRepositoryImpl @Inject constructor(
         currentMediaRecorder = null
     }
 
-    private suspend fun validateRecordingState(expectedStates: Set<MediaRecorderState>) {
+    private suspend fun validateRecordingSession(expectedStates: Set<MediaRecorderState>) {
         if (recorderState !in expectedStates) {
             throw IllegalStateException("Invalid MediaRecorder state: $recorderState. Expected one of: $expectedStates")
         }
@@ -97,7 +97,7 @@ class AudioRepositoryImpl @Inject constructor(
         withContext(Dispatchers.IO) {
             try {
                 // Ensure no recording is in progress
-                if (currentRecordingState != null) {
+                if (currentRecordingSession != null) {
                     throw IllegalStateException("A recording is already in progress")
                 }
 
@@ -134,7 +134,7 @@ class AudioRepositoryImpl @Inject constructor(
                 val startTime = System.currentTimeMillis()
                 
                 // Update recording state
-                currentRecordingState = RecordingState(
+                currentRecordingSession = RecordingSession(
                     recordingId = recordingId,
                     startTime = startTime,
                     audioFilePath = audioFile.absolutePath
@@ -157,7 +157,7 @@ class AudioRepositoryImpl @Inject constructor(
             } catch (e: Exception) {
                 // Cleanup on error
                 releaseMediaRecorder()
-                currentRecordingState = null
+                currentRecordingSession = null
                 recorderState = MediaRecorderState.ERROR
                 
                 when (e) {
@@ -172,7 +172,7 @@ class AudioRepositoryImpl @Inject constructor(
     override suspend fun pauseRecording(recordingId: String): Recording? = recordingMutex.withLock {
         withContext(Dispatchers.IO) {
             try {
-                val recordingState = currentRecordingState
+                val recordingState = currentRecordingSession
                     ?: throw IllegalStateException("No active recording found")
                 
                 if (recordingState.recordingId != recordingId) {
@@ -180,13 +180,13 @@ class AudioRepositoryImpl @Inject constructor(
                 }
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    validateRecordingState(setOf(MediaRecorderState.RECORDING))
+                    validateRecordingSession(setOf(MediaRecorderState.RECORDING))
                     
                     currentMediaRecorder?.pause()
                     recorderState = MediaRecorderState.PAUSED
                     
                     val pauseTime = System.currentTimeMillis()
-                    currentRecordingState = recordingState.copy(lastPauseTime = pauseTime)
+                    currentRecordingSession = recordingState.copy(lastPauseTime = pauseTime)
                     
                     recordingDao.getRecordingById(recordingId)?.let { entity ->
                         val recording = entity.toDomainModel()
@@ -207,7 +207,7 @@ class AudioRepositoryImpl @Inject constructor(
     override suspend fun resumeRecording(recordingId: String): Recording? = recordingMutex.withLock {
         withContext(Dispatchers.IO) {
             try {
-                val recordingState = currentRecordingState
+                val recordingState = currentRecordingSession
                     ?: throw IllegalStateException("No active recording found")
                 
                 if (recordingState.recordingId != recordingId) {
@@ -215,7 +215,7 @@ class AudioRepositoryImpl @Inject constructor(
                 }
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    validateRecordingState(setOf(MediaRecorderState.PAUSED))
+                    validateRecordingSession(setOf(MediaRecorderState.PAUSED))
                     
                     currentMediaRecorder?.resume()
                     recorderState = MediaRecorderState.RECORDING
@@ -228,7 +228,7 @@ class AudioRepositoryImpl @Inject constructor(
                         recordingState.pausedDuration
                     }
                     
-                    currentRecordingState = recordingState.copy(
+                    currentRecordingSession = recordingState.copy(
                         pausedDuration = updatedPausedDuration,
                         lastPauseTime = 0
                     )
@@ -252,7 +252,7 @@ class AudioRepositoryImpl @Inject constructor(
     override suspend fun stopRecording(recordingId: String): Recording? = recordingMutex.withLock {
         withContext(Dispatchers.IO) {
             try {
-                val recordingState = currentRecordingState
+                val recordingState = currentRecordingSession
                 
                 // Handle case where recording state might be null (already stopped or error)
                 if (recordingState == null) {
@@ -301,7 +301,7 @@ class AudioRepositoryImpl @Inject constructor(
                 } finally {
                     // Always cleanup resources
                     releaseMediaRecorder()
-                    currentRecordingState = null
+                    currentRecordingSession = null
                     recorderState = MediaRecorderState.INITIAL
                 }
                 
@@ -312,7 +312,7 @@ class AudioRepositoryImpl @Inject constructor(
                 
                 // Cleanup on error
                 releaseMediaRecorder()
-                currentRecordingState = null
+                currentRecordingSession = null
                 recorderState = MediaRecorderState.ERROR
                 
                 // Return whatever we can find in the database
@@ -390,7 +390,7 @@ class AudioRepositoryImpl @Inject constructor(
         try {
             android.util.Log.i("AudioRepository", "Cleaning up audio repository resources")
             releaseMediaRecorder()
-            currentRecordingState = null
+            currentRecordingSession = null
             recorderState = MediaRecorderState.INITIAL
         } catch (e: Exception) {
             android.util.Log.e("AudioRepository", "Error during cleanup", e)
@@ -400,11 +400,11 @@ class AudioRepositoryImpl @Inject constructor(
     /**
      * Get the current recording state for monitoring purposes
      */
-    fun getCurrentRecordingId(): String? = currentRecordingState?.recordingId
+    fun getCurrentRecordingId(): String? = currentRecordingSession?.recordingId
 
     /**
      * Check if a recording is currently active
      */
-    fun isRecordingActive(): Boolean = currentRecordingState != null && 
+    fun isRecordingActive(): Boolean = currentRecordingSession != null && 
         recorderState in setOf(MediaRecorderState.RECORDING, MediaRecorderState.PAUSED)
 }

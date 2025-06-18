@@ -1,6 +1,6 @@
 package com.example.talktobook.domain.manager
 
-import com.example.talktobook.data.offline.OfflineManager
+import com.example.talktobook.domain.connectivity.ConnectivityProvider
 import com.example.talktobook.domain.model.Recording
 import com.example.talktobook.domain.model.TranscriptionStatus
 import com.example.talktobook.domain.repository.AudioRepository
@@ -26,7 +26,7 @@ import javax.inject.Singleton
  */
 @Singleton
 class FallbackBehaviorManager @Inject constructor(
-    private val offlineManager: OfflineManager,
+    private val connectivityProvider: ConnectivityProvider,
     private val transcriptionRepository: TranscriptionRepository,
     private val audioRepository: AudioRepository,
     private val documentRepository: DocumentRepository
@@ -50,7 +50,7 @@ class FallbackBehaviorManager @Inject constructor(
     
     private fun startFallbackMonitoring() {
         // Monitor connectivity changes
-        offlineManager.observeConnectivity().onEach { isOnline ->
+        connectivityProvider.observeConnectivity().onEach { isOnline ->
             updateFallbackState(isOnline)
         }.launchIn(managerScope)
     }
@@ -177,7 +177,7 @@ class FallbackBehaviorManager @Inject constructor(
      * Sync offline drafts when connectivity is restored
      */
     suspend fun syncOfflineDrafts(): Result<Int> {
-        if (!offlineManager.isOnline()) {
+        if (!connectivityProvider.isOnline()) {
             return Result.failure(Exception("Cannot sync while offline"))
         }
         
@@ -216,7 +216,7 @@ class FallbackBehaviorManager @Inject constructor(
      * Execute pending recovery actions
      */
     suspend fun executeRecoveryActions(): Result<Int> {
-        if (!offlineManager.isOnline()) {
+        if (!connectivityProvider.isOnline()) {
             return Result.failure(Exception("Cannot execute recovery while offline"))
         }
         
