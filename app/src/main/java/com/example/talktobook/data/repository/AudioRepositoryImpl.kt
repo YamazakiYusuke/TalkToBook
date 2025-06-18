@@ -25,6 +25,8 @@ import java.util.*
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
+import com.example.talktobook.data.mapper.ErrorMapper
+import com.example.talktobook.data.mapper.AudioErrorContext
 
 @Singleton
 class AudioRepositoryImpl @Inject constructor(
@@ -101,6 +103,13 @@ class AudioRepositoryImpl @Inject constructor(
                     throw IllegalStateException("A recording is already in progress")
                 }
 
+                // Check storage space before starting
+                val availableSpace = audioFileManager.getAvailableStorageSpace()
+                val requiredSpace = 100 * 1024 * 1024L // 100MB minimum
+                if (availableSpace < requiredSpace) {
+                    throw IOException("Insufficient storage space: ${availableSpace / 1024 / 1024}MB available, ${requiredSpace / 1024 / 1024}MB required")
+                }
+
                 // Release any existing MediaRecorder
                 releaseMediaRecorder()
 
@@ -160,10 +169,22 @@ class AudioRepositoryImpl @Inject constructor(
                 currentRecordingState = null
                 recorderState = MediaRecorderState.ERROR
                 
-                when (e) {
-                    is IOException -> throw IOException("Failed to start recording: ${e.message}", e)
-                    is IllegalStateException -> throw IllegalStateException("MediaRecorder in invalid state: ${e.message}", e)
-                    else -> throw RuntimeException("Unexpected error during recording start: ${e.message}", e)
+                // Map to domain-specific exceptions
+                val domainException = ErrorMapper.mapAudioException(e)
+                android.util.Log.e("AudioRepository", "Failed to start recording", domainException)
+                
+                when (domainException) {
+                    is com.example.talktobook.domain.exception.DomainException.AudioException.InsufficientStorage ->
+                        throw IOException("Insufficient storage: ${domainException.message}", e)
+                    is com.example.talktobook.domain.exception.DomainException.AudioException.PermissionDenied ->
+                        throw SecurityException("Permission denied: ${domainException.permission}", e)
+                    is com.example.talktobook.domain.exception.DomainException.AudioException.MediaRecorderError ->
+                        throw IllegalStateException("MediaRecorder error: ${domainException.errorMessage}", e)
+                    else -> when (e) {
+                        is IOException -> throw IOException("Failed to start recording: ${e.message}", e)
+                        is IllegalStateException -> throw IllegalStateException("MediaRecorder in invalid state: ${e.message}", e)
+                        else -> throw RuntimeException("Unexpected error during recording start: ${e.message}", e)
+                    }
                 }
             }
         }
@@ -322,12 +343,36 @@ class AudioRepositoryImpl @Inject constructor(
     }
 
     override suspend fun deleteRecording(recordingId: String): Unit = withContext(Dispatchers.IO) {
-        recordingDao.getRecordingById(recordingId)?.let { entity ->
-            // Delete audio file using AudioFileManager
-            audioFileManager.deleteFile(entity.audioFilePath)
+        try {
+            val entity = recordingDao.getRecordingById(recordingId)
+                ?: throw IllegalArgumentException("Recording not found: $recordingId")
+            
+            // Stop recording if it's currently active
+            if (currentRecordingState?.recordingId == recordingId) {
+                android.util.Log.i("AudioRepository", "Stopping active recording before deletion: $recordingId")
+                stopRecording(recordingId)
+            }
+            
+            // Delete audio file using AudioFileManager with error handling
+            try {
+                audioFileManager.deleteFile(entity.audioFilePath)
+            } catch (e: Exception) {
+                android.util.Log.w("AudioRepository", "Failed to delete audio file: ${entity.audioFilePath}", e)
+                // Continue with database deletion even if file deletion fails
+            }
             
             // Delete from database
             recordingDao.deleteRecording(entity)
+            
+        } catch (e: Exception) {
+            val domainException = ErrorMapper.mapAudioException(e, AudioErrorContext(recordingId))
+            android.util.Log.e("AudioRepository", "Failed to delete recording: $recordingId", domainException)
+            
+            when (domainException) {
+                is com.example.talktobook.domain.exception.DomainException.AudioException.RecordingNotFound ->
+                    throw IllegalArgumentException("Recording not found: $recordingId", e)
+                else -> throw e
+            }
         }
     }
 
