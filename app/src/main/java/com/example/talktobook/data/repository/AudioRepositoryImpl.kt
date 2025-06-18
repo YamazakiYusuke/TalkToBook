@@ -27,6 +27,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import com.example.talktobook.data.mapper.ErrorMapper
 import com.example.talktobook.data.mapper.AudioErrorContext
+import com.example.talktobook.domain.util.ErrorConstants
 
 @Singleton
 class AudioRepositoryImpl @Inject constructor(
@@ -104,10 +105,10 @@ class AudioRepositoryImpl @Inject constructor(
                 }
 
                 // Check storage space before starting
-                val availableSpace = audioFileManager.getAvailableStorageSpace()
-                val requiredSpace = 100 * 1024 * 1024L // 100MB minimum
-                if (availableSpace < requiredSpace) {
-                    throw IOException("Insufficient storage space: ${availableSpace / 1024 / 1024}MB available, ${requiredSpace / 1024 / 1024}MB required")
+                val requiredSpace = ErrorConstants.MIN_STORAGE_REQUIRED_MB * 1024 * 1024L
+                if (!audioFileManager.hasSufficientStorage(requiredSpace)) {
+                    val availableSpace = audioFileManager.getAvailableStorageSpace()
+                    throw IOException("Insufficient storage space: ${availableSpace / 1024 / 1024}MB available, ${ErrorConstants.MIN_STORAGE_REQUIRED_MB}MB required")
                 }
 
                 // Release any existing MediaRecorder

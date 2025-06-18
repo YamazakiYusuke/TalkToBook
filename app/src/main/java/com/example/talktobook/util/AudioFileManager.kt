@@ -200,4 +200,33 @@ class AudioFileManager @Inject constructor(
             false
         }
     }
+    
+    /**
+     * Get available storage space in bytes for the audio directory
+     * @return available space in bytes, or 0 if unable to determine
+     */
+    suspend fun getAvailableStorageSpace(): Long = withContext(Dispatchers.IO) {
+        try {
+            audioDirectory.usableSpace
+        } catch (e: Exception) {
+            Log.e(TAG, "Error getting available storage space", e)
+            0L
+        }
+    }
+    
+    /**
+     * Check if there's sufficient storage space for a recording
+     * @param requiredSpaceBytes minimum required space in bytes
+     * @return true if sufficient space is available
+     */
+    suspend fun hasSufficientStorage(requiredSpaceBytes: Long): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val availableSpace = getAvailableStorageSpace()
+            val bufferSpace = 50 * 1024 * 1024L // 50MB buffer for safety
+            availableSpace >= (requiredSpaceBytes + bufferSpace)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error checking storage availability", e)
+            false
+        }
+    }
 }

@@ -1,5 +1,6 @@
 package com.example.talktobook.domain.exception
 
+import com.example.talktobook.domain.util.ErrorConstants
 import org.junit.Test
 import org.junit.Assert.*
 
@@ -32,9 +33,9 @@ class DomainExceptionTest {
         val exception = DomainException.TranscriptionException.AudioTooLarge(fileSize)
         
         assertEquals(fileSize, exception.fileSize)
-        assertEquals(25 * 1024 * 1024L, exception.maxSize)
+        assertEquals(ErrorConstants.MAX_AUDIO_FILE_SIZE_MB * 1024 * 1024L, exception.maxSize)
         assertTrue(exception.message!!.contains("30MB"))
-        assertTrue(exception.message!!.contains("25MB"))
+        assertTrue(exception.message!!.contains("${ErrorConstants.MAX_AUDIO_FILE_SIZE_MB}MB"))
     }
 
     @Test

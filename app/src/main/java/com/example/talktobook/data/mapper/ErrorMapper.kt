@@ -2,6 +2,7 @@ package com.example.talktobook.data.mapper
 
 import com.example.talktobook.data.remote.exception.NetworkException
 import com.example.talktobook.domain.exception.DomainException
+import com.example.talktobook.domain.util.ErrorConstants
 import java.io.IOException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
@@ -16,20 +17,20 @@ object ErrorMapper {
             // IO exceptions
             is SocketTimeoutException -> DomainException.OperationTimeout(
                 operation = "Network request",
-                timeoutMs = 30000L
+                timeoutMs = ErrorConstants.DEFAULT_TIMEOUT_MS
             )
             is UnknownHostException -> DomainException.TranscriptionException.TranscriptionFailed(
-                recordingId = "",
+                recordingId = ErrorConstants.UNKNOWN_RECORDING_ID,
                 reason = "No internet connection"
             )
             is IOException -> when {
                 throwable.message?.contains("space") == true -> 
                     DomainException.AudioException.InsufficientStorage(
-                        requiredSpace = 100L,
+                        requiredSpace = ErrorConstants.MIN_STORAGE_REQUIRED_MB,
                         availableSpace = 0L
                     )
                 throwable.message?.contains("permission") == true ->
-                    DomainException.AudioException.PermissionDenied("WRITE_EXTERNAL_STORAGE")
+                    DomainException.AudioException.PermissionDenied(ErrorConstants.DEFAULT_PERMISSION)
                 else -> DomainException.UnknownError(throwable.message ?: "IO error")
             }
             
@@ -64,8 +65,8 @@ object ErrorMapper {
             
             is NetworkException.FileTooLargeError -> 
                 DomainException.TranscriptionException.AudioTooLarge(
-                    fileSize = 26 * 1024 * 1024L, // Example size
-                    maxSize = 25 * 1024 * 1024L
+                    fileSize = ErrorConstants.EXAMPLE_LARGE_FILE_SIZE_MB * 1024 * 1024L,
+                    maxSize = ErrorConstants.MAX_AUDIO_FILE_SIZE_MB * 1024 * 1024L
                 )
             
             is NetworkException.UnsupportedFormatError -> 
@@ -74,12 +75,12 @@ object ErrorMapper {
             is NetworkException.TimeoutError -> 
                 DomainException.OperationTimeout(
                     operation = "Transcription",
-                    timeoutMs = 30000L
+                    timeoutMs = ErrorConstants.DEFAULT_TIMEOUT_MS
                 )
             
             is NetworkException.NoInternetError -> 
                 DomainException.TranscriptionException.TranscriptionFailed(
-                    recordingId = "",
+                    recordingId = ErrorConstants.UNKNOWN_RECORDING_ID,
                     reason = "No internet connection"
                 )
             
@@ -88,7 +89,7 @@ object ErrorMapper {
             is NetworkException.NetworkError,
             is NetworkException.UnknownError -> 
                 DomainException.TranscriptionException.TranscriptionFailed(
-                    recordingId = "",
+                    recordingId = ErrorConstants.UNKNOWN_RECORDING_ID,
                     reason = exception.message ?: "Unknown error"
                 )
         }
@@ -99,11 +100,11 @@ object ErrorMapper {
             is IllegalStateException -> when {
                 throwable.message?.contains("already in progress") == true ->
                     DomainException.AudioException.RecordingInProgress(
-                        context?.recordingId ?: "unknown"
+                        context?.recordingId ?: ErrorConstants.UNKNOWN_RECORDING_ID
                     )
                 throwable.message?.contains("No active recording") == true ->
                     DomainException.AudioException.NoActiveRecording(
-                        context?.recordingId ?: "unknown"
+                        context?.recordingId ?: ErrorConstants.UNKNOWN_RECORDING_ID
                     )
                 else -> mapToDomainException(throwable)
             }
@@ -111,7 +112,7 @@ object ErrorMapper {
                 throwable.message?.contains("File not found") == true ||
                 throwable.message?.contains("No such file") == true ->
                     DomainException.AudioException.AudioFileNotFound(
-                        context?.filePath ?: "unknown"
+                        context?.filePath ?: ErrorConstants.UNKNOWN_FILE_PATH
                     )
                 else -> mapToDomainException(throwable)
             }
@@ -127,18 +128,18 @@ object ErrorMapper {
                         throwable.message ?: "Invalid documents for merge"
                     )
                 else -> DomainException.ValidationError(
-                    field = context?.field ?: "unknown",
+                    field = context?.field ?: ErrorConstants.UNKNOWN_RECORDING_ID,
                     reason = throwable.message ?: "Invalid value"
                 )
             }
             is NullPointerException -> when (context?.type) {
                 DocumentErrorType.DOCUMENT_NOT_FOUND ->
                     DomainException.DocumentException.DocumentNotFound(
-                        context.id ?: "unknown"
+                        context.id ?: ErrorConstants.UNKNOWN_RECORDING_ID
                     )
                 DocumentErrorType.CHAPTER_NOT_FOUND ->
                     DomainException.DocumentException.ChapterNotFound(
-                        context.id ?: "unknown"
+                        context.id ?: ErrorConstants.UNKNOWN_RECORDING_ID
                     )
                 else -> mapToDomainException(throwable)
             }
