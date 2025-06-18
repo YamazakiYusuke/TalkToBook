@@ -9,6 +9,9 @@ import androidx.lifecycle.viewModelScope
 import com.example.talktobook.domain.model.Recording
 import com.example.talktobook.domain.model.RecordingState
 import com.example.talktobook.data.analytics.AnalyticsManager
+import com.example.talktobook.data.crashlytics.CrashlyticsManager
+import com.example.talktobook.data.crashlytics.BreadcrumbCategory
+import com.example.talktobook.data.crashlytics.CrashKeys
 import com.example.talktobook.domain.usecase.audio.StartRecordingUseCase
 import com.example.talktobook.domain.usecase.audio.StopRecordingUseCase
 import com.example.talktobook.domain.usecase.audio.PauseRecordingUseCase
@@ -45,7 +48,8 @@ class RecordingViewModel @Inject constructor(
     private val pauseRecordingUseCase: PauseRecordingUseCase,
     private val resumeRecordingUseCase: ResumeRecordingUseCase,
     private val permissionUtils: PermissionUtils,
-    private val analyticsManager: AnalyticsManager
+    private val analyticsManager: AnalyticsManager,
+    private val crashlyticsManager: CrashlyticsManager
 ) : BaseViewModel<RecordingUiState>() {
 
     private val _isServiceConnected = MutableStateFlow(false)
@@ -73,6 +77,17 @@ class RecordingViewModel @Inject constructor(
             audioService = null
             serviceBound = false
             _isServiceConnected.value = false
+            
+            // Log unexpected service disconnection for crash monitoring
+            crashlyticsManager.logCrashBreadcrumb(
+                message = "Audio service unexpectedly disconnected",
+                category = BreadcrumbCategory.AUDIO_RECORDING,
+                data = mapOf(
+                    "component_name" to (name?.className ?: "unknown"),
+                    "recording_state" to uiState.value.recordingState.toString(),
+                    "recording_duration" to _recordingDuration.value.toString()
+                )
+            )
         }
     }
 
@@ -143,6 +158,18 @@ class RecordingViewModel @Inject constructor(
                         context = "RecordingViewModel"
                     )
                     setError("Recording error: ${exception.message}")
+                    
+                    // Record audio recording start crash
+                    crashlyticsManager.recordAudioRecordingCrash(
+                        throwable = exception,
+                        recordingState = "STARTING",
+                        permissionGranted = permissionUtils.hasRecordAudioPermission(),
+                        additionalData = mapOf(
+                            "service_bound" to serviceBound.toString(),
+                            "error_location" to "startRecordingUseCase",
+                            "recording_start_time" to recordingStartTime.toString()
+                        )
+                    )
                 }
             )
             setLoading(false)
@@ -182,6 +209,19 @@ class RecordingViewModel @Inject constructor(
                         context = "RecordingViewModel"
                     )
                     setError("Stop recording error: ${exception.message}")
+                    
+                    // Record audio recording stop crash
+                    crashlyticsManager.recordAudioRecordingCrash(
+                        throwable = exception,
+                        recordingState = "STOPPING",
+                        permissionGranted = permissionUtils.hasRecordAudioPermission(),
+                        additionalData = mapOf(
+                            "service_bound" to serviceBound.toString(),
+                            "error_location" to "stopRecordingUseCase",
+                            "recording_id" to (currentRecording?.id ?: "unknown"),
+                            "recording_duration" to _recordingDuration.value.toString()
+                        )
+                    )
                 }
             )
             setLoading(false)
@@ -292,6 +332,18 @@ class RecordingViewModel @Inject constructor(
                 } catch (e: Exception) {
                     // Log error but don't crash the app
                     setError("Service connection error: ${e.message}")
+                    
+                    // Record audio service connection crash
+                    crashlyticsManager.recordAudioRecordingCrash(
+                        throwable = e,
+                        recordingState = uiState.value.recordingState.toString(),
+                        permissionGranted = permissionUtils.hasRecordAudioPermission(),
+                        additionalData = mapOf(
+                            "service_bound" to serviceBound.toString(),
+                            "audio_service_null" to (audioService == null).toString(),
+                            "error_location" to "observeServiceState"
+                        )
+                    )
                 }
             }
         }
