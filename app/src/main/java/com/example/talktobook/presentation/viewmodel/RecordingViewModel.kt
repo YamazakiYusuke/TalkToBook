@@ -48,8 +48,7 @@ class RecordingViewModel @Inject constructor(
     private val pauseRecordingUseCase: PauseRecordingUseCase,
     private val resumeRecordingUseCase: ResumeRecordingUseCase,
     private val permissionUtils: PermissionUtils,
-    private val analyticsManager: AnalyticsManager,
-    private val crashlyticsManager: CrashlyticsManager
+    private val analyticsManager: AnalyticsManager
 ) : BaseViewModel<RecordingUiState>() {
 
     private val _isServiceConnected = MutableStateFlow(false)
@@ -193,12 +192,14 @@ class RecordingViewModel @Inject constructor(
                         _recordingDuration.value / 1000
                     }
                     
-                    analyticsManager.logVoiceRecordingCompleted(
-                        documentId = recording.id,
-                        durationSeconds = durationSeconds,
-                        chapterId = null,
-                        fileSize = null // File size would need to be obtained from the recording
-                    )
+                    recording?.let {
+                        analyticsManager.logVoiceRecordingCompleted(
+                            documentId = it.id,
+                            durationSeconds = durationSeconds,
+                            chapterId = null,
+                            fileSize = null // File size would need to be obtained from the recording
+                        )
+                    }
                     recordingStartTime = 0L
                     clearError()
                 },
@@ -245,10 +246,12 @@ class RecordingViewModel @Inject constructor(
                         _recordingDuration.value / 1000
                     }
                     
-                    analyticsManager.logVoiceRecordingPaused(
-                        documentId = recording.id,
-                        durationBeforePause = durationBeforePause
-                    )
+                    recording?.let {
+                        analyticsManager.logVoiceRecordingPaused(
+                            documentId = it.id,
+                            durationBeforePause = durationBeforePause
+                        )
+                    }
                     clearError()
                 },
                 onFailure = { exception ->
@@ -279,10 +282,12 @@ class RecordingViewModel @Inject constructor(
                         0L
                     }
                     
-                    analyticsManager.logVoiceRecordingResumed(
-                        documentId = recording.id,
-                        pauseDuration = pauseDuration
-                    )
+                    recording?.let {
+                        analyticsManager.logVoiceRecordingResumed(
+                            documentId = it.id,
+                            pauseDuration = pauseDuration
+                        )
+                    }
                     pauseStartTime = 0L
                     clearError()
                 },

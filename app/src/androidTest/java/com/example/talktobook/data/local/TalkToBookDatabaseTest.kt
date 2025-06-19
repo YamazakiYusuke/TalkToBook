@@ -1,16 +1,16 @@
-package com.yama_ai.talktobook.data.local
+package com.example.talktobook.data.local
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.yama_ai.talktobook.data.local.dao.ChapterDao
-import com.yama_ai.talktobook.data.local.dao.DocumentDao
-import com.yama_ai.talktobook.data.local.dao.RecordingDao
-import com.yama_ai.talktobook.data.local.entity.ChapterEntity
-import com.yama_ai.talktobook.data.local.entity.DocumentEntity
-import com.yama_ai.talktobook.data.local.entity.RecordingEntity
-import com.yama_ai.talktobook.domain.model.TranscriptionStatus
+import com.example.talktobook.data.local.dao.ChapterDao
+import com.example.talktobook.data.local.dao.DocumentDao
+import com.example.talktobook.data.local.dao.RecordingDao
+import com.example.talktobook.data.local.entity.ChapterEntity
+import com.example.talktobook.data.local.entity.DocumentEntity
+import com.example.talktobook.data.local.entity.RecordingEntity
+import com.example.talktobook.domain.model.TranscriptionStatus
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After

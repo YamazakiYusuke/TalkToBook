@@ -105,11 +105,8 @@ fun TalkToBookNavigation(
                 onNavigateBack = {
                     navController.popBackStack()
                 },
-                onNavigateToChapters = {
+                onNavigateToChapters = { documentId ->
                     navController.navigate(Screen.ChapterList.createRoute(documentId))
-                },
-                onNavigateToChapterEdit = { chapterId ->
-                    navController.navigate(Screen.ChapterEdit.createRoute(chapterId))
                 }
             )
         }
@@ -151,7 +148,7 @@ fun TalkToBookNavigation(
                 onNavigateBack = {
                     navController.popBackStack()
                 },
-                onNavigateToChapterEdit = { chapterId ->
+                onNavigateToChapter = { chapterId ->
                     navController.navigate(Screen.ChapterEdit.createRoute(chapterId))
                 }
             )

@@ -1,12 +1,12 @@
-package com.yama_ai.talktobook.data.repository
+package com.example.talktobook.data.repository
 
-import com.yama_ai.talktobook.data.local.dao.ChapterDao
-import com.yama_ai.talktobook.data.local.dao.DocumentDao
-import com.yama_ai.talktobook.data.local.entity.ChapterEntity
-import com.yama_ai.talktobook.data.local.entity.DocumentEntity
-import com.yama_ai.talktobook.domain.model.Chapter
-import com.yama_ai.talktobook.domain.model.Document
-import com.yama_ai.talktobook.util.MemoryCache
+import com.example.talktobook.data.local.dao.ChapterDao
+import com.example.talktobook.data.local.dao.DocumentDao
+import com.example.talktobook.data.local.entity.ChapterEntity
+import com.example.talktobook.data.local.entity.DocumentEntity
+import com.example.talktobook.domain.model.Chapter
+import com.example.talktobook.domain.model.Document
+import com.example.talktobook.data.cache.MemoryCache
 import io.mockk.*
 import io.mockk.impl.annotations.MockK
 import kotlinx.coroutines.ExperimentalCoroutinesApi

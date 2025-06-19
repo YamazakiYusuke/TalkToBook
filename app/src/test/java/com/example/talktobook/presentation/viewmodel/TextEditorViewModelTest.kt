@@ -1,14 +1,14 @@
-package com.yama_ai.talktobook.presentation.viewmodel
+package com.example.talktobook.presentation.viewmodel
 
-import com.yama_ai.talktobook.domain.model.Document
-import com.yama_ai.talktobook.domain.model.Recording
-import com.yama_ai.talktobook.domain.model.TranscriptionStatus
-import com.yama_ai.talktobook.domain.model.TextFormatting
-import com.yama_ai.talktobook.domain.model.VoiceCorrectionResult
-import com.yama_ai.talktobook.domain.repository.AudioRepository
-import com.yama_ai.talktobook.domain.usecase.document.CreateDocumentUseCase
-import com.yama_ai.talktobook.domain.usecase.document.UpdateDocumentUseCase
-import com.yama_ai.talktobook.presentation.ui.state.TextEditorUiState
+import com.example.talktobook.domain.model.Document
+import com.example.talktobook.domain.model.Recording
+import com.example.talktobook.domain.model.TranscriptionStatus
+import com.example.talktobook.domain.model.TextFormatting
+import com.example.talktobook.domain.model.VoiceCorrectionResult
+import com.example.talktobook.domain.repository.AudioRepository
+import com.example.talktobook.domain.usecase.document.CreateDocumentUseCase
+import com.example.talktobook.domain.usecase.document.UpdateDocumentUseCase
+import com.example.talktobook.presentation.ui.state.TextEditorUiState
 import io.mockk.*
 import io.mockk.impl.annotations.MockK
 import kotlinx.coroutines.ExperimentalCoroutinesApi

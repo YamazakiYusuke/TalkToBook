@@ -1,8 +1,8 @@
-package com.yama_ai.talktobook.domain.usecase.audio
+package com.example.talktobook.domain.usecase.audio
 
-import com.yama_ai.talktobook.domain.model.Recording
-import com.yama_ai.talktobook.domain.model.TranscriptionStatus
-import com.yama_ai.talktobook.domain.repository.AudioRepository
+import com.example.talktobook.domain.model.Recording
+import com.example.talktobook.domain.model.TranscriptionStatus
+import com.example.talktobook.domain.repository.AudioRepository
 import io.mockk.*
 import io.mockk.impl.annotations.MockK
 import kotlinx.coroutines.ExperimentalCoroutinesApi
