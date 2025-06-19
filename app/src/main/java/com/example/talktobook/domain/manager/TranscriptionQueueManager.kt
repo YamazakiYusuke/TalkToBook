@@ -1,5 +1,6 @@
 package com.example.talktobook.domain.manager
 
+import android.util.Log
 import com.example.talktobook.domain.connectivity.ConnectivityProvider
 import com.example.talktobook.domain.model.Recording
 import com.example.talktobook.domain.model.TranscriptionStatus
@@ -61,7 +62,7 @@ class TranscriptionQueueManager @Inject constructor(
     
     private fun startQueueMonitoring() {
         managerScope.launch {
-            getTranscriptionQueueUseCase().onEach { recordings ->
+            getTranscriptionQueueUseCase().onEach { recordings: List<Recording> ->
                 _pendingCount.value = recordings.size
                 
                 if (!connectivityProvider.isOnline()) {
@@ -114,7 +115,7 @@ class TranscriptionQueueManager @Inject constructor(
             } catch (e: Exception) {
                 _queueState.value = QueueState.ERROR
                 _processingRecord.value = null
-                android.util.Log.e("TranscriptionQueueManager", "Error processing queue", e)
+                Log.e("TranscriptionQueueManager", "Error processing queue", e)
             }
         }
     }
