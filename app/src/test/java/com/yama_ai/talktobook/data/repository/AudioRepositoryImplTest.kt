@@ -1,11 +1,11 @@
-package com.example.talktobook.data.repository
+package com.yama_ai.talktobook.data.repository
 
 import android.content.Context
-import com.example.talktobook.data.local.dao.RecordingDao
-import com.example.talktobook.data.local.entity.RecordingEntity
-import com.example.talktobook.domain.model.Recording
-import com.example.talktobook.domain.model.TranscriptionStatus
-import com.example.talktobook.util.AudioFileManager
+import com.yama_ai.talktobook.data.local.dao.RecordingDao
+import com.yama_ai.talktobook.data.local.entity.RecordingEntity
+import com.yama_ai.talktobook.domain.model.Recording
+import com.yama_ai.talktobook.domain.model.TranscriptionStatus
+import com.yama_ai.talktobook.util.AudioFileManager
 import io.mockk.*
 import io.mockk.impl.annotations.MockK
 import kotlinx.coroutines.ExperimentalCoroutinesApi

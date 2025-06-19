@@ -1,7 +1,7 @@
-package com.example.talktobook.domain.usecase.document
+package com.yama_ai.talktobook.domain.usecase.document
 
-import com.example.talktobook.domain.model.Document
-import com.example.talktobook.domain.repository.DocumentRepository
+import com.yama_ai.talktobook.domain.model.Document
+import com.yama_ai.talktobook.domain.repository.DocumentRepository
 import io.mockk.*
 import io.mockk.impl.annotations.MockK
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -12,17 +12,17 @@ import org.junit.Test
 import org.junit.Assert.*
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class GetDocumentUseCaseTest {
+class GetDocumentByIdUseCaseTest {
 
     @MockK
     private lateinit var documentRepository: DocumentRepository
 
-    private lateinit var useCase: GetDocumentUseCase
+    private lateinit var useCase: GetDocumentByIdUseCase
 
     @Before
     fun setUp() {
         MockKAnnotations.init(this)
-        useCase = GetDocumentUseCase(documentRepository)
+        useCase = GetDocumentByIdUseCase(documentRepository)
     }
 
     @After

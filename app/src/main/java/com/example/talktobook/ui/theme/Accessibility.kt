@@ -290,12 +290,12 @@ object VoiceCorrectionDescriptions {
     fun selectedTextSection(selectedText: String, isActive: Boolean): String {
         val status = if (isActive) "アクティブ" else "非アクティブ"
         val charCount = selectedText.length
-        return "選択されたテキスト: $status, 文字数: ${charCount}文字。修正対象: ${selectedText.take(50)}${if (selectedText.length > 50) "..." else ""}"
+        return "選択されたテキスト: $status, 文字数: $charCount文字。修正対象: ${selectedText.take(50)}${if (selectedText.length > 50) "..." else ""}"
     }
     
     fun selectedTextContent(selectedText: String): String {
         val charCount = selectedText.length
-        return "修正対象のテキスト: ${charCount}文字。内容: $selectedText"
+        return "修正対象のテキスト: $charCount文字。内容: $selectedText"
     }
     
     // Recording controls section
@@ -347,7 +347,7 @@ object VoiceCorrectionDescriptions {
     
     fun correctedTextContent(correctedText: String): String {
         val charCount = correctedText.length
-        return "修正されたテキスト内容: ${charCount}文字。内容: $correctedText"
+        return "修正されたテキスト内容: $charCount文字。内容: $correctedText"
     }
     
     // Action buttons section

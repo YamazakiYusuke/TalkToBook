@@ -1,11 +1,11 @@
-package com.example.talktobook.data.remote
+package com.yama_ai.talktobook.data.remote
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.example.talktobook.data.remote.api.OpenAIApi
-import com.example.talktobook.data.remote.interceptor.AuthInterceptor
-import com.example.talktobook.data.remote.interceptor.NetworkConnectivityInterceptor
-import com.example.talktobook.data.remote.dto.TranscriptionResponse
-import com.example.talktobook.util.Constants
+import com.yama_ai.talktobook.data.remote.api.OpenAIApi
+import com.yama_ai.talktobook.data.remote.interceptor.AuthInterceptor
+import com.yama_ai.talktobook.data.remote.interceptor.NetworkConnectivityInterceptor
+import com.yama_ai.talktobook.data.remote.model.TranscriptionResponse
+import com.yama_ai.talktobook.util.Constants
 import kotlinx.coroutines.test.runTest
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody

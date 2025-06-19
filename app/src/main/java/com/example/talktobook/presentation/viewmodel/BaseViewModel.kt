@@ -17,7 +17,7 @@ import javax.inject.Inject
 abstract class BaseViewModel<T : UiState> : ViewModel() {
 
     @Inject
-    internal lateinit var crashlyticsManager: CrashlyticsManager
+    protected lateinit var crashlyticsManager: CrashlyticsManager
 
     protected val _isLoading = MutableStateFlow(false)
     protected val _error = MutableStateFlow<String?>(null)

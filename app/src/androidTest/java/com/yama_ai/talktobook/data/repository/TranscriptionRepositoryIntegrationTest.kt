@@ -1,14 +1,14 @@
-package com.example.talktobook.data.repository
+package com.yama_ai.talktobook.data.repository
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.example.talktobook.data.remote.api.OpenAIApi
-import com.example.talktobook.data.remote.exception.*
-import com.example.talktobook.data.remote.interceptor.AuthInterceptor
-import com.example.talktobook.data.remote.dto.TranscriptionResponse
-import com.example.talktobook.data.remote.util.NetworkErrorHandler
-import com.example.talktobook.data.cache.MemoryCache
-import com.example.talktobook.data.offline.OfflineManager
-import com.example.talktobook.domain.util.RetryPolicy
+import com.yama_ai.talktobook.data.remote.api.OpenAIApi
+import com.yama_ai.talktobook.data.remote.exception.*
+import com.yama_ai.talktobook.data.remote.interceptor.AuthInterceptor
+import com.yama_ai.talktobook.data.remote.model.TranscriptionResponse
+import com.yama_ai.talktobook.data.remote.util.NetworkErrorHandler
+import com.yama_ai.talktobook.util.MemoryCache
+import com.yama_ai.talktobook.util.OfflineManager
+import com.yama_ai.talktobook.util.RetryPolicies
 import io.mockk.*
 import io.mockk.impl.annotations.MockK
 import kotlinx.coroutines.test.runTest

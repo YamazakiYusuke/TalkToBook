@@ -1,14 +1,14 @@
-package com.example.talktobook.presentation.viewmodel.document
+package com.yama_ai.talktobook.presentation.viewmodel.document
 
 import androidx.lifecycle.SavedStateHandle
-import com.example.talktobook.domain.model.Chapter
-import com.example.talktobook.domain.model.Document
-import com.example.talktobook.domain.usecase.chapter.CreateChapterUseCase
-import com.example.talktobook.domain.usecase.chapter.GetChaptersByDocumentUseCase
-import com.example.talktobook.domain.usecase.document.DeleteDocumentUseCase
-import com.example.talktobook.domain.usecase.document.GetDocumentByIdUseCase
-import com.example.talktobook.domain.usecase.document.UpdateDocumentUseCase
-import com.example.talktobook.presentation.ui.state.DocumentDetailUiState
+import com.yama_ai.talktobook.domain.model.Chapter
+import com.yama_ai.talktobook.domain.model.Document
+import com.yama_ai.talktobook.domain.usecase.chapter.CreateChapterUseCase
+import com.yama_ai.talktobook.domain.usecase.chapter.GetChaptersByDocumentUseCase
+import com.yama_ai.talktobook.domain.usecase.document.DeleteDocumentUseCase
+import com.yama_ai.talktobook.domain.usecase.document.GetDocumentByIdUseCase
+import com.yama_ai.talktobook.domain.usecase.document.UpdateDocumentUseCase
+import com.yama_ai.talktobook.presentation.ui.state.DocumentDetailUiState
 import io.mockk.*
 import io.mockk.impl.annotations.MockK
 import kotlinx.coroutines.ExperimentalCoroutinesApi
