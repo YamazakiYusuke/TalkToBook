@@ -1,9 +1,9 @@
-package com.yama_ai.talktobook.presentation.viewmodel
+package com.example.talktobook.presentation.viewmodel
 
-import com.yama_ai.talktobook.domain.model.Document
-import com.yama_ai.talktobook.domain.usecase.document.*
-import com.yama_ai.talktobook.presentation.ui.state.DocumentUiState
-import com.yama_ai.talktobook.util.AnalyticsManager
+import com.example.talktobook.domain.model.Document
+import com.example.talktobook.domain.usecase.document.*
+import com.example.talktobook.presentation.ui.state.DocumentUiState
+import com.example.talktobook.util.AnalyticsManager
 import io.mockk.*
 import io.mockk.impl.annotations.MockK
 import kotlinx.coroutines.ExperimentalCoroutinesApi
