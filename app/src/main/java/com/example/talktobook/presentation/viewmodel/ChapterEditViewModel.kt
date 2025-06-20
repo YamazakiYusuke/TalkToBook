@@ -80,14 +80,19 @@ class ChapterEditViewModel @Inject constructor(
                 setLoading(false)
             }
         ) {
-            val chapter = getChapterUseCase(chapterId)
-            if (chapter != null) {
-                _chapter.value = chapter
-                _title.value = chapter.title
-                _content.value = chapter.content
+            val result = getChapterUseCase(chapterId)
+            if (result.isSuccess) {
+                val chapter = result.getOrNull()
+                if (chapter != null) {
+                    _chapter.value = chapter
+                    _title.value = chapter.title
+                    _content.value = chapter.content
                 _hasUnsavedChanges.value = false
+                } else {
+                    setError("Chapter not found")
+                }
             } else {
-                setError("Chapter not found")
+                throw result.exceptionOrNull() ?: Exception("Failed to get chapter")
             }
             setLoading(false)
         }

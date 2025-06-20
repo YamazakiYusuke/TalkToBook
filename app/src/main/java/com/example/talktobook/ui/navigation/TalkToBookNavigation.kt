@@ -87,7 +87,10 @@ fun TalkToBookNavigation(
                 onNavigateToDocument = { documentId ->
                     navController.navigate(Screen.DocumentDetail.createRoute(documentId))
                 },
-                onNavigateToMerge = { selectedIds: List<String> ->
+                onNavigateToMerge = {
+                    navController.navigate(Screen.DocumentMerge.route)
+                },
+                onNavigateToMergeWithSelection = { selectedIds: List<String> ->
                     val idsString = selectedIds.joinToString(",")
                     navController.navigate("${Screen.DocumentMerge.route}?selectedIds=$idsString")
                 }

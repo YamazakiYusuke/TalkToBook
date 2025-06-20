@@ -42,7 +42,7 @@ import com.example.talktobook.ui.theme.ContentDescriptions
 @Composable
 fun RecordingScreen(
     onNavigateBack: () -> Unit,
-    onNavigateToProcessing: () -> Unit,
+    onNavigateToProcessing: (String) -> Unit,
     viewModel: RecordingViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
@@ -162,7 +162,7 @@ private fun RecordingContent(
     onStopRecording: () -> Unit,
     onPauseRecording: () -> Unit,
     onResumeRecording: () -> Unit,
-    onNavigateToProcessing: () -> Unit,
+    onNavigateToProcessing: (String) -> Unit,
     onNavigateBack: () -> Unit,
     onClearError: () -> Unit
 ) {
@@ -204,7 +204,9 @@ private fun RecordingContent(
             onStartRecording = onStartRecording,
             onStopRecording = {
                 onStopRecording()
-                onNavigateToProcessing()
+                uiState.currentRecording?.id?.let { recordingId ->
+                    onNavigateToProcessing(recordingId)
+                }
             },
             onPauseRecording = onPauseRecording,
             onResumeRecording = onResumeRecording,
