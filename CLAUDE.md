@@ -119,8 +119,27 @@ The project includes automated test scripts in `scripts/` directory:
 - `run-tests.sh`: Full test suite with comprehensive reporting
 - `quick-test.sh`: Fast execution for development workflow
 - `test-specific.sh`: Targeted test execution for specific classes
+- `cleanup-test-reports.sh`: Automated cleanup of old test reports
 
-Refer to `scripts/README.md` for detailed usage instructions and configuration options.
+Refer to `scripts/README.md` and `docs/development/testing.md` for detailed usage instructions and testing methodology.
+
+## Documentation
+
+The project maintains comprehensive documentation in the `docs/` directory:
+
+### Core Documentation
+- **`docs/README.md`**: Complete documentation index and navigation
+- **`docs/architecture/`**: Clean Architecture and Dependency Injection guides
+- **`docs/development/`**: Setup, testing, and build guides
+- **`docs/api/`**: OpenAI integration documentation
+- **`docs/troubleshooting/`**: Common issues and solutions
+
+### Quick Reference
+- **Testing Guide**: `docs/development/testing.md`
+- **Setup Guide**: `docs/development/setup.md`
+- **Build Commands**: `docs/development/build-commands.md`
+- **OpenAI Integration**: `docs/api/openai-integration.md`
+- **Troubleshooting**: `docs/troubleshooting/common-issues.md`
 
 ## Current Project Status
 
@@ -132,6 +151,7 @@ Refer to `scripts/README.md` for detailed usage instructions and configuration o
 - ✅ Comprehensive unit test coverage
 - ✅ Hilt dependency injection setup
 - ✅ Base ViewModels and UI state management
+- ✅ Comprehensive documentation structure
 
 ### Development Environment
 - **Target SDK**: 35
