@@ -30,7 +30,8 @@ import javax.inject.Singleton
 class AudioRepositoryImpl @Inject constructor(
     private val recordingDao: RecordingDao,
     @ApplicationContext private val context: Context,
-    private val audioFileManager: com.example.talktobook.util.AudioFileManager
+    private val audioFileManager: com.example.talktobook.util.AudioFileManager,
+    private val timeManager: com.example.talktobook.util.RecordingTimeManager
 ) : AudioRepository {
 
     private val recordingMutex = Mutex()
@@ -39,9 +40,6 @@ class AudioRepositoryImpl @Inject constructor(
 
     private data class RecordingSession(
         val recordingId: String,
-        val startTime: Long,
-        val pausedDuration: Long = 0,
-        val lastPauseTime: Long = 0,
         val audioFilePath: String
     )
 
@@ -131,18 +129,19 @@ class AudioRepositoryImpl @Inject constructor(
 
                 // Create recording entity
                 val recordingId = UUID.randomUUID().toString()
-                val startTime = System.currentTimeMillis()
+                
+                // Start timing
+                timeManager.startTiming()
                 
                 // Update recording state
                 currentRecordingSession = RecordingSession(
                     recordingId = recordingId,
-                    startTime = startTime,
                     audioFilePath = audioFile.absolutePath
                 )
 
                 val recording = Recording(
                     id = recordingId,
-                    timestamp = startTime,
+                    timestamp = timeManager.getStartTime(),
                     audioFilePath = audioFile.absolutePath,
                     transcribedText = null,
                     status = TranscriptionStatus.PENDING,
@@ -159,6 +158,7 @@ class AudioRepositoryImpl @Inject constructor(
                 releaseMediaRecorder()
                 currentRecordingSession = null
                 recorderState = MediaRecorderState.ERROR
+                timeManager.reset()
                 
                 when (e) {
                     is IOException -> throw IOException("Failed to start recording: ${e.message}", e)
@@ -185,8 +185,7 @@ class AudioRepositoryImpl @Inject constructor(
                     currentMediaRecorder?.pause()
                     recorderState = MediaRecorderState.PAUSED
                     
-                    val pauseTime = System.currentTimeMillis()
-                    currentRecordingSession = recordingState.copy(lastPauseTime = pauseTime)
+                    timeManager.pauseTiming()
                     
                     recordingDao.getRecordingById(recordingId)?.let { entity ->
                         val recording = entity.toDomainModel()
@@ -220,18 +219,7 @@ class AudioRepositoryImpl @Inject constructor(
                     currentMediaRecorder?.resume()
                     recorderState = MediaRecorderState.RECORDING
                     
-                    // Calculate paused duration
-                    val resumeTime = System.currentTimeMillis()
-                    val updatedPausedDuration = if (recordingState.lastPauseTime > 0) {
-                        recordingState.pausedDuration + (resumeTime - recordingState.lastPauseTime)
-                    } else {
-                        recordingState.pausedDuration
-                    }
-                    
-                    currentRecordingSession = recordingState.copy(
-                        pausedDuration = updatedPausedDuration,
-                        lastPauseTime = 0
-                    )
+                    timeManager.resumeTiming()
                     
                     recordingDao.getRecordingById(recordingId)?.let { entity ->
                         val recording = entity.toDomainModel()
@@ -274,14 +262,7 @@ class AudioRepositoryImpl @Inject constructor(
                     }
                     
                     // Calculate total duration
-                    val stopTime = System.currentTimeMillis()
-                    val totalRecordingTime = stopTime - recordingState.startTime
-                    val finalPausedDuration = if (recorderState == MediaRecorderState.PAUSED && recordingState.lastPauseTime > 0) {
-                        recordingState.pausedDuration + (stopTime - recordingState.lastPauseTime)
-                    } else {
-                        recordingState.pausedDuration
-                    }
-                    val totalDuration = (totalRecordingTime - finalPausedDuration).coerceAtLeast(0L)
+                    val totalDuration = timeManager.getTotalDuration()
                     
                     // Update recording in database
                     recordingDao.getRecordingById(recordingId)?.let { entity ->
@@ -303,6 +284,7 @@ class AudioRepositoryImpl @Inject constructor(
                     releaseMediaRecorder()
                     currentRecordingSession = null
                     recorderState = MediaRecorderState.INITIAL
+                    timeManager.reset()
                 }
                 
                 return@withContext finalRecording
@@ -314,6 +296,7 @@ class AudioRepositoryImpl @Inject constructor(
                 releaseMediaRecorder()
                 currentRecordingSession = null
                 recorderState = MediaRecorderState.ERROR
+                timeManager.reset()
                 
                 // Return whatever we can find in the database
                 return@withContext recordingDao.getRecordingById(recordingId)?.toDomainModel()
@@ -392,6 +375,7 @@ class AudioRepositoryImpl @Inject constructor(
             releaseMediaRecorder()
             currentRecordingSession = null
             recorderState = MediaRecorderState.INITIAL
+            timeManager.reset()
         } catch (e: Exception) {
             android.util.Log.e("AudioRepository", "Error during cleanup", e)
         }

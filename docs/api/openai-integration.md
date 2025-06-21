@@ -231,6 +231,15 @@ class NetworkErrorHandler @Inject constructor() {
             else -> NetworkException("Network error: ${response.code()}")
         }
     }
+    
+    fun handleException(exception: Exception): Exception {
+        return when (exception) {
+            is SocketTimeoutException -> TimeoutException("Request timeout")
+            is UnknownHostException -> NetworkException("No internet connection")
+            is SSLException -> SecurityException("SSL/TLS error")
+            else -> exception
+        }
+    }
 }
 ```
 
@@ -349,6 +358,12 @@ class AudioProcessor @Inject constructor() {
     private fun isSizeValid(file: File): Boolean {
         return file.length() <= Constants.MAX_FILE_SIZE_MB * 1024 * 1024
     }
+    
+    private fun convertAndCompressAudio(inputFile: File): File {
+        // Implementation for audio conversion/compression
+        // This would typically use FFmpeg or similar library
+        throw NotImplementedError("Audio conversion not implemented")
+    }
 }
 ```
 
@@ -394,6 +409,19 @@ fun `should return error when API call fails`() = runTest {
 }
 ```
 
+### Integration Tests
+
+```kotlin
+@Test
+fun `should transcribe real audio file`() = runTest {
+    // This test requires a valid API key and network connection
+    val audioFile = getTestAudioFile()
+    val result = repository.transcribeAudio(audioFile)
+    
+    assertTrue(result.isSuccess)
+    assertTrue(result.getOrNull()?.isNotEmpty() == true)
+}
+```
 ## Best Practices
 
 ### 1. API Key Security

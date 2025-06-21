@@ -199,6 +199,28 @@ class ExampleClass {
 }
 ```
 
+## Code Quality Tools
+
+### Lint Configuration
+
+Lint is configured to catch common issues:
+
+```kotlin
+android {
+    lint {
+        abortOnError = false
+        checkReleaseBuilds = true
+        warningsAsErrors = false
+    }
+}
+```
+
+### Code Formatting
+
+Follow Kotlin coding conventions:
+- Use 4 spaces for indentation
+- Line length: 120 characters maximum
+- Use meaningful variable and function names
 ## Device/Emulator Setup
 
 ### Physical Device Setup
@@ -269,6 +291,41 @@ adb logcat | grep TalkToBook
 adb devices
 ```
 
+### Performance Optimization
+
+#### Build Performance
+
+```kotlin
+// In gradle.properties
+org.gradle.jvmargs=-Xmx4g -XX:MaxPermSize=512m
+org.gradle.parallel=true
+org.gradle.caching=true
+android.useAndroidX=true
+android.enableJetifier=true
+```
+
+#### Development Settings
+
+Enable parallel builds and incremental compilation in Android Studio:
+- File > Settings > Build > Compiler
+- Check "Build project automatically"
+- Check "Compile independent modules in parallel"
+
+## Environment Variables
+
+For production builds, use environment variables for sensitive data:
+
+```bash
+# Set environment variable
+export OPENAI_API_KEY="your-api-key"
+
+# Access in build.gradle.kts
+android {
+    defaultConfig {
+        buildConfigField("String", "OPENAI_API_KEY", "\"${System.getenv("OPENAI_API_KEY")}\"")
+    }
+}
+```
 ## Next Steps
 
 After completing the setup:

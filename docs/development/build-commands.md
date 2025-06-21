@@ -227,6 +227,20 @@ android {
 ./gradlew :app:compareApks
 ```
 
+## Docker Build (DevContainer)
+
+For consistent build environments using Docker:
+
+```bash
+# Build in Docker container
+docker build -t talktobook-build .
+docker run --rm -v $(pwd):/workspace talktobook-build ./gradlew build
+
+# Interactive development container
+docker run -it -v $(pwd):/workspace talktobook-build bash
+```
+
+See [Docker Android Debug Build Methodology](../build/docker-android-debug-build-methodology.md) for detailed information.
 ## Continuous Integration
 
 ### GitHub Actions
