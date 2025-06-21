@@ -58,8 +58,8 @@ class AudioRepositoryImplTest {
         val testFilePath = "/test/path/recording.mp3"
         
         every { testFile.absolutePath } returns testFilePath
-        every { audioFileManager.generateUniqueFileName() } returns "test-filename.mp3"
-        every { audioFileManager.createRecordingFile(any()) } returns testFile
+        coEvery { audioFileManager.generateUniqueFileName() } returns "test-filename.mp3"
+        coEvery { audioFileManager.createRecordingFile(any()) } returns testFile
         coEvery { recordingDao.insertRecording(any()) } just Runs
         every { timeManager.startTiming() } just Runs
         
@@ -169,8 +169,8 @@ class AudioRepositoryImplTest {
         )
         
         coEvery { recordingDao.getRecordingById(recordingId) } returns recordingEntity
-        coEvery { recordingDao.deleteRecording(recordingEntity) } just Runs
-        coEvery { audioFileManager.deleteFile(recordingEntity.audioFilePath) } just Runs
+        coEvery { recordingDao.deleteRecording(recordingEntity) } just runs
+        coEvery { audioFileManager.deleteFile(recordingEntity.audioFilePath) } just awaits
         
         // When
         repository.deleteRecording(recordingId)
@@ -294,9 +294,9 @@ class AudioRepositoryImplTest {
         
         every { audioFileManager.audioDirectory } returns testDirectory
         every { recordingDao.getAllRecordings() } returns flowOf(emptyList())
-        coEvery { audioFileManager.deleteFile(any()) } just Runs
-        coEvery { audioFileManager.cleanupTempFiles() } just Runs
-        coEvery { audioFileManager.enforceCacheSizeLimit() } just Runs
+        coEvery { audioFileManager.deleteFile(any()) } just awaits
+        coEvery { audioFileManager.cleanupTempFiles() } just awaits
+        coEvery { audioFileManager.enforceCacheSizeLimit() } just awaits
         
         // When
         repository.cleanupOrphanedAudioFiles()

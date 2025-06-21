@@ -120,7 +120,7 @@ class VoiceCommandRepositoryImplTest {
         
         assertNotNull(result)
         assertTrue(result?.command is VoiceCommand.Unknown)
-        assertEquals(CommandConfidence.UNKNOWN, result.confidence)
+        assertEquals(CommandConfidence.UNKNOWN, result?.confidence)
     }
 
     @Test
@@ -129,7 +129,7 @@ class VoiceCommandRepositoryImplTest {
         
         assertNotNull(result)
         assertTrue(result?.command is VoiceCommand.Unknown)
-        assertEquals(CommandConfidence.UNKNOWN, result.confidence)
+        assertEquals(CommandConfidence.UNKNOWN, result?.confidence)
     }
 
     @Test
@@ -146,7 +146,7 @@ class VoiceCommandRepositoryImplTest {
     }
 
     @Test
-    fun `getAvailableCommands returns commands for enabled categories only`() {
+    fun `getAvailableCommands returns commands for enabled categories only`() = runTest {
         repository.setCommandCategories(
             navigationEnabled = true,
             recordingEnabled = false,
