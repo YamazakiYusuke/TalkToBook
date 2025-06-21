@@ -2,6 +2,8 @@ package com.example.talktobook.di
 
 import android.content.Context
 import androidx.room.Room
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKey
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.talktobook.data.local.TalkToBookDatabase
 import com.example.talktobook.data.local.dao.ChapterDao
@@ -14,11 +16,16 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import net.sqlcipher.database.SQLiteDatabase
 import net.sqlcipher.database.SupportFactory
+import java.security.SecureRandom
 import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
+    
+    private const val DB_PASSPHRASE_KEY = "database_passphrase"
+    private const val DB_SECURITY_PREFS = "database_security_prefs"
+    private const val PASSPHRASE_LENGTH = 32
     
     @Provides
     @Singleton
@@ -39,23 +46,37 @@ object DatabaseModule {
     }
     
     private fun generateDatabasePassphrase(context: Context): String {
-        val prefs = context.getSharedPreferences("db_security", Context.MODE_PRIVATE)
-        val existingPassphrase = prefs.getString("db_passphrase", null)
+        val masterKey = MasterKey.Builder(context)
+            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+            .build()
         
+        val encryptedPrefs = EncryptedSharedPreferences.create(
+            context,
+            DB_SECURITY_PREFS,
+            masterKey,
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+        )
+        
+        val existingPassphrase = encryptedPrefs.getString(DB_PASSPHRASE_KEY, null)
         if (existingPassphrase != null) {
             return existingPassphrase
         }
         
-        // Generate a new passphrase using Android's secure random
+        // Generate a new secure passphrase
         val passphrase = generateSecurePassphrase()
-        prefs.edit().putString("db_passphrase", passphrase).apply()
+        encryptedPrefs.edit()
+            .putString(DB_PASSPHRASE_KEY, passphrase)
+            .apply()
+        
         return passphrase
     }
     
     private fun generateSecurePassphrase(): String {
+        val secureRandom = SecureRandom()
         val charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*"
-        return (1..32)
-            .map { charset.random() }
+        return (1..PASSPHRASE_LENGTH)
+            .map { charset[secureRandom.nextInt(charset.length)] }
             .joinToString("")
     }
     

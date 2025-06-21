@@ -95,6 +95,8 @@ dependencies {
     
     // Work Manager
     implementation(libs.androidx.work.runtime)
+    implementation(libs.androidx.hilt.work)
+    ksp(libs.hilt.compiler)
     
     // Firebase
     implementation(platform(libs.firebase.bom))

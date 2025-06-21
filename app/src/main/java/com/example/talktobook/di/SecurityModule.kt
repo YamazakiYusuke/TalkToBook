@@ -1,9 +1,11 @@
 package com.example.talktobook.di
 
+import com.example.talktobook.data.security.ApiKeyProviderImpl
 import com.example.talktobook.data.security.EncryptionManagerImpl
 import com.example.talktobook.data.security.FileCleanupManagerImpl
 import com.example.talktobook.data.security.PrivacyManagerImpl
 import com.example.talktobook.data.security.SecureStorageManagerImpl
+import com.example.talktobook.domain.security.ApiKeyProvider
 import com.example.talktobook.domain.security.EncryptionManager
 import com.example.talktobook.domain.security.FileCleanupManager
 import com.example.talktobook.domain.security.PrivacyManager
@@ -41,4 +43,10 @@ abstract class SecurityModule {
     abstract fun bindFileCleanupManager(
         fileCleanupManagerImpl: FileCleanupManagerImpl
     ): FileCleanupManager
+    
+    @Binds
+    @Singleton
+    abstract fun bindApiKeyProvider(
+        apiKeyProviderImpl: ApiKeyProviderImpl
+    ): ApiKeyProvider
 }

@@ -28,6 +28,12 @@ class FileCleanupManagerImpl @Inject constructor(
         private const val TAG = "FileCleanupManager"
         private const val CLEANUP_WORK_NAME = "talktobook_file_cleanup"
         private const val SECURE_WIPE_PASSES = 3
+        private const val SECURE_WIPE_BUFFER_SIZE = 8192
+        private const val ORPHANED_FILE_AGE_THRESHOLD_HOURS = 24
+        private const val ORPHANED_FILE_AGE_THRESHOLD_MS = ORPHANED_FILE_AGE_THRESHOLD_HOURS * 60 * 60 * 1000L
+        private const val CLEANUP_SCHEDULE_INTERVAL_HOURS = 24L
+        private const val CLEANUP_SCHEDULE_FLEX_HOURS = 4L
+        private const val BYTES_PER_KB = 1024L
     }
     
     private val workManager: WorkManager by lazy {
@@ -51,7 +57,7 @@ class FileCleanupManagerImpl @Inject constructor(
                 }
             }
             
-            Log.i(TAG, "Cleanup completed: $deletedCount files deleted, ${spaceFreed / 1024}KB freed")
+            Log.i(TAG, "Cleanup completed: $deletedCount files deleted, ${spaceFreed / BYTES_PER_KB}KB freed")
         } catch (e: Exception) {
             Log.e(TAG, "Error during temp file cleanup", e)
         }
@@ -131,7 +137,7 @@ class FileCleanupManagerImpl @Inject constructor(
                         else -> (System.currentTimeMillis() and 0xFF).toByte() // Random pattern
                     }
                     
-                    val buffer = ByteArray(8192) { pattern }
+                    val buffer = ByteArray(SECURE_WIPE_BUFFER_SIZE) { pattern }
                     var remaining = fileSize
                     
                     while (remaining > 0) {
@@ -155,8 +161,8 @@ class FileCleanupManagerImpl @Inject constructor(
     override suspend fun scheduleAutomaticCleanup() = withContext(Dispatchers.IO) {
         try {
             val cleanupRequest = PeriodicWorkRequestBuilder<FileCleanupWorker>(
-                24, TimeUnit.HOURS,
-                4, TimeUnit.HOURS
+                CLEANUP_SCHEDULE_INTERVAL_HOURS, TimeUnit.HOURS,
+                CLEANUP_SCHEDULE_FLEX_HOURS, TimeUnit.HOURS
             )
             .setConstraints(
                 Constraints.Builder()
@@ -167,7 +173,7 @@ class FileCleanupManagerImpl @Inject constructor(
             .build()
             
             workManager.enqueueUniquePeriodicWork(
-                CLEANUP_WORK_NAME,
+                FileCleanupWorker.WORK_NAME,
                 ExistingPeriodicWorkPolicy.KEEP,
                 cleanupRequest
             )
@@ -180,7 +186,7 @@ class FileCleanupManagerImpl @Inject constructor(
     
     override suspend fun cleanupOldRecordings(maxAgeDays: Int): Int = withContext(Dispatchers.IO) {
         var deletedCount = 0
-        val cutoffTime = System.currentTimeMillis() - (maxAgeDays * 24 * 60 * 60 * 1000L)
+        val cutoffTime = System.currentTimeMillis() - (maxAgeDays * ORPHANED_FILE_AGE_THRESHOLD_MS)
         
         try {
             val audioDir = audioFileManager.audioDirectory
@@ -212,13 +218,13 @@ class FileCleanupManagerImpl @Inject constructor(
     private fun isOrphanedFile(file: File): Boolean {
         // This would need to check against the database to see if the file
         // is referenced by any RecordingEntity
-        // For now, we'll use a simple heuristic: files older than 24 hours
+        // For now, we'll use a simple heuristic: files older than threshold
         // that match the temp file pattern
         val age = System.currentTimeMillis() - file.lastModified()
-        val is24HoursOld = age > (24 * 60 * 60 * 1000)
+        val isOldEnough = age > ORPHANED_FILE_AGE_THRESHOLD_MS
         val hasExpectedExtension = file.name.endsWith(".m4a") || file.name.endsWith(".wav")
         
-        return is24HoursOld && hasExpectedExtension
+        return isOldEnough && hasExpectedExtension
     }
     
     private fun updateCleanupStats(totalProcessed: Int, deleted: Int, spaceFreed: Long) {
@@ -239,23 +245,3 @@ class FileCleanupManagerImpl @Inject constructor(
     }
 }
 
-/**
- * Worker class for scheduled file cleanup
- */
-class FileCleanupWorker(
-    context: Context,
-    params: WorkerParameters
-) : CoroutineWorker(context, params) {
-    
-    override suspend fun doWork(): Result {
-        return try {
-            // Note: In a real implementation, this would need dependency injection
-            // For now, we'll return success to avoid compilation errors
-            Log.d("FileCleanupWorker", "Scheduled cleanup executed")
-            Result.success()
-        } catch (e: Exception) {
-            Log.e("FileCleanupWorker", "Cleanup work failed", e)
-            Result.failure()
-        }
-    }
-}

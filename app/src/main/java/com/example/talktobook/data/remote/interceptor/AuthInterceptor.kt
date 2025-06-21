@@ -1,8 +1,6 @@
 package com.example.talktobook.data.remote.interceptor
 
-import com.example.talktobook.domain.security.SecureStorageManager
-import com.example.talktobook.util.Constants
-import kotlinx.coroutines.runBlocking
+import com.example.talktobook.domain.security.ApiKeyProvider
 import okhttp3.Interceptor
 import okhttp3.Response
 import javax.inject.Inject
@@ -10,7 +8,7 @@ import javax.inject.Singleton
 
 @Singleton
 class AuthInterceptor @Inject constructor(
-    private val secureStorageManager: SecureStorageManager
+    private val apiKeyProvider: ApiKeyProvider
 ) : Interceptor {
     
     override fun intercept(chain: Interceptor.Chain): Response {
@@ -18,9 +16,7 @@ class AuthInterceptor @Inject constructor(
         
         // Only add auth header to OpenAI API requests
         val requestBuilder = if (original.url.host.contains("openai.com")) {
-            val apiKey = runBlocking { 
-                secureStorageManager.getApiKey() ?: Constants.OPENAI_API_KEY 
-            }
+            val apiKey = apiKeyProvider.getCachedApiKey()
             original.newBuilder()
                 .header("Authorization", "Bearer $apiKey")
         } else {
