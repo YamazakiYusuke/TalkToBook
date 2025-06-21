@@ -21,7 +21,7 @@ ksp = "2.0.0-1.0.22"
 mockk = "1.13.5"
 robolectric = "4.13"
 firebaseBom = "33.1.0"
-googleServices = "4.4.0"
+googleServices = "4.4.2"
 firebaseCrashlytics = "3.0.2"
 
 [libraries]
