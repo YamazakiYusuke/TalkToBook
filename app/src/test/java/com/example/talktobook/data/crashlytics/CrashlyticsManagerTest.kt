@@ -17,9 +17,9 @@ class CrashlyticsManagerTest {
 
     @Before
     fun setUp() {
-        // Mock Firebase.crashlytics static call
-        mockkStatic("com.google.firebase.ktx.FirebaseKt")
-        every { com.google.firebase.ktx.Firebase.crashlytics } returns mockFirebaseCrashlytics
+        // Mock FirebaseCrashlytics.getInstance() static call
+        mockkStatic(FirebaseCrashlytics::class)
+        every { FirebaseCrashlytics.getInstance() } returns mockFirebaseCrashlytics
         
         crashlyticsManager = CrashlyticsManager()
     }
@@ -31,7 +31,7 @@ class CrashlyticsManagerTest {
 
         // Assert
         assertTrue(crashlyticsManager.isCrashlyticsEnabled())
-        verify { mockFirebaseCrashlytics.isCrashlyticsCollectionEnabled = true }
+        verify { mockFirebaseCrashlytics.setCrashlyticsCollectionEnabled(true) }
     }
 
     @Test
@@ -41,7 +41,7 @@ class CrashlyticsManagerTest {
 
         // Assert
         assertFalse(crashlyticsManager.isCrashlyticsEnabled())
-        verify { mockFirebaseCrashlytics.isCrashlyticsCollectionEnabled = false }
+        verify { mockFirebaseCrashlytics.setCrashlyticsCollectionEnabled(false) }
     }
 
     @Test
