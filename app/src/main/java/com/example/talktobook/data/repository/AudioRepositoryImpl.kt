@@ -129,7 +129,6 @@ class AudioRepositoryImpl @Inject constructor(
 
                 // Create recording entity
                 val recordingId = UUID.randomUUID().toString()
-                val startTime = System.currentTimeMillis()
                 
                 // Start timing
                 timeManager.startTiming()
@@ -142,7 +141,7 @@ class AudioRepositoryImpl @Inject constructor(
 
                 val recording = Recording(
                     id = recordingId,
-                    timestamp = startTime,
+                    timestamp = timeManager.getStartTime(),
                     audioFilePath = audioFile.absolutePath,
                     transcribedText = null,
                     status = TranscriptionStatus.PENDING,

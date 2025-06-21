@@ -9,17 +9,17 @@ class RecordingTimeManager @Inject constructor() {
     private var startTime: Long = 0
     private var pausedDuration: Long = 0
     private var lastPauseTime: Long = 0
-    private var isActive: Boolean = false
+    private var active: Boolean = false
     
     fun startTiming() {
         startTime = System.currentTimeMillis()
         pausedDuration = 0
         lastPauseTime = 0
-        isActive = true
+        active = true
     }
     
     fun pauseTiming() {
-        if (!isActive) {
+        if (!active) {
             throw IllegalStateException("Timer is not active")
         }
         
@@ -29,7 +29,7 @@ class RecordingTimeManager @Inject constructor() {
     }
     
     fun resumeTiming(): Long {
-        if (!isActive) {
+        if (!active) {
             throw IllegalStateException("Timer is not active")
         }
         
@@ -46,7 +46,7 @@ class RecordingTimeManager @Inject constructor() {
     }
     
     fun getTotalDuration(): Long {
-        if (!isActive) {
+        if (!active) {
             return 0
         }
         
@@ -59,19 +59,20 @@ class RecordingTimeManager @Inject constructor() {
             pausedDuration
         }
         
-        return (totalRecordingTime - finalPausedDuration).coerceAtLeast(0L)
+        val duration = totalRecordingTime - finalPausedDuration
+        return if (duration < 0) 0L else duration
     }
     
     fun reset() {
         startTime = 0
         pausedDuration = 0
         lastPauseTime = 0
-        isActive = false
+        active = false
     }
     
-    fun isActive(): Boolean = isActive
+    fun isActive(): Boolean = active
     
-    fun isPaused(): Boolean = isActive && lastPauseTime > 0
+    fun isPaused(): Boolean = active && lastPauseTime > 0
     
     fun getStartTime(): Long = startTime
     
