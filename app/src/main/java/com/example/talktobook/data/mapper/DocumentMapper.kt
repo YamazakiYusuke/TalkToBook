@@ -5,7 +5,11 @@ import com.example.talktobook.data.local.entity.DocumentWithChapters
 import com.example.talktobook.data.mapper.ChapterMapper.toDomainModel
 import com.example.talktobook.domain.model.Document
 
-object DocumentMapper {
+object DocumentMapper : EntityMapper<DocumentEntity, Document> {
+    
+    override fun DocumentEntity.toDomainModel(): Document {
+        return toDomainModel(emptyList())
+    }
     
     fun DocumentEntity.toDomainModel(chapters: List<com.example.talktobook.domain.model.Chapter> = emptyList()): Document {
         return Document(
@@ -18,7 +22,7 @@ object DocumentMapper {
         )
     }
     
-    fun Document.toEntity(): DocumentEntity {
+    override fun Document.toEntity(): DocumentEntity {
         return DocumentEntity(
             id = id,
             title = title,
@@ -32,13 +36,5 @@ object DocumentMapper {
         return document.toDomainModel(
             chapters = chapters.map { it.toDomainModel() }
         )
-    }
-    
-    fun List<DocumentEntity>.toDomainModels(): List<Document> {
-        return map { it.toDomainModel() }
-    }
-    
-    fun List<Document>.toEntities(): List<DocumentEntity> {
-        return map { it.toEntity() }
     }
 }

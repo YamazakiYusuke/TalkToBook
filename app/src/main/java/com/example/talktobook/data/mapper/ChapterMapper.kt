@@ -3,9 +3,9 @@ package com.example.talktobook.data.mapper
 import com.example.talktobook.data.local.entity.ChapterEntity
 import com.example.talktobook.domain.model.Chapter
 
-object ChapterMapper {
+object ChapterMapper : EntityMapper<ChapterEntity, Chapter> {
     
-    fun ChapterEntity.toDomainModel(): Chapter {
+    override fun ChapterEntity.toDomainModel(): Chapter {
         return Chapter(
             id = id,
             documentId = documentId,
@@ -17,7 +17,7 @@ object ChapterMapper {
         )
     }
     
-    fun Chapter.toEntity(): ChapterEntity {
+    override fun Chapter.toEntity(): ChapterEntity {
         return ChapterEntity(
             id = id,
             documentId = documentId,
@@ -27,13 +27,5 @@ object ChapterMapper {
             createdAt = createdAt,
             updatedAt = updatedAt
         )
-    }
-    
-    fun List<ChapterEntity>.toDomainModels(): List<Chapter> {
-        return map { it.toDomainModel() }
-    }
-    
-    fun List<Chapter>.toEntities(): List<ChapterEntity> {
-        return map { it.toEntity() }
     }
 }
