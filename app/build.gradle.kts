@@ -74,6 +74,9 @@ dependencies {
     implementation(libs.room.ktx)
     ksp(libs.room.compiler)
     
+    // Database Encryption
+    implementation(libs.sqlcipher)
+    
     // Network
     implementation(libs.retrofit)
     implementation(libs.retrofit.gson)
@@ -86,6 +89,12 @@ dependencies {
     
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
+    
+    // Security
+    implementation(libs.androidx.security.crypto)
+    
+    // Work Manager
+    implementation(libs.androidx.work.runtime)
     
     // Firebase
     implementation(platform(libs.firebase.bom))
