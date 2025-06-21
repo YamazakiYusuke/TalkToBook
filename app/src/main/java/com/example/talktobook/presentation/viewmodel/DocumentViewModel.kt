@@ -4,11 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.talktobook.data.analytics.AnalyticsManager
 import com.example.talktobook.domain.model.Document
+import com.example.talktobook.domain.usecase.DocumentUseCases
 import com.example.talktobook.domain.usecase.document.CreateDocumentUseCase
-import com.example.talktobook.domain.usecase.document.DeleteDocumentUseCase
-import com.example.talktobook.domain.usecase.document.GetAllDocumentsUseCase
 import com.example.talktobook.domain.usecase.document.GetDocumentUseCase
 import com.example.talktobook.domain.usecase.document.UpdateDocumentUseCase
+import com.example.talktobook.domain.usecase.document.DeleteDocumentUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,11 +24,7 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class DocumentViewModel @Inject constructor(
-    private val createDocumentUseCase: CreateDocumentUseCase,
-    private val updateDocumentUseCase: UpdateDocumentUseCase,
-    private val getDocumentUseCase: GetDocumentUseCase,
-    private val deleteDocumentUseCase: DeleteDocumentUseCase,
-    private val getAllDocumentsUseCase: GetAllDocumentsUseCase,
+    private val documentUseCases: DocumentUseCases,
     private val analyticsManager: AnalyticsManager
 ) : ViewModel() {
 
@@ -46,7 +42,7 @@ class DocumentViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             
-            getAllDocumentsUseCase()
+            documentUseCases.getAllDocuments()
                 .fold(
                     onSuccess = { documentsFlow ->
                         documentsFlow
@@ -81,7 +77,7 @@ class DocumentViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(searchQuery = query)
             
-            getAllDocumentsUseCase.searchDocuments(query)
+            documentUseCases.getAllDocuments.searchDocuments(query)
                 .onStart {
                     _uiState.value = _uiState.value.copy(isLoading = true, error = null)
                 }
@@ -118,7 +114,7 @@ class DocumentViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             
-            val result = createDocumentUseCase(CreateDocumentUseCase.Params(title, content))
+            val result = documentUseCases.createDocument(CreateDocumentUseCase.Params(title, content))
             result.fold(
                 onSuccess = { document ->
                     analyticsManager.logDocumentCreated(
@@ -155,7 +151,7 @@ class DocumentViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             
-            val result = getDocumentUseCase(GetDocumentUseCase.Params(documentId))
+            val result = documentUseCases.getDocument(GetDocumentUseCase.Params(documentId))
             result.fold(
                 onSuccess = { document ->
                     _uiState.value = _uiState.value.copy(
@@ -181,7 +177,7 @@ class DocumentViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             
-            val result = updateDocumentUseCase(UpdateDocumentUseCase.Params(document))
+            val result = documentUseCases.updateDocument(UpdateDocumentUseCase.Params(document))
             result.fold(
                 onSuccess = { updatedDocument ->
                     analyticsManager.logDocumentUpdated(
@@ -221,7 +217,7 @@ class DocumentViewModel @Inject constructor(
             // Get document info before deletion for analytics
             val documentToDelete = _uiState.value.documents.find { it.id == documentId }
             
-            val result = deleteDocumentUseCase(DeleteDocumentUseCase.Params(documentId))
+            val result = documentUseCases.deleteDocument(DeleteDocumentUseCase.Params(documentId))
             result.fold(
                 onSuccess = {
                     documentToDelete?.let { doc ->
