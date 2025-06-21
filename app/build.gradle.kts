@@ -25,12 +25,44 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            isDebuggable = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            
+            // Build configuration optimizations
+            buildConfigField("boolean", "DEBUG_MODE", "false")
+            buildConfigField("String", "BUILD_TYPE", "\"release\"")
+            
+            // Signing configuration (will be configured separately)
+            // signingConfig = signingConfigs.getByName("release")
         }
+        
+        debug {
+            isMinifyEnabled = false
+            isDebuggable = true
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+            
+            buildConfigField("boolean", "DEBUG_MODE", "true")
+            buildConfigField("String", "BUILD_TYPE", "\"debug\"")
+        }
+    }
+    
+    // Signing configurations (template for future use)
+    signingConfigs {
+        // Uncomment and configure when ready for production signing
+        /*
+        create("release") {
+            storeFile = file("path/to/your/keystore.jks")
+            storePassword = "your_store_password"
+            keyAlias = "your_key_alias"
+            keyPassword = "your_key_password"
+        }
+        */
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -41,6 +73,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     lint {
         disable += "NullSafeMutableLiveData"
