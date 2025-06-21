@@ -241,7 +241,6 @@ docker run -it -v $(pwd):/workspace talktobook-build bash
 ```
 
 See [Docker Android Debug Build Methodology](../build/docker-android-debug-build-methodology.md) for detailed information.
-
 ## Continuous Integration
 
 ### GitHub Actions

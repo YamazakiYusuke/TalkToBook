@@ -221,7 +221,6 @@ Follow Kotlin coding conventions:
 - Use 4 spaces for indentation
 - Line length: 120 characters maximum
 - Use meaningful variable and function names
-
 ## Device/Emulator Setup
 
 ### Physical Device Setup
@@ -327,7 +326,6 @@ android {
     }
 }
 ```
-
 ## Next Steps
 
 After completing the setup:

@@ -154,7 +154,6 @@ object AndroidModule {
     }
 }
 ```
-
 ## Scopes and Lifecycle
 
 ### Component Scopes
@@ -294,7 +293,6 @@ class FakeAudioRepository @Inject constructor() : AudioRepository {
     }
 }
 ```
-
 ## Best Practices
 
 ### 1. Use Constructor Injection
@@ -438,5 +436,4 @@ abstract class RepositoryModule {
     abstract fun bindRepository(impl: RepositoryImpl): Repository
 }
 ```
-
 This dependency injection setup ensures clean, testable, and maintainable code throughout the TalkToBook application.

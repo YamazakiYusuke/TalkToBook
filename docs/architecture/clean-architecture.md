@@ -50,7 +50,6 @@ TalkToBook follows Clean Architecture principles with MVVM pattern, organized in
 - UI components should be as simple as possible
 - ViewModels handle UI state and business logic coordination
 - No direct dependencies on data sources
-
 ### Domain Layer (`domain/`)
 
 **Purpose**: Contains pure business logic and domain rules
@@ -64,7 +63,6 @@ TalkToBook follows Clean Architecture principles with MVVM pattern, organized in
 - No dependencies on external frameworks
 - Pure Kotlin objects (no Android dependencies)
 - Contains the core business rules
-
 ### Data Layer (`data/`)
 
 **Purpose**: Handles data access and external communication
@@ -78,7 +76,6 @@ TalkToBook follows Clean Architecture principles with MVVM pattern, organized in
 - Implements repository interfaces from domain layer
 - Handles data transformation between external and domain formats
 - Manages caching and offline capabilities
-
 ## Core Entities
 
 ### RecordingEntity
@@ -96,6 +93,9 @@ TalkToBook follows Clean Architecture principles with MVVM pattern, organized in
 - Contains transcribed text content
 - Supports ordering and editing
 
+<<<<<<< HEAD
+This architecture ensures clean, maintainable, and testable code that follows established architectural patterns.
+=======
 ## Data Flow
 
 ```

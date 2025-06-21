@@ -422,7 +422,6 @@ fun `should transcribe real audio file`() = runTest {
     assertTrue(result.getOrNull()?.isNotEmpty() == true)
 }
 ```
-
 ## Best Practices
 
 ### 1. API Key Security

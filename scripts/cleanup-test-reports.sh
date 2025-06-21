@@ -114,5 +114,4 @@ if [ "$DRY_RUN" = true ]; then
 else
     log_success "Test reports cleanup completed"
 fi
-
 exit 0

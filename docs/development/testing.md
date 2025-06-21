@@ -39,7 +39,6 @@ For rapid feedback during development:
 - Runs only unit tests (no coverage/reports)
 - Faster execution for quick feedback
 - Minimal output for rapid iteration
-
 ### Comprehensive Test Suite
 
 For full validation before commits/PRs:
@@ -55,7 +54,6 @@ For full validation before commits/PRs:
 - Runs instrumented tests (if device/emulator connected)
 - Generates detailed reports
 - Opens reports in browser on macOS
-
 ### Targeted Test Execution
 
 For focused testing on specific components:
@@ -65,7 +63,7 @@ For focused testing on specific components:
 ./scripts/test-specific.sh "*ViewModel*"
 
 # Run specific repository tests
-./scripts/test-specific.sh DocumentRepository
+./scripts/test-specific.sh "DocumentRepository"
 
 # Run use case tests
 ./scripts/test-specific.sh "*UseCase*"
@@ -141,6 +139,9 @@ fun `should return success when audio file exists`() {
 }
 ```
 
+<<<<<<< HEAD
+This comprehensive testing approach ensures reliable, maintainable code throughout the TalkToBook application.
+=======
 ### Test Naming
 
 Use descriptive test names that clearly state:
