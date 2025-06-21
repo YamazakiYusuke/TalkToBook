@@ -34,7 +34,10 @@ TalkToBook is an Android application designed to help elderly users (65+) write 
 ./scripts/run-tests.sh          # Comprehensive test suite with reports
 ./scripts/quick-test.sh         # Fast test execution for development
 ./scripts/test-specific.sh      # Run specific test classes
+./scripts/cleanup-test-reports.sh # Clean old test reports
 ```
+
+**For detailed build instructions, see [Build Commands Guide](docs/development/build-commands.md)**
 
 ## Architecture
 
@@ -44,6 +47,10 @@ The project follows Clean Architecture with MVVM pattern using:
 - **Domain Layer** (`domain/`): Use cases, domain models, repository interfaces
 - **Data Layer** (`data/`): Repository implementations, local (Room) and remote (Retrofit) data sources
 - **Dependency Injection** (`di/`): Hilt modules for dependency management
+
+**For detailed architecture documentation:**
+- [Clean Architecture Guide](docs/architecture/clean-architecture.md)
+- [Dependency Injection Guide](docs/architecture/dependency-injection.md)
 
 ### Key Technology Stack
 - **UI**: Jetpack Compose with Material 3
@@ -77,11 +84,15 @@ Update `util/Constants.kt` with your OpenAI API key:
 const val OPENAI_API_KEY = "your-actual-api-key"
 ```
 
+**For detailed API setup, see [OpenAI Integration Guide](docs/api/openai-integration.md)**
+
 ### Permissions
 The app requires these permissions (already configured in AndroidManifest.xml):
 - `RECORD_AUDIO`: Voice recording functionality
 - `INTERNET`: OpenAI API communication
 - Storage permissions for temporary audio files
+
+**For complete setup instructions, see [Development Setup Guide](docs/development/setup.md)**
 
 ## Senior-Friendly Design Requirements
 
@@ -119,8 +130,27 @@ The project includes automated test scripts in `scripts/` directory:
 - `run-tests.sh`: Full test suite with comprehensive reporting
 - `quick-test.sh`: Fast execution for development workflow
 - `test-specific.sh`: Targeted test execution for specific classes
+- `cleanup-test-reports.sh`: Automated cleanup of old test reports
 
-Refer to `scripts/README.md` for detailed usage instructions and configuration options.
+Refer to `scripts/README.md` and [Testing Guide](docs/development/testing.md) for detailed usage instructions and testing methodology.
+
+## Documentation
+
+The project maintains comprehensive documentation in the `docs/` directory:
+
+### Core Documentation
+- **[docs/README.md](docs/README.md)**: Complete documentation index and navigation
+- **[docs/architecture/](docs/architecture/)**: Clean Architecture and Dependency Injection guides
+- **[docs/development/](docs/development/)**: Setup, testing, and build guides
+- **[docs/api/](docs/api/)**: OpenAI integration documentation
+- **[docs/troubleshooting/](docs/troubleshooting/)**: Common issues and solutions
+
+### Quick Reference
+- **Testing Guide**: [docs/development/testing.md](docs/development/testing.md)
+- **Setup Guide**: [docs/development/setup.md](docs/development/setup.md)
+- **Build Commands**: [docs/development/build-commands.md](docs/development/build-commands.md)
+- **OpenAI Integration**: [docs/api/openai-integration.md](docs/api/openai-integration.md)
+- **Troubleshooting**: [docs/troubleshooting/common-issues.md](docs/troubleshooting/common-issues.md)
 
 ## Current Project Status
 
@@ -132,6 +162,7 @@ Refer to `scripts/README.md` for detailed usage instructions and configuration o
 - ✅ Comprehensive unit test coverage
 - ✅ Hilt dependency injection setup
 - ✅ Base ViewModels and UI state management
+- ✅ Comprehensive documentation structure
 
 ### Development Environment
 - **Target SDK**: 35
