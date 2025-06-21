@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.example.talktobook.data.analytics.AnalyticsManager
 import com.example.talktobook.domain.model.Document
 import com.example.talktobook.domain.usecase.DocumentUseCases
+import com.example.talktobook.domain.usecase.DocumentUseCaseParams
+import com.example.talktobook.domain.usecase.document.SearchDocumentsUseCase
 import com.example.talktobook.domain.usecase.document.CreateDocumentUseCase
 import com.example.talktobook.domain.usecase.document.GetDocumentUseCase
 import com.example.talktobook.domain.usecase.document.UpdateDocumentUseCase
@@ -25,6 +27,7 @@ import javax.inject.Inject
 @HiltViewModel
 class DocumentViewModel @Inject constructor(
     private val documentUseCases: DocumentUseCases,
+    private val searchDocumentsUseCase: SearchDocumentsUseCase,
     private val analyticsManager: AnalyticsManager
 ) : ViewModel() {
 
@@ -75,35 +78,33 @@ class DocumentViewModel @Inject constructor(
      */
     fun searchDocuments(query: String) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(searchQuery = query)
+            _uiState.value = _uiState.value.copy(searchQuery = query, isLoading = true, error = null)
             
-            documentUseCases.getAllDocuments.searchDocuments(query)
-                .onStart {
-                    _uiState.value = _uiState.value.copy(isLoading = true, error = null)
-                }
-                .catch { exception ->
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        error = exception.message ?: "Failed to search documents"
-                    )
-                }
-                .collect { result ->
-                    result.fold(
-                        onSuccess = { documents ->
-                            _uiState.value = _uiState.value.copy(
-                                isLoading = false,
-                                documents = documents,
-                                error = null
-                            )
-                        },
-                        onFailure = { exception ->
+            val result = searchDocumentsUseCase(SearchDocumentsUseCase.Params(query))
+            result.fold(
+                onSuccess = { documentsFlow ->
+                    documentsFlow
+                        .catch { exception ->
                             _uiState.value = _uiState.value.copy(
                                 isLoading = false,
                                 error = exception.message ?: "Failed to search documents"
                             )
                         }
+                        .collect { documents ->
+                            _uiState.value = _uiState.value.copy(
+                                isLoading = false,
+                                documents = documents,
+                                error = null
+                            )
+                        }
+                },
+                onFailure = { exception ->
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        error = exception.message ?: "Failed to search documents"
                     )
                 }
+            )
         }
     }
 

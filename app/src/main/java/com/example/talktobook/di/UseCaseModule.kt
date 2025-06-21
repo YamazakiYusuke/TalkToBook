@@ -33,8 +33,10 @@ import com.example.talktobook.domain.usecase.voicecommand.StartVoiceCommandListe
 import com.example.talktobook.domain.usecase.voicecommand.StopVoiceCommandListeningUseCase
 import com.example.talktobook.domain.usecase.AudioUseCases
 import com.example.talktobook.domain.usecase.DocumentUseCases
+import com.example.talktobook.domain.usecase.ChapterUseCases
 import com.example.talktobook.domain.usecase.TranscriptionUseCases
 import com.example.talktobook.domain.usecase.VoiceCommandUseCases
+import com.example.talktobook.domain.usecase.document.SearchDocumentsUseCase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -212,6 +214,12 @@ object UseCaseModule {
         voiceCommandRepository: VoiceCommandRepository
     ): StopVoiceCommandListeningUseCase = StopVoiceCommandListeningUseCase(voiceCommandRepository)
 
+    @Provides
+    @Singleton
+    fun provideSearchDocumentsUseCase(
+        documentRepository: DocumentRepository
+    ): SearchDocumentsUseCase = SearchDocumentsUseCase(documentRepository)
+
     // Grouped Use Cases
     @Provides
     @Singleton
@@ -239,7 +247,19 @@ object UseCaseModule {
         getDocument: GetDocumentUseCase,
         getDocumentById: GetDocumentByIdUseCase,
         deleteDocument: DeleteDocumentUseCase,
-        getAllDocuments: GetAllDocumentsUseCase,
+        getAllDocuments: GetAllDocumentsUseCase
+    ): DocumentUseCases = DocumentUseCases(
+        createDocument = createDocument,
+        updateDocument = updateDocument,
+        getDocument = getDocument,
+        getDocumentById = getDocumentById,
+        deleteDocument = deleteDocument,
+        getAllDocuments = getAllDocuments
+    )
+
+    @Provides
+    @Singleton
+    fun provideChapterUseCases(
         createChapter: CreateChapterUseCase,
         updateChapter: UpdateChapterUseCase,
         getChapter: GetChapterUseCase,
@@ -247,13 +267,7 @@ object UseCaseModule {
         deleteChapter: DeleteChapterUseCase,
         reorderChapters: ReorderChaptersUseCase,
         mergeChapters: MergeChaptersUseCase
-    ): DocumentUseCases = DocumentUseCases(
-        createDocument = createDocument,
-        updateDocument = updateDocument,
-        getDocument = getDocument,
-        getDocumentById = getDocumentById,
-        deleteDocument = deleteDocument,
-        getAllDocuments = getAllDocuments,
+    ): ChapterUseCases = ChapterUseCases(
         createChapter = createChapter,
         updateChapter = updateChapter,
         getChapter = getChapter,

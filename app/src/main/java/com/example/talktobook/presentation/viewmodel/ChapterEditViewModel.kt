@@ -2,6 +2,7 @@ package com.example.talktobook.presentation.viewmodel
 
 import androidx.lifecycle.viewModelScope
 import com.example.talktobook.domain.model.Chapter
+import com.example.talktobook.domain.usecase.ChapterUseCases
 import com.example.talktobook.domain.usecase.chapter.GetChapterUseCase
 import com.example.talktobook.domain.usecase.chapter.UpdateChapterUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -25,8 +26,7 @@ data class ChapterEditUiState(
 
 @HiltViewModel
 class ChapterEditViewModel @Inject constructor(
-    private val getChapterUseCase: GetChapterUseCase,
-    private val updateChapterUseCase: UpdateChapterUseCase
+    private val chapterUseCases: ChapterUseCases
 ) : BaseViewModel<ChapterEditUiState>() {
 
     private val _chapter = MutableStateFlow<Chapter?>(null)
@@ -80,7 +80,7 @@ class ChapterEditViewModel @Inject constructor(
                 setLoading(false)
             }
         ) {
-            val result = getChapterUseCase(chapterId)
+            val result = chapterUseCases.getChapter(chapterId)
             if (result.isSuccess) {
                 val chapter = result.getOrNull()
                 if (chapter != null) {
@@ -139,7 +139,7 @@ class ChapterEditViewModel @Inject constructor(
                 content = _content.value
             )
 
-            updateChapterUseCase(updatedChapter).fold(
+            chapterUseCases.updateChapter(updatedChapter).fold(
                 onSuccess = { savedChapter ->
                     _chapter.value = savedChapter
                     _hasUnsavedChanges.value = false
