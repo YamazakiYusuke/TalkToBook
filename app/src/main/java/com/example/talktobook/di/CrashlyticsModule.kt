@@ -12,23 +12,18 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object CrashlyticsModule {
     
-    @Provides
-    @Singleton
-    fun provideCrashlyticsManager(): CrashlyticsManager {
-        return CrashlyticsManager()
-    }
-    
     /**
-     * Initialize CrashlyticsManager with privacy settings from AnalyticsManager
+     * Provide CrashlyticsManager with privacy settings from AnalyticsManager
      * This ensures crash reporting respects the same privacy controls as analytics
      */
     @Provides
     @Singleton
-    fun provideCrashlyticsWithPrivacySync(
-        crashlyticsManager: CrashlyticsManager,
+    fun provideCrashlyticsManager(
         analyticsManager: AnalyticsManager
-    ): CrashlyticsManager = crashlyticsManager.apply {
-        // Sync privacy settings with analytics preferences
-        setCrashlyticsEnabled(analyticsManager.isAnalyticsEnabled())
+    ): CrashlyticsManager {
+        return CrashlyticsManager().apply {
+            // Sync privacy settings with analytics preferences
+            setCrashlyticsEnabled(analyticsManager.isAnalyticsEnabled())
+        }
     }
 }

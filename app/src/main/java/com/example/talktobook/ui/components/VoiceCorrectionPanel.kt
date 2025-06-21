@@ -221,7 +221,6 @@ private fun SelectedTextSection(
                 .fillMaxWidth()
                 .semantics {
                     contentDescription = VoiceCorrectionDescriptions.selectedTextContent(selectedText)
-                    role = Role.Text
                 },
             colors = CardDefaults.cardColors(
                 containerColor = if (isActive) 
@@ -435,7 +434,6 @@ private fun CorrectedTextSection(
                 .fillMaxWidth()
                 .semantics {
                     contentDescription = VoiceCorrectionDescriptions.correctedTextContent(correctedText)
-                    role = Role.Text
                     stateDescription = "修正済み"
                 },
             colors = CardDefaults.cardColors(
@@ -507,7 +505,6 @@ private fun ApplyCorrectionDialog(
         onDismissRequest = onDismiss,
         modifier = Modifier.semantics {
             contentDescription = dialogDescription
-            role = Role.Dialog
         },
         icon = {
             Icon(
@@ -551,7 +548,6 @@ private fun ApplyCorrectionDialog(
                     Card(
                         modifier = Modifier.semantics {
                             contentDescription = VoiceCorrectionDescriptions.originalTextInDialog(originalText)
-                            role = Role.Text
                         },
                         colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.errorContainer,
@@ -578,7 +574,6 @@ private fun ApplyCorrectionDialog(
                     Card(
                         modifier = Modifier.semantics {
                             contentDescription = VoiceCorrectionDescriptions.correctedTextInDialog(correctedText)
-                            role = Role.Text
                         },
                         colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.primaryContainer,
