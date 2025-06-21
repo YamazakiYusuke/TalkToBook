@@ -6,6 +6,10 @@ import com.example.talktobook.domain.usecase.transcription.RetryTranscriptionUse
 import com.example.talktobook.domain.usecase.transcription.TranscribeAudioUseCase
 import com.example.talktobook.domain.usecase.transcription.UpdateTranscriptionStatusUseCase
 
+/**
+ * Groups transcription-related use cases for dependency injection
+ * Contains all transcription operations including OpenAI Whisper API communication
+ */
 data class TranscriptionUseCases(
     val transcribeAudio: TranscribeAudioUseCase,
     val getTranscriptionQueue: GetTranscriptionQueueUseCase,

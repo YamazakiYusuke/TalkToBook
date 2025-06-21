@@ -58,8 +58,8 @@ class AudioRepositoryImplTest {
         val testFilePath = "/test/path/recording.mp3"
         
         every { testFile.absolutePath } returns testFilePath
-        every { audioFileManager.generateUniqueFileName() } returns "test-filename.mp3"
-        every { audioFileManager.createRecordingFile(any()) } returns testFile
+        coEvery { audioFileManager.generateUniqueFileName() } returns "test-filename.mp3"
+        coEvery { audioFileManager.createRecordingFile(any()) } returns testFile
         coEvery { recordingDao.insertRecording(any()) } just Runs
         every { timeManager.startTiming() } just Runs
         
@@ -82,12 +82,12 @@ class AudioRepositoryImplTest {
         val recordingId = "test-id"
         val recordingEntity = RecordingEntity(
             id = recordingId,
-            filePath = "/test/path.mp3",
-            duration = 5000L,
+            timestamp = System.currentTimeMillis(),
+            audioFilePath = "/test/path.mp3",
             transcribedText = "Test text",
-            transcriptionStatus = TranscriptionStatus.COMPLETED,
-            createdAt = System.currentTimeMillis(),
-            updatedAt = System.currentTimeMillis()
+            status = TranscriptionStatus.COMPLETED,
+            duration = 5000L,
+            title = "Test Recording"
         )
         
         coEvery { recordingDao.getRecordingById(recordingId) } returns recordingEntity
@@ -99,7 +99,7 @@ class AudioRepositoryImplTest {
         assertNotNull(result)
         assertEquals(recordingId, result?.id)
         assertEquals("Test text", result?.transcribedText)
-        assertEquals(TranscriptionStatus.COMPLETED, result?.transcriptionStatus)
+        assertEquals(TranscriptionStatus.COMPLETED, result?.status)
         
         coVerify { recordingDao.getRecordingById(recordingId) }
     }
@@ -126,21 +126,21 @@ class AudioRepositoryImplTest {
         val recordingEntities = listOf(
             RecordingEntity(
                 id = "1",
-                filePath = "/test/path1.mp3",
-                duration = 3000L,
+                timestamp = System.currentTimeMillis(),
+                audioFilePath = "/test/path1.mp3",
                 transcribedText = null,
-                transcriptionStatus = TranscriptionStatus.PENDING,
-                createdAt = System.currentTimeMillis(),
-                updatedAt = System.currentTimeMillis()
+                status = TranscriptionStatus.PENDING,
+                duration = 3000L,
+                title = "Test Recording 1"
             ),
             RecordingEntity(
                 id = "2",
-                filePath = "/test/path2.mp3",
-                duration = 4000L,
+                timestamp = System.currentTimeMillis(),
+                audioFilePath = "/test/path2.mp3",
                 transcribedText = "Test text",
-                transcriptionStatus = TranscriptionStatus.COMPLETED,
-                createdAt = System.currentTimeMillis(),
-                updatedAt = System.currentTimeMillis()
+                status = TranscriptionStatus.COMPLETED,
+                duration = 4000L,
+                title = "Test Recording 2"
             )
         )
         
@@ -160,17 +160,17 @@ class AudioRepositoryImplTest {
         val recordingId = "test-id"
         val recordingEntity = RecordingEntity(
             id = recordingId,
-            filePath = "/test/path.mp3",
-            duration = 5000L,
+            timestamp = System.currentTimeMillis(),
+            audioFilePath = "/test/path.mp3",
             transcribedText = null,
-            transcriptionStatus = TranscriptionStatus.PENDING,
-            createdAt = System.currentTimeMillis(),
-            updatedAt = System.currentTimeMillis()
+            status = TranscriptionStatus.PENDING,
+            duration = 5000L,
+            title = "Test Recording"
         )
         
         coEvery { recordingDao.getRecordingById(recordingId) } returns recordingEntity
-        coEvery { recordingDao.deleteRecording(recordingEntity) } just Runs
-        coEvery { audioFileManager.deleteFile(recordingEntity.filePath) } just Runs
+        coEvery { recordingDao.deleteRecording(recordingEntity) } just runs
+        coEvery { audioFileManager.deleteFile(recordingEntity.audioFilePath) } just awaits
         
         // When
         repository.deleteRecording(recordingId)
@@ -178,7 +178,7 @@ class AudioRepositoryImplTest {
         // Then
         coVerify { recordingDao.getRecordingById(recordingId) }
         coVerify { recordingDao.deleteRecording(recordingEntity) }
-        coVerify { audioFileManager.deleteFile(recordingEntity.filePath) }
+        coVerify { audioFileManager.deleteFile(recordingEntity.audioFilePath) }
     }
 
     @Test
@@ -204,12 +204,12 @@ class AudioRepositoryImplTest {
         val transcribedText = "This is the transcribed text"
         val recordingEntity = RecordingEntity(
             id = recordingId,
-            filePath = "/test/path.mp3",
-            duration = 5000L,
+            timestamp = System.currentTimeMillis(),
+            audioFilePath = "/test/path.mp3",
             transcribedText = null,
-            transcriptionStatus = TranscriptionStatus.PENDING,
-            createdAt = System.currentTimeMillis(),
-            updatedAt = System.currentTimeMillis()
+            status = TranscriptionStatus.PENDING,
+            duration = 5000L,
+            title = "Test Recording"
         )
         
         coEvery { recordingDao.getRecordingById(recordingId) } returns recordingEntity
@@ -225,7 +225,7 @@ class AudioRepositoryImplTest {
                 match { 
                     it.id == recordingId && 
                     it.transcribedText == transcribedText &&
-                    it.transcriptionStatus == TranscriptionStatus.COMPLETED
+                    it.status == TranscriptionStatus.COMPLETED
                 }
             )
         }
@@ -238,12 +238,12 @@ class AudioRepositoryImplTest {
         val filePath = "/test/path.mp3"
         val recordingEntity = RecordingEntity(
             id = recordingId,
-            filePath = filePath,
-            duration = 5000L,
+            timestamp = System.currentTimeMillis(),
+            audioFilePath = filePath,
             transcribedText = null,
-            transcriptionStatus = TranscriptionStatus.PENDING,
-            createdAt = System.currentTimeMillis(),
-            updatedAt = System.currentTimeMillis()
+            status = TranscriptionStatus.PENDING,
+            duration = 5000L,
+            title = "Test Recording"
         )
         val testFile = mockk<File>()
         
@@ -294,9 +294,9 @@ class AudioRepositoryImplTest {
         
         every { audioFileManager.audioDirectory } returns testDirectory
         every { recordingDao.getAllRecordings() } returns flowOf(emptyList())
-        coEvery { audioFileManager.deleteFile(any()) } just Runs
-        coEvery { audioFileManager.cleanupTempFiles() } just Runs
-        coEvery { audioFileManager.enforceCacheSizeLimit() } just Runs
+        coEvery { audioFileManager.deleteFile(any()) } just awaits
+        coEvery { audioFileManager.cleanupTempFiles() } just awaits
+        coEvery { audioFileManager.enforceCacheSizeLimit() } just awaits
         
         // When
         repository.cleanupOrphanedAudioFiles()

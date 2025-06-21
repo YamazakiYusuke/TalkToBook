@@ -39,21 +39,21 @@ class GetAllRecordingsUseCaseTest {
         val recordings = listOf(
             Recording(
                 id = "recording-1",
-                filePath = "/path/to/recording1.mp3",
+                audioFilePath = "/path/to/recording1.mp3",
                 duration = 5000L,
                 transcribedText = "First recording",
-                transcriptionStatus = TranscriptionStatus.COMPLETED,
-                createdAt = System.currentTimeMillis(),
-                updatedAt = System.currentTimeMillis()
+                status = TranscriptionStatus.COMPLETED,
+                timestamp = System.currentTimeMillis(),
+                title = "Recording 1"
             ),
             Recording(
                 id = "recording-2",
-                filePath = "/path/to/recording2.mp3",
+                audioFilePath = "/path/to/recording2.mp3",
                 duration = 3000L,
                 transcribedText = null,
-                transcriptionStatus = TranscriptionStatus.PENDING,
-                createdAt = System.currentTimeMillis(),
-                updatedAt = System.currentTimeMillis()
+                status = TranscriptionStatus.PENDING,
+                timestamp = System.currentTimeMillis(),
+                title = "Recording 2"
             )
         )
         

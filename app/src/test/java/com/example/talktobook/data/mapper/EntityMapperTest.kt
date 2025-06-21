@@ -2,6 +2,7 @@ package com.example.talktobook.data.mapper
 
 import com.example.talktobook.data.local.entity.RecordingEntity
 import com.example.talktobook.domain.model.Recording
+import com.example.talktobook.domain.model.TranscriptionStatus
 import org.junit.Test
 import org.junit.Assert.*
 
@@ -37,20 +38,20 @@ class EntityMapperTest {
     fun `toDomainModels should map list of entities to domain models`() {
         val entities = listOf(
             RecordingEntity(
-                id = 1L,
+                id = "1",
                 timestamp = 123456789L,
                 audioFilePath = "/path/to/audio",
                 transcribedText = "Test text",
-                status = "COMPLETED",
+                status = TranscriptionStatus.COMPLETED,
                 duration = 5000L,
                 title = "Test Recording"
             ),
             RecordingEntity(
-                id = 2L,
+                id = "2",
                 timestamp = 987654321L,
                 audioFilePath = "/path/to/audio2",
                 transcribedText = "Test text 2",
-                status = "PENDING",
+                status = TranscriptionStatus.PENDING,
                 duration = 3000L,
                 title = "Test Recording 2"
             )
@@ -59,9 +60,9 @@ class EntityMapperTest {
         val result = with(TestMapper) { entities.toDomainModels() }
 
         assertEquals(2, result.size)
-        assertEquals(1L, result[0].id)
+        assertEquals("1", result[0].id)
         assertEquals("Test text", result[0].transcribedText)
-        assertEquals(2L, result[1].id)
+        assertEquals("2", result[1].id)
         assertEquals("Test text 2", result[1].transcribedText)
     }
 
@@ -69,20 +70,20 @@ class EntityMapperTest {
     fun `toEntities should map list of domain models to entities`() {
         val domainModels = listOf(
             Recording(
-                id = 1L,
+                id = "1",
                 timestamp = 123456789L,
                 audioFilePath = "/path/to/audio",
                 transcribedText = "Test text",
-                status = "COMPLETED",
+                status = TranscriptionStatus.COMPLETED,
                 duration = 5000L,
                 title = "Test Recording"
             ),
             Recording(
-                id = 2L,
+                id = "2",
                 timestamp = 987654321L,
                 audioFilePath = "/path/to/audio2",
                 transcribedText = "Test text 2",
-                status = "PENDING",
+                status = TranscriptionStatus.PENDING,
                 duration = 3000L,
                 title = "Test Recording 2"
             )
@@ -91,9 +92,9 @@ class EntityMapperTest {
         val result = with(TestMapper) { domainModels.toEntities() }
 
         assertEquals(2, result.size)
-        assertEquals(1L, result[0].id)
+        assertEquals("1", result[0].id)
         assertEquals("Test text", result[0].transcribedText)
-        assertEquals(2L, result[1].id)
+        assertEquals("2", result[1].id)
         assertEquals("Test text 2", result[1].transcribedText)
     }
 

@@ -2,9 +2,9 @@ package com.example.talktobook.presentation.viewmodel
 
 import androidx.lifecycle.viewModelScope
 import com.example.talktobook.domain.model.Chapter
+import com.example.talktobook.domain.usecase.ChapterUseCases
 import com.example.talktobook.domain.usecase.chapter.CreateChapterUseCase
 import com.example.talktobook.domain.usecase.chapter.DeleteChapterUseCase
-import com.example.talktobook.domain.usecase.chapter.GetChaptersByDocumentUseCase
 import com.example.talktobook.domain.usecase.chapter.ReorderChaptersUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,10 +28,7 @@ data class ChapterListUiState(
 
 @HiltViewModel
 class ChapterListViewModel @Inject constructor(
-    private val getChaptersByDocumentUseCase: GetChaptersByDocumentUseCase,
-    private val createChapterUseCase: CreateChapterUseCase,
-    private val deleteChapterUseCase: DeleteChapterUseCase,
-    private val reorderChaptersUseCase: ReorderChaptersUseCase
+    private val chapterUseCases: ChapterUseCases
 ) : BaseViewModel<ChapterListUiState>() {
 
     private val _documentId = MutableStateFlow("")
@@ -82,7 +79,7 @@ class ChapterListViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
-                val result = getChaptersByDocumentUseCase(documentId)
+                val result = chapterUseCases.getChaptersByDocument(documentId)
                 if (result.isSuccess) {
                     result.getOrNull()?.collect { chapters ->
                         _chapters.value = chapters
@@ -129,7 +126,7 @@ class ChapterListViewModel @Inject constructor(
                 orderIndex = nextOrderIndex
             )
 
-            createChapterUseCase(params).fold(
+            chapterUseCases.createChapter(params).fold(
                 onSuccess = { chapter ->
                     // Chapter will be automatically updated via the Flow
                     _isCreatingChapter.value = false
@@ -157,7 +154,7 @@ class ChapterListViewModel @Inject constructor(
                 _isDeletingChapter.value = false
             }
         ) {
-            deleteChapterUseCase(chapterId).fold(
+            chapterUseCases.deleteChapter(chapterId).fold(
                 onSuccess = {
                     // Chapter will be automatically removed from the list via the Flow
                     _isDeletingChapter.value = false
@@ -196,7 +193,7 @@ class ChapterListViewModel @Inject constructor(
                 chapterIds = chapterIds
             )
 
-            reorderChaptersUseCase(params).fold(
+            chapterUseCases.reorderChapters(params).fold(
                 onSuccess = {
                     // Chapters will be automatically reordered via the Flow
                     _isReordering.value = false

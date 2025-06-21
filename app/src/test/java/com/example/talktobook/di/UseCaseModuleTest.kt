@@ -5,6 +5,7 @@ import com.example.talktobook.domain.repository.DocumentRepository
 import com.example.talktobook.domain.repository.TranscriptionRepository
 import com.example.talktobook.domain.repository.VoiceCommandRepository
 import com.example.talktobook.domain.usecase.AudioUseCases
+import com.example.talktobook.domain.usecase.ChapterUseCases
 import com.example.talktobook.domain.usecase.DocumentUseCases
 import com.example.talktobook.domain.usecase.TranscriptionUseCases
 import com.example.talktobook.domain.usecase.VoiceCommandUseCases
@@ -20,6 +21,7 @@ import com.example.talktobook.domain.usecase.document.GetAllDocumentsUseCase
 import com.example.talktobook.domain.usecase.document.GetDocumentByIdUseCase
 import com.example.talktobook.domain.usecase.document.GetDocumentUseCase
 import com.example.talktobook.domain.usecase.document.UpdateDocumentUseCase
+import com.example.talktobook.domain.usecase.document.SearchDocumentsUseCase
 import com.example.talktobook.domain.usecase.chapter.CreateChapterUseCase
 import com.example.talktobook.domain.usecase.chapter.DeleteChapterUseCase
 import com.example.talktobook.domain.usecase.chapter.GetChapterUseCase
@@ -57,10 +59,10 @@ class UseCaseModuleTest {
     @Before
     fun setUp() {
         useCaseModule = UseCaseModule
-        mockAudioRepository = mockk()
-        mockDocumentRepository = mockk()
-        mockTranscriptionRepository = mockk()
-        mockVoiceCommandRepository = mockk()
+        mockAudioRepository = mockk(relaxed = true)
+        mockDocumentRepository = mockk(relaxed = true)
+        mockTranscriptionRepository = mockk(relaxed = true)
+        mockVoiceCommandRepository = mockk(relaxed = true)
     }
 
     // Individual Use Case Tests
@@ -86,6 +88,14 @@ class UseCaseModuleTest {
         
         assertNotNull(useCase)
         assertTrue(useCase is CreateDocumentUseCase)
+    }
+
+    @Test
+    fun `provideSearchDocumentsUseCase returns SearchDocumentsUseCase`() {
+        val useCase = useCaseModule.provideSearchDocumentsUseCase(mockDocumentRepository)
+        
+        assertNotNull(useCase)
+        assertTrue(useCase is SearchDocumentsUseCase)
     }
 
     @Test
@@ -140,13 +150,6 @@ class UseCaseModuleTest {
         val getDocumentById = GetDocumentByIdUseCase(mockDocumentRepository)
         val deleteDocument = DeleteDocumentUseCase(mockDocumentRepository)
         val getAllDocuments = GetAllDocumentsUseCase(mockDocumentRepository)
-        val createChapter = CreateChapterUseCase(mockDocumentRepository)
-        val updateChapter = UpdateChapterUseCase(mockDocumentRepository)
-        val getChapter = GetChapterUseCase(mockDocumentRepository)
-        val getChaptersByDocument = GetChaptersByDocumentUseCase(mockDocumentRepository)
-        val deleteChapter = DeleteChapterUseCase(mockDocumentRepository)
-        val reorderChapters = ReorderChaptersUseCase(mockDocumentRepository)
-        val mergeChapters = MergeChaptersUseCase(mockDocumentRepository)
 
         val documentUseCases = useCaseModule.provideDocumentUseCases(
             createDocument = createDocument,
@@ -154,14 +157,7 @@ class UseCaseModuleTest {
             getDocument = getDocument,
             getDocumentById = getDocumentById,
             deleteDocument = deleteDocument,
-            getAllDocuments = getAllDocuments,
-            createChapter = createChapter,
-            updateChapter = updateChapter,
-            getChapter = getChapter,
-            getChaptersByDocument = getChaptersByDocument,
-            deleteChapter = deleteChapter,
-            reorderChapters = reorderChapters,
-            mergeChapters = mergeChapters
+            getAllDocuments = getAllDocuments
         )
 
         assertNotNull(documentUseCases)
@@ -171,13 +167,36 @@ class UseCaseModuleTest {
         assertEquals(getDocumentById, documentUseCases.getDocumentById)
         assertEquals(deleteDocument, documentUseCases.deleteDocument)
         assertEquals(getAllDocuments, documentUseCases.getAllDocuments)
-        assertEquals(createChapter, documentUseCases.createChapter)
-        assertEquals(updateChapter, documentUseCases.updateChapter)
-        assertEquals(getChapter, documentUseCases.getChapter)
-        assertEquals(getChaptersByDocument, documentUseCases.getChaptersByDocument)
-        assertEquals(deleteChapter, documentUseCases.deleteChapter)
-        assertEquals(reorderChapters, documentUseCases.reorderChapters)
-        assertEquals(mergeChapters, documentUseCases.mergeChapters)
+    }
+
+    @Test
+    fun `provideChapterUseCases returns properly configured ChapterUseCases`() {
+        val createChapter = CreateChapterUseCase(mockDocumentRepository)
+        val updateChapter = UpdateChapterUseCase(mockDocumentRepository)
+        val getChapter = GetChapterUseCase(mockDocumentRepository)
+        val getChaptersByDocument = GetChaptersByDocumentUseCase(mockDocumentRepository)
+        val deleteChapter = DeleteChapterUseCase(mockDocumentRepository)
+        val reorderChapters = ReorderChaptersUseCase(mockDocumentRepository)
+        val mergeChapters = MergeChaptersUseCase(mockDocumentRepository)
+
+        val chapterUseCases = useCaseModule.provideChapterUseCases(
+            createChapter = createChapter,
+            updateChapter = updateChapter,
+            getChapter = getChapter,
+            getChaptersByDocument = getChaptersByDocument,
+            deleteChapter = deleteChapter,
+            reorderChapters = reorderChapters,
+            mergeChapters = mergeChapters
+        )
+
+        assertNotNull(chapterUseCases)
+        assertEquals(createChapter, chapterUseCases.createChapter)
+        assertEquals(updateChapter, chapterUseCases.updateChapter)
+        assertEquals(getChapter, chapterUseCases.getChapter)
+        assertEquals(getChaptersByDocument, chapterUseCases.getChaptersByDocument)
+        assertEquals(deleteChapter, chapterUseCases.deleteChapter)
+        assertEquals(reorderChapters, chapterUseCases.reorderChapters)
+        assertEquals(mergeChapters, chapterUseCases.mergeChapters)
     }
 
     @Test

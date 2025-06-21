@@ -28,13 +28,15 @@ import com.example.talktobook.domain.usecase.transcription.GetTranscriptionQueue
 import com.example.talktobook.domain.usecase.transcription.ProcessTranscriptionQueueUseCase
 import com.example.talktobook.domain.usecase.transcription.UpdateTranscriptionStatusUseCase
 import com.example.talktobook.domain.usecase.transcription.RetryTranscriptionUseCase
+import com.example.talktobook.domain.usecase.document.SearchDocumentsUseCase
+import com.example.talktobook.domain.usecase.DocumentUseCases
+import com.example.talktobook.domain.usecase.ChapterUseCases
+import com.example.talktobook.domain.usecase.AudioUseCases
+import com.example.talktobook.domain.usecase.TranscriptionUseCases
+import com.example.talktobook.domain.usecase.VoiceCommandUseCases
 import com.example.talktobook.domain.usecase.voicecommand.ProcessVoiceCommandUseCase
 import com.example.talktobook.domain.usecase.voicecommand.StartVoiceCommandListeningUseCase
 import com.example.talktobook.domain.usecase.voicecommand.StopVoiceCommandListeningUseCase
-import com.example.talktobook.domain.usecase.AudioUseCases
-import com.example.talktobook.domain.usecase.DocumentUseCases
-import com.example.talktobook.domain.usecase.TranscriptionUseCases
-import com.example.talktobook.domain.usecase.VoiceCommandUseCases
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -212,7 +214,52 @@ object UseCaseModule {
         voiceCommandRepository: VoiceCommandRepository
     ): StopVoiceCommandListeningUseCase = StopVoiceCommandListeningUseCase(voiceCommandRepository)
 
+    // Search Use Cases
+    @Provides
+    @Singleton
+    fun provideSearchDocumentsUseCase(
+        documentRepository: DocumentRepository
+    ): SearchDocumentsUseCase = SearchDocumentsUseCase(documentRepository)
+
     // Grouped Use Cases
+    @Provides
+    @Singleton
+    fun provideDocumentUseCases(
+        createDocument: CreateDocumentUseCase,
+        updateDocument: UpdateDocumentUseCase,
+        getDocument: GetDocumentUseCase,
+        getDocumentById: GetDocumentByIdUseCase,
+        deleteDocument: DeleteDocumentUseCase,
+        getAllDocuments: GetAllDocumentsUseCase
+    ): DocumentUseCases = DocumentUseCases(
+        createDocument = createDocument,
+        updateDocument = updateDocument,
+        getDocument = getDocument,
+        getDocumentById = getDocumentById,
+        deleteDocument = deleteDocument,
+        getAllDocuments = getAllDocuments
+    )
+
+    @Provides
+    @Singleton
+    fun provideChapterUseCases(
+        createChapter: CreateChapterUseCase,
+        updateChapter: UpdateChapterUseCase,
+        getChapter: GetChapterUseCase,
+        getChaptersByDocument: GetChaptersByDocumentUseCase,
+        deleteChapter: DeleteChapterUseCase,
+        reorderChapters: ReorderChaptersUseCase,
+        mergeChapters: MergeChaptersUseCase
+    ): ChapterUseCases = ChapterUseCases(
+        createChapter = createChapter,
+        updateChapter = updateChapter,
+        getChapter = getChapter,
+        getChaptersByDocument = getChaptersByDocument,
+        deleteChapter = deleteChapter,
+        reorderChapters = reorderChapters,
+        mergeChapters = mergeChapters
+    )
+
     @Provides
     @Singleton
     fun provideAudioUseCases(
@@ -229,38 +276,6 @@ object UseCaseModule {
         resumeRecording = resumeRecording,
         deleteRecording = deleteRecording,
         getAllRecordings = getAllRecordings
-    )
-
-    @Provides
-    @Singleton
-    fun provideDocumentUseCases(
-        createDocument: CreateDocumentUseCase,
-        updateDocument: UpdateDocumentUseCase,
-        getDocument: GetDocumentUseCase,
-        getDocumentById: GetDocumentByIdUseCase,
-        deleteDocument: DeleteDocumentUseCase,
-        getAllDocuments: GetAllDocumentsUseCase,
-        createChapter: CreateChapterUseCase,
-        updateChapter: UpdateChapterUseCase,
-        getChapter: GetChapterUseCase,
-        getChaptersByDocument: GetChaptersByDocumentUseCase,
-        deleteChapter: DeleteChapterUseCase,
-        reorderChapters: ReorderChaptersUseCase,
-        mergeChapters: MergeChaptersUseCase
-    ): DocumentUseCases = DocumentUseCases(
-        createDocument = createDocument,
-        updateDocument = updateDocument,
-        getDocument = getDocument,
-        getDocumentById = getDocumentById,
-        deleteDocument = deleteDocument,
-        getAllDocuments = getAllDocuments,
-        createChapter = createChapter,
-        updateChapter = updateChapter,
-        getChapter = getChapter,
-        getChaptersByDocument = getChaptersByDocument,
-        deleteChapter = deleteChapter,
-        reorderChapters = reorderChapters,
-        mergeChapters = mergeChapters
     )
 
     @Provides
