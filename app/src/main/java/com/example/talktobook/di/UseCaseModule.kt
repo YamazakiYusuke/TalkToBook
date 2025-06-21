@@ -198,6 +198,12 @@ object UseCaseModule {
     // Voice Command Use Cases
     @Provides
     @Singleton
+    fun provideProcessVoiceCommandUseCase(
+        voiceCommandRepository: VoiceCommandRepository
+    ): ProcessVoiceCommandUseCase = ProcessVoiceCommandUseCase(voiceCommandRepository)
+
+    @Provides
+    @Singleton
     fun provideStartVoiceCommandListeningUseCase(
         voiceCommandRepository: VoiceCommandRepository
     ): StartVoiceCommandListeningUseCase = StartVoiceCommandListeningUseCase(voiceCommandRepository)
@@ -207,12 +213,6 @@ object UseCaseModule {
     fun provideStopVoiceCommandListeningUseCase(
         voiceCommandRepository: VoiceCommandRepository
     ): StopVoiceCommandListeningUseCase = StopVoiceCommandListeningUseCase(voiceCommandRepository)
-
-    @Provides
-    @Singleton
-    fun provideProcessVoiceCommandUseCase(
-        voiceCommandRepository: VoiceCommandRepository
-    ): ProcessVoiceCommandUseCase = ProcessVoiceCommandUseCase(voiceCommandRepository)
 
     // Search Use Cases
     @Provides
@@ -297,12 +297,12 @@ object UseCaseModule {
     @Provides
     @Singleton
     fun provideVoiceCommandUseCases(
+        processVoiceCommand: ProcessVoiceCommandUseCase,
         startListening: StartVoiceCommandListeningUseCase,
-        stopListening: StopVoiceCommandListeningUseCase,
-        processCommand: ProcessVoiceCommandUseCase
+        stopListening: StopVoiceCommandListeningUseCase
     ): VoiceCommandUseCases = VoiceCommandUseCases(
+        processVoiceCommand = processVoiceCommand,
         startListening = startListening,
-        stopListening = stopListening,
-        processCommand = processCommand
+        stopListening = stopListening
     )
 }

@@ -12,11 +12,7 @@ class ResumeRecordingUseCase @Inject constructor(
 ) : BaseUseCase<String, Recording?>() {
 
     override suspend fun execute(parameters: String): Result<Recording?> {
-        return try {
-            val recording = audioRepository.resumeRecording(parameters)
-            Result.success(recording)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
+        val recording = audioRepository.resumeRecording(parameters)
+        return Result.success(recording)
     }
 }

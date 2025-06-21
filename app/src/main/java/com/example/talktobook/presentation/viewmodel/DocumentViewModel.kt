@@ -10,6 +10,7 @@ import com.example.talktobook.domain.usecase.document.DeleteDocumentUseCase
 import com.example.talktobook.domain.usecase.document.GetDocumentUseCase
 import com.example.talktobook.domain.usecase.document.SearchDocumentsUseCase
 import com.example.talktobook.domain.usecase.document.UpdateDocumentUseCase
+import com.example.talktobook.domain.usecase.document.DeleteDocumentUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

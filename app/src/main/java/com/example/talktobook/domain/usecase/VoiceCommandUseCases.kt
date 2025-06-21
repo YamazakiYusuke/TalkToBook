@@ -8,7 +8,7 @@ import com.example.talktobook.domain.usecase.voicecommand.StopVoiceCommandListen
  * Groups voice command-related use cases for dependency injection
  */
 data class VoiceCommandUseCases(
+    val processVoiceCommand: ProcessVoiceCommandUseCase,
     val startListening: StartVoiceCommandListeningUseCase,
-    val stopListening: StopVoiceCommandListeningUseCase,
-    val processCommand: ProcessVoiceCommandUseCase
+    val stopListening: StopVoiceCommandListeningUseCase
 )

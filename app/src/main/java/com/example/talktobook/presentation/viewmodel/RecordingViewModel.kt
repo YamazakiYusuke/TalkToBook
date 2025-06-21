@@ -12,10 +12,7 @@ import com.example.talktobook.data.analytics.AnalyticsManager
 import com.example.talktobook.data.crashlytics.CrashlyticsManager
 import com.example.talktobook.data.crashlytics.BreadcrumbCategory
 import com.example.talktobook.data.crashlytics.CrashKeys
-import com.example.talktobook.domain.usecase.audio.StartRecordingUseCase
-import com.example.talktobook.domain.usecase.audio.StopRecordingUseCase
-import com.example.talktobook.domain.usecase.audio.PauseRecordingUseCase
-import com.example.talktobook.domain.usecase.audio.ResumeRecordingUseCase
+import com.example.talktobook.domain.usecase.AudioUseCases
 import com.example.talktobook.service.AudioRecordingService
 import com.example.talktobook.util.PermissionUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -43,10 +40,7 @@ data class RecordingUiState(
 @HiltViewModel
 class RecordingViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val startRecordingUseCase: StartRecordingUseCase,
-    private val stopRecordingUseCase: StopRecordingUseCase,
-    private val pauseRecordingUseCase: PauseRecordingUseCase,
-    private val resumeRecordingUseCase: ResumeRecordingUseCase,
+    private val audioUseCases: AudioUseCases,
     private val permissionUtils: PermissionUtils,
     private val analyticsManager: AnalyticsManager
 ) : BaseViewModel<RecordingUiState>() {
@@ -142,7 +136,7 @@ class RecordingViewModel @Inject constructor(
         setLoading(true)
         recordingStartTime = System.currentTimeMillis()
         viewModelScope.launch {
-            startRecordingUseCase().fold(
+            audioUseCases.startRecording().fold(
                 onSuccess = { recording ->
                     analyticsManager.logVoiceRecordingStarted(
                         documentId = recording.id, // Using recording ID as document ID for now
@@ -184,7 +178,7 @@ class RecordingViewModel @Inject constructor(
 
         setLoading(true)
         viewModelScope.launch {
-            stopRecordingUseCase(currentRecording.id).fold(
+            audioUseCases.stopRecording(currentRecording.id).fold(
                 onSuccess = { recording ->
                     val durationSeconds = if (recordingStartTime > 0) {
                         (System.currentTimeMillis() - recordingStartTime) / 1000
@@ -238,7 +232,7 @@ class RecordingViewModel @Inject constructor(
 
         pauseStartTime = System.currentTimeMillis()
         viewModelScope.launch {
-            pauseRecordingUseCase(currentRecording.id).fold(
+            audioUseCases.pauseRecording(currentRecording.id).fold(
                 onSuccess = { recording ->
                     val durationBeforePause = if (recordingStartTime > 0) {
                         (pauseStartTime - recordingStartTime) / 1000
@@ -274,7 +268,7 @@ class RecordingViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            resumeRecordingUseCase(currentRecording.id).fold(
+            audioUseCases.resumeRecording(currentRecording.id).fold(
                 onSuccess = { recording ->
                     val pauseDuration = if (pauseStartTime > 0) {
                         (System.currentTimeMillis() - pauseStartTime) / 1000

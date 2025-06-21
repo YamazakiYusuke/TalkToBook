@@ -11,7 +11,6 @@ import com.example.talktobook.domain.model.VoiceCommandResult
 import com.example.talktobook.domain.processor.VoiceCommandContext
 import com.example.talktobook.domain.processor.VoiceCommandProcessor
 import com.example.talktobook.domain.usecase.VoiceCommandUseCases
-import com.example.talktobook.domain.usecase.voicecommand.ProcessVoiceCommandUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -113,7 +112,7 @@ class VoiceCommandViewModel @Inject constructor(
      */
     fun processTextCommand(text: String) {
         viewModelScope.launch {
-            val recognizedCommand = voiceCommandUseCases.processCommand(text)
+            val recognizedCommand = voiceCommandUseCases.processVoiceCommand(text)
             if (recognizedCommand != null) {
                 handleRecognizedCommand(recognizedCommand)
             } else {
