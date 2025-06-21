@@ -3,6 +3,7 @@ package com.example.talktobook.di
 import com.example.talktobook.domain.repository.AudioRepository
 import com.example.talktobook.domain.repository.DocumentRepository
 import com.example.talktobook.domain.repository.TranscriptionRepository
+import com.example.talktobook.domain.repository.VoiceCommandRepository
 import com.example.talktobook.domain.usecase.document.CreateDocumentUseCase
 import com.example.talktobook.domain.usecase.document.UpdateDocumentUseCase
 import com.example.talktobook.domain.usecase.document.GetDocumentUseCase
@@ -27,6 +28,15 @@ import com.example.talktobook.domain.usecase.transcription.GetTranscriptionQueue
 import com.example.talktobook.domain.usecase.transcription.ProcessTranscriptionQueueUseCase
 import com.example.talktobook.domain.usecase.transcription.UpdateTranscriptionStatusUseCase
 import com.example.talktobook.domain.usecase.transcription.RetryTranscriptionUseCase
+import com.example.talktobook.domain.usecase.document.SearchDocumentsUseCase
+import com.example.talktobook.domain.usecase.DocumentUseCases
+import com.example.talktobook.domain.usecase.ChapterUseCases
+import com.example.talktobook.domain.usecase.AudioUseCases
+import com.example.talktobook.domain.usecase.TranscriptionUseCases
+import com.example.talktobook.domain.usecase.VoiceCommandUseCases
+import com.example.talktobook.domain.usecase.voicecommand.ProcessVoiceCommandUseCase
+import com.example.talktobook.domain.usecase.voicecommand.StartVoiceCommandListeningUseCase
+import com.example.talktobook.domain.usecase.voicecommand.StopVoiceCommandListeningUseCase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -184,4 +194,115 @@ object UseCaseModule {
     fun provideRetryTranscriptionUseCase(
         transcriptionRepository: TranscriptionRepository
     ): RetryTranscriptionUseCase = RetryTranscriptionUseCase(transcriptionRepository)
+
+    // Voice Command Use Cases
+    @Provides
+    @Singleton
+    fun provideStartVoiceCommandListeningUseCase(
+        voiceCommandRepository: VoiceCommandRepository
+    ): StartVoiceCommandListeningUseCase = StartVoiceCommandListeningUseCase(voiceCommandRepository)
+
+    @Provides
+    @Singleton
+    fun provideStopVoiceCommandListeningUseCase(
+        voiceCommandRepository: VoiceCommandRepository
+    ): StopVoiceCommandListeningUseCase = StopVoiceCommandListeningUseCase(voiceCommandRepository)
+
+    @Provides
+    @Singleton
+    fun provideProcessVoiceCommandUseCase(
+        voiceCommandRepository: VoiceCommandRepository
+    ): ProcessVoiceCommandUseCase = ProcessVoiceCommandUseCase(voiceCommandRepository)
+
+    // Search Use Cases
+    @Provides
+    @Singleton
+    fun provideSearchDocumentsUseCase(
+        documentRepository: DocumentRepository
+    ): SearchDocumentsUseCase = SearchDocumentsUseCase(documentRepository)
+
+    // Grouped Use Cases
+    @Provides
+    @Singleton
+    fun provideDocumentUseCases(
+        createDocument: CreateDocumentUseCase,
+        updateDocument: UpdateDocumentUseCase,
+        getDocument: GetDocumentUseCase,
+        getDocumentById: GetDocumentByIdUseCase,
+        deleteDocument: DeleteDocumentUseCase,
+        getAllDocuments: GetAllDocumentsUseCase
+    ): DocumentUseCases = DocumentUseCases(
+        createDocument = createDocument,
+        updateDocument = updateDocument,
+        getDocument = getDocument,
+        getDocumentById = getDocumentById,
+        deleteDocument = deleteDocument,
+        getAllDocuments = getAllDocuments
+    )
+
+    @Provides
+    @Singleton
+    fun provideChapterUseCases(
+        createChapter: CreateChapterUseCase,
+        updateChapter: UpdateChapterUseCase,
+        getChapter: GetChapterUseCase,
+        getChaptersByDocument: GetChaptersByDocumentUseCase,
+        deleteChapter: DeleteChapterUseCase,
+        reorderChapters: ReorderChaptersUseCase,
+        mergeChapters: MergeChaptersUseCase
+    ): ChapterUseCases = ChapterUseCases(
+        createChapter = createChapter,
+        updateChapter = updateChapter,
+        getChapter = getChapter,
+        getChaptersByDocument = getChaptersByDocument,
+        deleteChapter = deleteChapter,
+        reorderChapters = reorderChapters,
+        mergeChapters = mergeChapters
+    )
+
+    @Provides
+    @Singleton
+    fun provideAudioUseCases(
+        startRecording: StartRecordingUseCase,
+        stopRecording: StopRecordingUseCase,
+        pauseRecording: PauseRecordingUseCase,
+        resumeRecording: ResumeRecordingUseCase,
+        deleteRecording: DeleteRecordingUseCase,
+        getAllRecordings: GetAllRecordingsUseCase
+    ): AudioUseCases = AudioUseCases(
+        startRecording = startRecording,
+        stopRecording = stopRecording,
+        pauseRecording = pauseRecording,
+        resumeRecording = resumeRecording,
+        deleteRecording = deleteRecording,
+        getAllRecordings = getAllRecordings
+    )
+
+    @Provides
+    @Singleton
+    fun provideTranscriptionUseCases(
+        transcribeAudio: TranscribeAudioUseCase,
+        getTranscriptionQueue: GetTranscriptionQueueUseCase,
+        processTranscriptionQueue: ProcessTranscriptionQueueUseCase,
+        updateTranscriptionStatus: UpdateTranscriptionStatusUseCase,
+        retryTranscription: RetryTranscriptionUseCase
+    ): TranscriptionUseCases = TranscriptionUseCases(
+        transcribeAudio = transcribeAudio,
+        getTranscriptionQueue = getTranscriptionQueue,
+        processTranscriptionQueue = processTranscriptionQueue,
+        updateTranscriptionStatus = updateTranscriptionStatus,
+        retryTranscription = retryTranscription
+    )
+
+    @Provides
+    @Singleton
+    fun provideVoiceCommandUseCases(
+        startListening: StartVoiceCommandListeningUseCase,
+        stopListening: StopVoiceCommandListeningUseCase,
+        processCommand: ProcessVoiceCommandUseCase
+    ): VoiceCommandUseCases = VoiceCommandUseCases(
+        startListening = startListening,
+        stopListening = stopListening,
+        processCommand = processCommand
+    )
 }

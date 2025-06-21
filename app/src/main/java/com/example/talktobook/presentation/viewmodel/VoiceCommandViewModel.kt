@@ -10,9 +10,8 @@ import com.example.talktobook.domain.model.VoiceCommand
 import com.example.talktobook.domain.model.VoiceCommandResult
 import com.example.talktobook.domain.processor.VoiceCommandContext
 import com.example.talktobook.domain.processor.VoiceCommandProcessor
+import com.example.talktobook.domain.usecase.VoiceCommandUseCases
 import com.example.talktobook.domain.usecase.voicecommand.ProcessVoiceCommandUseCase
-import com.example.talktobook.domain.usecase.voicecommand.StartVoiceCommandListeningUseCase
-import com.example.talktobook.domain.usecase.voicecommand.StopVoiceCommandListeningUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,9 +24,7 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class VoiceCommandViewModel @Inject constructor(
-    private val startVoiceCommandListeningUseCase: StartVoiceCommandListeningUseCase,
-    private val stopVoiceCommandListeningUseCase: StopVoiceCommandListeningUseCase,
-    private val processVoiceCommandUseCase: ProcessVoiceCommandUseCase,
+    private val voiceCommandUseCases: VoiceCommandUseCases,
     private val voiceCommandProcessor: VoiceCommandProcessor
 ) : ViewModel() {
 
@@ -58,7 +55,7 @@ class VoiceCommandViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             
-            val result = startVoiceCommandListeningUseCase()
+            val result = voiceCommandUseCases.startListening()
             result.fold(
                 onSuccess = { commandFlow ->
                     _uiState.value = _uiState.value.copy(
@@ -92,7 +89,7 @@ class VoiceCommandViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
             
-            val result = stopVoiceCommandListeningUseCase()
+            val result = voiceCommandUseCases.stopListening()
             result.fold(
                 onSuccess = {
                     _uiState.value = _uiState.value.copy(
@@ -116,7 +113,7 @@ class VoiceCommandViewModel @Inject constructor(
      */
     fun processTextCommand(text: String) {
         viewModelScope.launch {
-            val recognizedCommand = processVoiceCommandUseCase(text)
+            val recognizedCommand = voiceCommandUseCases.processCommand(text)
             if (recognizedCommand != null) {
                 handleRecognizedCommand(recognizedCommand)
             } else {
@@ -228,7 +225,7 @@ class VoiceCommandViewModel @Inject constructor(
     override fun onCleared() {
         super.onCleared()
         viewModelScope.launch {
-            stopVoiceCommandListeningUseCase()
+            voiceCommandUseCases.stopListening()
         }
     }
 }
