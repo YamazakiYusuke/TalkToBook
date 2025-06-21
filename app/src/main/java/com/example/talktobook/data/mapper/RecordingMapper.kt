@@ -3,9 +3,9 @@ package com.example.talktobook.data.mapper
 import com.example.talktobook.data.local.entity.RecordingEntity
 import com.example.talktobook.domain.model.Recording
 
-object RecordingMapper {
+object RecordingMapper : EntityMapper<RecordingEntity, Recording> {
     
-    fun RecordingEntity.toDomainModel(): Recording {
+    override fun RecordingEntity.toDomainModel(): Recording {
         return Recording(
             id = id,
             timestamp = timestamp,
@@ -17,7 +17,7 @@ object RecordingMapper {
         )
     }
     
-    fun Recording.toEntity(): RecordingEntity {
+    override fun Recording.toEntity(): RecordingEntity {
         return RecordingEntity(
             id = id,
             timestamp = timestamp,
@@ -27,13 +27,5 @@ object RecordingMapper {
             duration = duration,
             title = title
         )
-    }
-    
-    fun List<RecordingEntity>.toDomainModels(): List<Recording> {
-        return map { it.toDomainModel() }
-    }
-    
-    fun List<Recording>.toEntities(): List<RecordingEntity> {
-        return map { it.toEntity() }
     }
 }
