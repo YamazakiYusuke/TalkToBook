@@ -43,7 +43,7 @@ class SecureStorageManagerImpl @Inject constructor(
         )
     }
     
-    override suspend fun storeApiKey(key: String) = withContext(Dispatchers.IO) {
+    override suspend fun storeApiKey(key: String): Unit = withContext(Dispatchers.IO) {
         try {
             securePrefs.edit()
                 .putString(API_KEY, key)
@@ -64,7 +64,7 @@ class SecureStorageManagerImpl @Inject constructor(
         }
     }
     
-    override suspend fun clearApiKey() = withContext(Dispatchers.IO) {
+    override suspend fun clearApiKey(): Unit = withContext(Dispatchers.IO) {
         try {
             securePrefs.edit()
                 .remove(API_KEY)
@@ -84,7 +84,7 @@ class SecureStorageManagerImpl @Inject constructor(
         }
     }
     
-    override suspend fun storeSecureData(key: String, value: String) = withContext(Dispatchers.IO) {
+    override suspend fun storeSecureData(key: String, value: String): Unit = withContext(Dispatchers.IO) {
         try {
             securePrefs.edit()
                 .putString(key, value)
@@ -105,7 +105,7 @@ class SecureStorageManagerImpl @Inject constructor(
         }
     }
     
-    override suspend fun clearSecureData(key: String) = withContext(Dispatchers.IO) {
+    override suspend fun clearSecureData(key: String): Unit = withContext(Dispatchers.IO) {
         try {
             securePrefs.edit()
                 .remove(key)
@@ -116,7 +116,7 @@ class SecureStorageManagerImpl @Inject constructor(
         }
     }
     
-    override suspend fun clearAllSecureData() = withContext(Dispatchers.IO) {
+    override suspend fun clearAllSecureData(): Unit = withContext(Dispatchers.IO) {
         try {
             securePrefs.edit()
                 .clear()

@@ -26,7 +26,7 @@ class FileCleanupManagerImpl @Inject constructor(
     
     companion object {
         private const val TAG = "FileCleanupManager"
-        private const val CLEANUP_WORK_NAME = "talktobook_file_cleanup"
+        private const val CLEANUP_WORK_NAME = FileCleanupWorker.WORK_NAME
         private const val SECURE_WIPE_PASSES = 3
         private const val SECURE_WIPE_BUFFER_SIZE = 8192
         private const val ORPHANED_FILE_AGE_THRESHOLD_HOURS = 24
@@ -158,7 +158,7 @@ class FileCleanupManagerImpl @Inject constructor(
         }
     }
     
-    override suspend fun scheduleAutomaticCleanup() = withContext(Dispatchers.IO) {
+    override suspend fun scheduleAutomaticCleanup(): Unit = withContext(Dispatchers.IO) {
         try {
             val cleanupRequest = PeriodicWorkRequestBuilder<FileCleanupWorker>(
                 CLEANUP_SCHEDULE_INTERVAL_HOURS, TimeUnit.HOURS,

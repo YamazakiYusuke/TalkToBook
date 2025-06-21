@@ -8,6 +8,7 @@ import com.example.talktobook.domain.security.PrivacySettings
 import com.example.talktobook.domain.repository.DocumentRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -39,7 +40,7 @@ class PrivacyManagerImpl @Inject constructor(
         prefs.getBoolean(KEY_DATA_COLLECTION, true)
     }
     
-    override suspend fun setDataCollectionEnabled(enabled: Boolean) = withContext(Dispatchers.IO) {
+    override suspend fun setDataCollectionEnabled(enabled: Boolean): Unit = withContext(Dispatchers.IO) {
         prefs.edit().putBoolean(KEY_DATA_COLLECTION, enabled).apply()
         Log.d(TAG, "Data collection enabled: $enabled")
     }
@@ -48,7 +49,7 @@ class PrivacyManagerImpl @Inject constructor(
         prefs.getBoolean(KEY_ANALYTICS, true)
     }
     
-    override suspend fun setAnalyticsEnabled(enabled: Boolean) = withContext(Dispatchers.IO) {
+    override suspend fun setAnalyticsEnabled(enabled: Boolean): Unit = withContext(Dispatchers.IO) {
         prefs.edit().putBoolean(KEY_ANALYTICS, enabled).apply()
         Log.d(TAG, "Analytics enabled: $enabled")
     }
@@ -57,7 +58,7 @@ class PrivacyManagerImpl @Inject constructor(
         prefs.getBoolean(KEY_CRASH_REPORTING, true)
     }
     
-    override suspend fun setCrashReportingEnabled(enabled: Boolean) = withContext(Dispatchers.IO) {
+    override suspend fun setCrashReportingEnabled(enabled: Boolean): Unit = withContext(Dispatchers.IO) {
         prefs.edit().putBoolean(KEY_CRASH_REPORTING, enabled).apply()
         Log.d(TAG, "Crash reporting enabled: $enabled")
     }
@@ -66,7 +67,7 @@ class PrivacyManagerImpl @Inject constructor(
         prefs.getBoolean(KEY_AUTO_DELETE, false)
     }
     
-    override suspend fun setAutoDeleteEnabled(enabled: Boolean) = withContext(Dispatchers.IO) {
+    override suspend fun setAutoDeleteEnabled(enabled: Boolean): Unit = withContext(Dispatchers.IO) {
         prefs.edit().putBoolean(KEY_AUTO_DELETE, enabled).apply()
         Log.d(TAG, "Auto delete enabled: $enabled")
     }
@@ -75,7 +76,7 @@ class PrivacyManagerImpl @Inject constructor(
         prefs.getInt(KEY_AUTO_DELETE_DAYS, 30)
     }
     
-    override suspend fun setAutoDeleteDays(days: Int) = withContext(Dispatchers.IO) {
+    override suspend fun setAutoDeleteDays(days: Int): Unit = withContext(Dispatchers.IO) {
         val validDays = days.coerceAtLeast(1).coerceAtMost(365)
         prefs.edit().putInt(KEY_AUTO_DELETE_DAYS, validDays).apply()
         Log.d(TAG, "Auto delete days set to: $validDays")
@@ -84,9 +85,12 @@ class PrivacyManagerImpl @Inject constructor(
     override suspend fun requestDataDeletion(): Boolean = withContext(Dispatchers.IO) {
         try {
             // Delete all documents and recordings
-            val documents = documentRepository.getAllDocuments()
+            val documents = documentRepository.getAllDocuments().first()
             documents.forEach { document ->
-                documentRepository.deleteDocument(document.id)
+                val result = documentRepository.deleteDocument(document.id)
+                if (result.isFailure) {
+                    Log.w(TAG, "Failed to delete document ${document.id}: ${result.exceptionOrNull()}")
+                }
             }
             
             // Clear privacy preferences (keep defaults)
@@ -102,7 +106,7 @@ class PrivacyManagerImpl @Inject constructor(
     
     override suspend fun exportUserData(): String? = withContext(Dispatchers.IO) {
         try {
-            val documents = documentRepository.getAllDocuments()
+            val documents = documentRepository.getAllDocuments().first()
             val exportData = StringBuilder()
             
             exportData.append("TalkToBook Data Export\n")
@@ -142,7 +146,7 @@ class PrivacyManagerImpl @Inject constructor(
         )
     }
     
-    override suspend fun updatePrivacySettings(settings: PrivacySettings) = withContext(Dispatchers.IO) {
+    override suspend fun updatePrivacySettings(settings: PrivacySettings): Unit = withContext(Dispatchers.IO) {
         setDataCollectionEnabled(settings.dataCollectionEnabled)
         setAnalyticsEnabled(settings.analyticsEnabled)
         setCrashReportingEnabled(settings.crashReportingEnabled)
