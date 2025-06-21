@@ -6,6 +6,7 @@ import com.example.talktobook.data.local.entity.RecordingEntity
 import com.example.talktobook.domain.model.Recording
 import com.example.talktobook.domain.model.TranscriptionStatus
 import com.example.talktobook.util.AudioFileManager
+import com.example.talktobook.util.RecordingTimeManager
 import io.mockk.*
 import io.mockk.impl.annotations.MockK
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -31,6 +32,9 @@ class AudioRepositoryImplTest {
     @MockK
     private lateinit var audioFileManager: AudioFileManager
 
+    @MockK
+    private lateinit var timeManager: RecordingTimeManager
+
     private lateinit var repository: AudioRepositoryImpl
 
     private val testDispatcher = StandardTestDispatcher()
@@ -38,7 +42,7 @@ class AudioRepositoryImplTest {
     @Before
     fun setUp() {
         MockKAnnotations.init(this)
-        repository = AudioRepositoryImpl(recordingDao, context, audioFileManager)
+        repository = AudioRepositoryImpl(recordingDao, context, audioFileManager, timeManager)
     }
 
     @After
@@ -54,8 +58,10 @@ class AudioRepositoryImplTest {
         val testFilePath = "/test/path/recording.mp3"
         
         every { testFile.absolutePath } returns testFilePath
-        coEvery { audioFileManager.createTempRecordingFile(any()) } returns testFile
+        every { audioFileManager.generateUniqueFileName() } returns "test-filename.mp3"
+        every { audioFileManager.createRecordingFile(any()) } returns testFile
         coEvery { recordingDao.insertRecording(any()) } just Runs
+        every { timeManager.startTiming() } just Runs
         
         // Mock MediaRecorder behavior (this would require more complex mocking)
         // For now, we'll test the basic flow
@@ -272,27 +278,46 @@ class AudioRepositoryImplTest {
     }
 
     @Test
-    fun `cleanupOrphanedAudioFiles delegates to audioFileManager`() = runTest(testDispatcher) {
+    fun `cleanupOrphanedAudioFiles works with flow-based cleanup`() = runTest(testDispatcher) {
         // Given
-        coEvery { audioFileManager.cleanupOrphanedAudioFiles() } just Runs
+        val testFiles = arrayOf(
+            mockk<File> {
+                every { absolutePath } returns "/test/file1.mp3"
+            },
+            mockk<File> {
+                every { absolutePath } returns "/test/file2.mp3"
+            }
+        )
+        val testDirectory = mockk<File> {
+            every { listFiles() } returns testFiles
+        }
+        
+        every { audioFileManager.audioDirectory } returns testDirectory
+        every { recordingDao.getAllRecordings() } returns flowOf(emptyList())
+        coEvery { audioFileManager.deleteFile(any()) } just Runs
+        coEvery { audioFileManager.cleanupTempFiles() } just Runs
+        coEvery { audioFileManager.enforceCacheSizeLimit() } just Runs
         
         // When
         repository.cleanupOrphanedAudioFiles()
         
         // Then
-        coVerify { audioFileManager.cleanupOrphanedAudioFiles() }
+        verify { audioFileManager.audioDirectory }
+        verify { recordingDao.getAllRecordings() }
+        coVerify { audioFileManager.cleanupTempFiles() }
+        coVerify { audioFileManager.enforceCacheSizeLimit() }
     }
 
     @Test
-    fun `cleanup method executes cleanup operations`() = runTest(testDispatcher) {
+    fun `cleanup method resets time manager and clears recording state`() = runTest(testDispatcher) {
         // Given
-        coEvery { audioFileManager.cleanupOrphanedAudioFiles() } just Runs
+        every { timeManager.reset() } just Runs
         
         // When
         repository.cleanup()
         
         // Then
-        coVerify { audioFileManager.cleanupOrphanedAudioFiles() }
+        verify { timeManager.reset() }
     }
 
     @Test
