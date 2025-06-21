@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -91,8 +92,9 @@ class FallbackBehaviorManager @Inject constructor(
     
     private suspend fun tryOnlineTranscription(recordingId: String): FallbackResult<String> {
         return try {
-            val recording = audioRepository.getRecordingById(recordingId).getOrThrow()
-            val result = transcriptionRepository.transcribeAudio(recording.audioFilePath)
+            val recording = audioRepository.getRecording(recordingId) ?: throw NoSuchElementException("Recording not found")
+            val audioFile = File(recording.audioFilePath)
+            val result = transcriptionRepository.transcribeAudio(audioFile)
             
             result.fold(
                 onSuccess = { transcription ->

@@ -82,9 +82,14 @@ class ChapterListViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
-                getChaptersByDocumentUseCase(documentId).collect { chapters ->
-                    _chapters.value = chapters
-                    setLoading(false)
+                val result = getChaptersByDocumentUseCase(documentId)
+                if (result.isSuccess) {
+                    result.getOrNull()?.collect { chapters ->
+                        _chapters.value = chapters
+                        setLoading(false)
+                    }
+                } else {
+                    throw result.exceptionOrNull() ?: Exception("Failed to get chapters flow")
                 }
             } catch (e: Exception) {
                 setError("Failed to load chapters: ${e.message}")

@@ -5,7 +5,16 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -212,7 +221,6 @@ private fun SelectedTextSection(
                 .fillMaxWidth()
                 .semantics {
                     contentDescription = VoiceCorrectionDescriptions.selectedTextContent(selectedText)
-                    role = Role.Text
                 },
             colors = CardDefaults.cardColors(
                 containerColor = if (isActive) 
@@ -426,7 +434,6 @@ private fun CorrectedTextSection(
                 .fillMaxWidth()
                 .semantics {
                     contentDescription = VoiceCorrectionDescriptions.correctedTextContent(correctedText)
-                    role = Role.Text
                     stateDescription = "修正済み"
                 },
             colors = CardDefaults.cardColors(
@@ -498,7 +505,6 @@ private fun ApplyCorrectionDialog(
         onDismissRequest = onDismiss,
         modifier = Modifier.semantics {
             contentDescription = dialogDescription
-            role = Role.Dialog
         },
         icon = {
             Icon(
@@ -542,7 +548,6 @@ private fun ApplyCorrectionDialog(
                     Card(
                         modifier = Modifier.semantics {
                             contentDescription = VoiceCorrectionDescriptions.originalTextInDialog(originalText)
-                            role = Role.Text
                         },
                         colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.errorContainer,
@@ -569,7 +574,6 @@ private fun ApplyCorrectionDialog(
                     Card(
                         modifier = Modifier.semantics {
                             contentDescription = VoiceCorrectionDescriptions.correctedTextInDialog(correctedText)
-                            role = Role.Text
                         },
                         colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.primaryContainer,

@@ -26,8 +26,7 @@ class VoiceCorrectionViewModel @Inject constructor(
     private val stopRecordingUseCase: StopRecordingUseCase,
     private val transcribeAudioUseCase: TranscribeAudioUseCase,
     private val audioRepository: AudioRepository,
-    private val transcriptionRepository: TranscriptionRepository,
-    private val crashlyticsManager: CrashlyticsManager
+    private val transcriptionRepository: TranscriptionRepository
 ) : BaseViewModel<VoiceCorrectionUiState>() {
 
     private val _uiState = MutableStateFlow(VoiceCorrectionUiState())
@@ -240,7 +239,8 @@ class VoiceCorrectionViewModel @Inject constructor(
     /**
      * Clear error state
      */
-    fun clearError() {
+    fun clearErrorState() {
+        clearError()
         _uiState.value = _uiState.value.copy(error = null)
     }
 

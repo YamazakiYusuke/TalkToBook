@@ -20,7 +20,7 @@ class CrashlyticsManager @Inject constructor() {
      */
     fun setCrashlyticsEnabled(enabled: Boolean) {
         isCrashlyticsEnabled = enabled
-        firebaseCrashlytics.isCrashlyticsCollectionEnabled = enabled
+        firebaseCrashlytics.setCrashlyticsCollectionEnabled(enabled)
     }
     
     /**

@@ -17,7 +17,7 @@ import javax.inject.Inject
 abstract class BaseViewModel<T : UiState> : ViewModel() {
 
     @Inject
-    protected lateinit var crashlyticsManager: CrashlyticsManager
+    internal lateinit var crashlyticsManager: CrashlyticsManager
 
     protected val _isLoading = MutableStateFlow(false)
     protected val _error = MutableStateFlow<String?>(null)
@@ -89,7 +89,14 @@ abstract class BaseViewModel<T : UiState> : ViewModel() {
     protected open fun handleError(throwable: Throwable) {
         val errorUiState = mapThrowableToErrorUiState(throwable)
         setErrorUiState(errorUiState)
-        setError(errorUiState.message)
+        setError(when (errorUiState) {
+            is ErrorUiState.NetworkError -> errorUiState.message
+            is ErrorUiState.ApiError -> errorUiState.message
+            is ErrorUiState.RateLimitError -> errorUiState.message
+            is ErrorUiState.AudioError -> errorUiState.message
+            is ErrorUiState.StorageError -> errorUiState.message
+            is ErrorUiState.UnknownError -> errorUiState.message
+        })
         _operationState.value = OperationUiState.Failed(errorUiState)
         
         // Record crash in Crashlytics with context
@@ -112,7 +119,14 @@ abstract class BaseViewModel<T : UiState> : ViewModel() {
         val context = this::class.simpleName ?: "BaseViewModel"
         val additionalData = mapOf(
             "error_type" to errorUiState::class.simpleName.orEmpty(),
-            "error_message" to errorUiState.message,
+            "error_message" to when (errorUiState) {
+                is ErrorUiState.NetworkError -> errorUiState.message
+                is ErrorUiState.ApiError -> errorUiState.message
+                is ErrorUiState.RateLimitError -> errorUiState.message
+                is ErrorUiState.AudioError -> errorUiState.message
+                is ErrorUiState.StorageError -> errorUiState.message
+                is ErrorUiState.UnknownError -> errorUiState.message
+            },
             "viewmodel_class" to context
         ).let { baseData ->
             when (errorUiState) {
@@ -137,7 +151,7 @@ abstract class BaseViewModel<T : UiState> : ViewModel() {
                 message = "ネットワーク接続に問題があります。接続をご確認ください。"
             )
             is NetworkException.ApiError -> ErrorUiState.ApiError(
-                httpCode = throwable.statusCode
+                httpCode = throwable.code
             )
             is NetworkException.UnauthorizedError -> ErrorUiState.ApiError(
                 title = "認証エラー",
@@ -148,7 +162,7 @@ abstract class BaseViewModel<T : UiState> : ViewModel() {
             is NetworkException.ServerError -> ErrorUiState.ApiError(
                 title = "サーバーエラー",
                 message = "サーバーに問題が発生しています。しばらくお待ちください。",
-                httpCode = throwable.statusCode
+                httpCode = 500
             )
             is NetworkException.FileTooLargeError -> ErrorUiState.AudioError(
                 title = "ファイルサイズエラー",

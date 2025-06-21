@@ -1,5 +1,6 @@
 package com.example.talktobook.domain.manager
 
+import android.util.Log
 import com.example.talktobook.domain.connectivity.ConnectivityProvider
 import com.example.talktobook.domain.model.Recording
 import com.example.talktobook.domain.model.TranscriptionStatus
@@ -61,7 +62,9 @@ class TranscriptionQueueManager @Inject constructor(
     
     private fun startQueueMonitoring() {
         managerScope.launch {
-            getTranscriptionQueueUseCase().onEach { recordings ->
+            val queueResult = getTranscriptionQueueUseCase()
+            if (queueResult.isSuccess) {
+                queueResult.getOrNull()?.onEach { recordings: List<Recording> ->
                 _pendingCount.value = recordings.size
                 
                 if (!connectivityProvider.isOnline()) {
@@ -78,7 +81,8 @@ class TranscriptionQueueManager @Inject constructor(
                         _queueState.value = QueueState.IDLE
                     }
                 }
-            }.launchIn(this)
+                }?.launchIn(this)
+            }
         }
     }
     
@@ -89,8 +93,10 @@ class TranscriptionQueueManager @Inject constructor(
             try {
                 _queueState.value = QueueState.PROCESSING
                 
-                val currentQueue = getTranscriptionQueueUseCase().first()
-                if (currentQueue.isNotEmpty()) {
+                val queueResult = getTranscriptionQueueUseCase()
+                if (queueResult.isSuccess) {
+                    val currentQueue = queueResult.getOrNull()?.first() ?: emptyList()
+                    if (currentQueue.isNotEmpty()) {
                     _processingRecord.value = currentQueue.first()
                 }
                 
@@ -99,22 +105,26 @@ class TranscriptionQueueManager @Inject constructor(
                 if (result.isSuccess) {
                     _processingRecord.value = null
                     
-                    val remainingQueue = getTranscriptionQueueUseCase().first()
-                    if (remainingQueue.isNotEmpty()) {
+                    val remainingQueueResult = getTranscriptionQueueUseCase()
+                    if (remainingQueueResult.isSuccess) {
+                        val remainingQueue = remainingQueueResult.getOrNull()?.first() ?: emptyList()
+                        if (remainingQueue.isNotEmpty()) {
                         _queueState.value = QueueState.READY
                         processQueueWhenReady()
-                    } else {
-                        _queueState.value = QueueState.IDLE
+                        } else {
+                            _queueState.value = QueueState.IDLE
+                        }
                     }
                 } else {
                     _queueState.value = QueueState.ERROR
                     _processingRecord.value = null
                 }
+                }
                 
             } catch (e: Exception) {
                 _queueState.value = QueueState.ERROR
                 _processingRecord.value = null
-                android.util.Log.e("TranscriptionQueueManager", "Error processing queue", e)
+                Log.e("TranscriptionQueueManager", "Error processing queue", e)
             }
         }
     }
@@ -149,11 +159,17 @@ class TranscriptionQueueManager @Inject constructor(
     }
     
     suspend fun getQueueObservable(): Flow<List<Recording>> {
-        return getTranscriptionQueueUseCase()
+        val result = getTranscriptionQueueUseCase()
+        return result.getOrThrow()
     }
     
     suspend fun getOfflineQueueSummary(): OfflineQueueSummary {
-        val pendingRecordings = getTranscriptionQueueUseCase().first()
+        val queueResult = getTranscriptionQueueUseCase()
+        val pendingRecordings = if (queueResult.isSuccess) {
+            queueResult.getOrNull()?.first() ?: emptyList()
+        } else {
+            emptyList()
+        }
         val isOffline = !connectivityProvider.isOnline()
         
         return OfflineQueueSummary(
