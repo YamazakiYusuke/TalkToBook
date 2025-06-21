@@ -11,11 +11,7 @@ class DeleteRecordingUseCase @Inject constructor(
 ) : BaseUseCase<String, Unit>() {
 
     override suspend fun execute(parameters: String): Result<Unit> {
-        return try {
-            audioRepository.deleteRecording(parameters)
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
+        audioRepository.deleteRecording(parameters)
+        return Result.success(Unit)
     }
 }
